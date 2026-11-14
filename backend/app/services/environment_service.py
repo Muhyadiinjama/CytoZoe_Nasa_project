@@ -32,11 +32,9 @@ def _epoch(ts: str) -> float:
 
 
 def dataset_row(conn: sqlite3.Connection) -> sqlite3.Row:
-    row = conn.execute("SELECT * FROM datasets WHERE kind = 'ENV_RADIATION'").fetchone()
-    if row is None:
-        raise AppError(404, "NO_DATA", "The RadLab DosTel1 dataset has not been imported yet. "
-                       "Run the documented setup (scripts/fetch_data.py then scripts/import_data.py).")
-    return row
+    from .health_service import verified_dataset
+
+    return verified_dataset(conn, "ENV_RADIATION", "RadLab DosTel1")
 
 
 def _compute(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -69,7 +67,7 @@ def conflict_evidence_id(ts: str) -> str:
 def _source(ds: dict[str, Any]) -> dict[str, Any]:
     return {
         "dataset_id": ds["id"], "title": ds["title"], "provider": ds["provider"], "file_name": ds["file_name"],
-        "sha256": ds["sha256"], "source_url": ds["source_url"], "download_url": ds["download_url"],
+        "sha256": ds["sha256"], "provenance": ds.get("provenance"), "source_url": ds["source_url"], "download_url": ds["download_url"],
         "fetched_at": ds["fetched_at"], "imported_at": ds["imported_at"], "license_note": ds["license_note"],
         "citation": ds["citation"], "instrument_id": "DosTel1", "location": "ISS Columbus module",
     }

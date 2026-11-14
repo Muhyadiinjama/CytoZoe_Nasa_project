@@ -2,20 +2,20 @@
 
 Running 12 tests using 1 worker
 
-(node:10552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:34792) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ok  1 e2e\environment.spec.ts:4:1 › T08/ENV-01/ENV-02: radiation quality strip, conflict evidence and a participant-free review (3.4s)
-  ok  2 e2e\journey.spec.ts:8:1 › T17–T19, T23, T26–T27: C001 L-3 creatinine → evidence → explain → save → reload → export, network-isolated (3.6s)
-  ok  3 e2e\journey.spec.ts:88:1 › Health Trends: categorical visits, URL state, inline follow-up keeps the measurement visible (1.5s)
-  ok  4 e2e\quality.spec.ts:13:1 › T28/UX-01: automated axe checks on all four routes and the drawer (WCAG 2.x A/AA rules) (7.7s)
-  ok  5 e2e\quality.spec.ts:31:1 › T28: keyboard-only core journey with focus trap and focus restore (1.3s)
-  ok  6 e2e\quality.spec.ts:59:1 › T29: responsive layouts at 390/768/1024/1440 px without horizontal page scroll (19.6s)
-  ok  7 e2e\quality.spec.ts:82:1 › T30: service-unavailable and no-data states never fabricate content (640ms)
-  ok  8 e2e\quality.spec.ts:97:1 › T21: stale second tab gets a 409 conflict and keeps its draft (4.8s)
-  ok  9 e2e\realtime.spec.ts:4:1 › Radiation replay streams real readings in real time, surfaces conflicts, and pauses (12.3s)
-  ok 10 e2e\realtime.spec.ts:31:1 › Health timeline replay drives the overview visit by visit (6.7s)
-  ok 11 e2e\realtime.spec.ts:45:1 › Live sync: a review saved in one window appears instantly in another (3.3s)
-  ok 12 e2e\restart.spec.ts:32:1 › T20: saved review and history survive a full server restart (5.1s)
+  ok  1 e2e\environment.spec.ts:4:1 › T08/ENV-01/ENV-02: radiation quality strip, conflict evidence and a participant-free review (4.0s)
+  ok  2 e2e\journey.spec.ts:8:1 › T17–T19, T23, T26–T27: C001 L-3 creatinine → evidence → explain → save → reload → export, network-isolated (3.5s)
+  ok  3 e2e\journey.spec.ts:88:1 › Health Trends: categorical visits, URL state, inline follow-up keeps the measurement visible (1.0s)
+  ok  4 e2e\quality.spec.ts:13:1 › T28/UX-01: automated axe checks on all four routes and the drawer (WCAG 2.x A/AA rules) (7.4s)
+  ok  5 e2e\quality.spec.ts:31:1 › T28: keyboard-only core journey with focus trap and focus restore (1.5s)
+  ok  6 e2e\quality.spec.ts:59:1 › T29: responsive layouts at 390/768/1024/1440 px without horizontal page scroll (18.7s)
+  ok  7 e2e\quality.spec.ts:82:1 › T30: service-unavailable and no-data states never fabricate content (464ms)
+  ok  8 e2e\quality.spec.ts:97:1 › T21: stale second tab gets a 409 conflict and keeps its draft (5.0s)
+  ok  9 e2e\realtime.spec.ts:4:1 › Radiation replay streams real readings in real time, surfaces conflicts, and pauses (12.5s)
+  ok 10 e2e\realtime.spec.ts:31:1 › Health timeline replay drives the overview visit by visit (6.6s)
+  ok 11 e2e\realtime.spec.ts:45:1 › Live sync: a review saved in one window appears instantly in another (1.5s)
+  ok 12 e2e\restart.spec.ts:32:1 › T20: saved review and history survive a full server restart (4.8s)
 
   12 passed (1.2m)
 

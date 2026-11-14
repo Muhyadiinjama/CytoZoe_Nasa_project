@@ -7,7 +7,7 @@ export type RangeStatus =
   | "ONE_SIDED_COMPARISON"
   | "UNKNOWN";
 export type ReviewStatus = "OPEN" | "FOLLOW_UP_REQUESTED" | "REVIEWED";
-export type QuestionId = "EXPLAIN_RESULT" | "HOW_CALCULATED" | "LIMITATIONS" | "DIAGNOSIS_REQUEST" | "CAUSATION_REQUEST";
+export type QuestionId = "EXPLAIN_RESULT" | "HOW_CALCULATED" | "LIMITATIONS" | "DIAGNOSIS_REQUEST" | "CAUSATION_REQUEST" | "SOURCE_LOCATION" | "FOLLOW_UP_OPTIONS";
 export type CaseKind = "health" | "environment";
 
 export interface ApiErrorBody { code: string; message: string; details: Record<string, unknown>; }
@@ -180,10 +180,11 @@ export interface ReplayCard {
   baseline_so_far: number | null; n_so_far: number; delta: number | null; percent_delta: number | null; source_row: number;
 }
 export interface ReplayFrame {
+  baseline_context?: "PROSPECTIVE_PRIOR_PREFLIGHT"; baseline_visits?: string[];
   visit: string; visit_label: string; phase: string; visit_order: number; cards: ReplayCard[];
   events: { kind: "sample" | "flag" | "baseline"; text: string; marker?: string; evidence_id?: string }[];
 }
-export interface HealthReplay { participant_id: string; mode: "REPLAY"; label: string; baseline_method: string; rule_version: string; frames: ReplayFrame[]; }
+export interface HealthReplay { participant_id: string; mode: "HISTORICAL_REPLAY"; label: string; baseline_method: string; rule_version: string; frames: ReplayFrame[]; }
 
 export interface StreamReading { kind: "reading"; t: number; ts: string; rate: number; cumulative: number; source_row: number; segment: number; segment_start: boolean; covered_seconds: number; }
 export interface StreamExcluded { kind: "excluded"; t: number; ts: string; evidence_id: string; rows: ConflictRow[]; reason: string; }

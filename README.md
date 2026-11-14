@@ -51,7 +51,10 @@ CytoZoe closes that review-workflow gap in one complete loop: **inspect → expl
   - **Live sync:** saving or changing a review pushes an event to every open window. Tabs refresh instantly, the sidebar's *Recent reviews* updates, and other windows get a notice. A tab with an unsaved draft is never silently rebased; it gets a 409 conflict prompt instead.
 - **Conversational assistant:** suggested questions or a typed question. Typed text is routed by fixed keyword rules to the same verified templates, so there is no language model, and the typed text is never echoed into an answer.
 - **Persistent reviews:** statuses OPEN / FOLLOW_UP_REQUESTED / REVIEWED, optimistic versioning (HTTP 409 on stale edits), and an audit history.
-- **Local export:** a self-contained printable HTML packet plus a JSON packet, with health and environment sections kept separate. Both carry source hashes, rule versions and limitations.
+- **Local export:** a self-contained printable HTML packet plus a JSON packet, with health and environment sections kept separate. Both carry source hashes, provenance, rule versions and limitations.
+- **Mission Health Intelligence Brief** (`GET /api/mission/brief`): one typed, source-linked summary of a historical sample. For each marker it gives what was observed, what it was compared with, the exact source row and column, why it was flagged, the limits, and what follow-up can be recorded. It is built only from the canonical evidence objects, so every number matches the evidence view and the export. See [docs/API_CONTRACT.md](docs/API_CONTRACT.md).
+- **Verified provenance:** only files whose SHA-256 is registered in the reviewed manifest can be stored as NASA data. A schema-valid but altered file is rejected (`SOURCE_HASH_MISMATCH`), even on an empty database.
+- **Operational readiness:** `/api/healthz` (liveness), `/api/readyz` (DB + migrations + verified data). Launchers report real readiness, refuse busy ports and leave no orphaned processes. `scripts/backup_db.py` makes and restores consistent database backups.
 
 Stack: React 19 + TypeScript + Vite + Recharts · FastAPI + Pydantic + pandas · SQLite (WAL, versioned migrations). The server binds to **127.0.0.1:8000** and serves the API and the built interface from one origin. It uses no CDNs, analytics or cloud APIs, and the Inter font is bundled locally.
 
@@ -61,10 +64,12 @@ Stack: React 19 + TypeScript + Vite + Recharts · FastAPI + Pydantic + pandas ·
 
 Requirements: Python 3.11+ and Node.js 20+. Network access is needed **only once**, for dependencies and the one-time NASA data download.
 
-### One-command dev mode (any OS)
+### Easiest (any OS, from the project folder)
 ```sh
-npm run dev              # auto-sets up venv, npm deps & NASA data on first run, then starts API (:8000) + Vite (:5173)
+npm run dev     # first run auto-sets up venv, npm deps & NASA data, then starts API (:8000) + interface → http://127.0.0.1:5173
+npm start       # demo / offline: built app on one port → http://127.0.0.1:8000
 ```
+`npm run setup` runs the one-time setup only (`npm run dev -- --setup` forces it again). `npm run data` re-downloads and imports the NASA files. `npm test` runs the backend tests, typecheck and component tests; `npm run e2e` runs the browser tests.
 
 ### Windows (PowerShell)
 ```powershell
@@ -95,7 +100,8 @@ Once data is imported, **the raw CSVs are no longer needed**: the app reads only
 
 ### Tests
 ```sh
-cd backend && python -m pytest -q                 # 33 tests: engines, API, streams, on the real pinned NASA snapshots
+cd backend && python -m pytest -q                 # 56 tests: engines, provenance, brief, replays, API, backup, on the real pinned NASA snapshots
+node tests/launcher/launcher.test.mjs             # 13 launcher checks: start, readiness, clean stop, no orphans, port safety
 cd frontend && npm run typecheck && npm test      # strict TypeScript + component tests
 cd frontend && npx playwright test                # 12 E2E specs (uses installed Edge/Chrome; set PW_CHANNEL)
 ```
@@ -198,6 +204,10 @@ Full provenance: [data/manifests/sources.json](data/manifests/sources.json) · [
 
 | Document | Purpose |
 |---|---|
+| [docs/BACKEND_RELEASE_REPORT.md](docs/BACKEND_RELEASE_REPORT.md) | Backend v3 milestones, test results, fixed defects, limits |
+| [docs/API_CONTRACT.md](docs/API_CONTRACT.md) | Every endpoint, MissionBriefV1, error codes, provenance |
+| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) | Fresh setup → journey → offline → submission checks |
+| [docs/REBUILD_BASELINE.md](docs/REBUILD_BASELINE.md) | Audit findings before the backend rebuild |
 | [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) | P0/P1 requirement ledger |
 | [docs/TEST_REPORT.md](docs/TEST_REPORT.md) | Commands, results, visual & accessibility findings |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Engines, API, schema, data flow |

@@ -1,0 +1,6 @@
+
+BACKUP: Backup written: C:\Users\User\AppData\Local\Temp\tmpmo92r9x1\backups\cytozoe-20261114T092334098944Z.sqlite  integrity=ok  reviews=1
+RESTORE: Restored C:\Users\User\AppData\Local\Temp\tmpmo92r9x1\backups\cytozoe-20261114T092334098944Z.sqlite -> C:\Users\User\AppData\Local\Temp\tmpmo92r9x1\cytozoe.sqlite
+RESTORE CHECK note = 'before backup' (expected 'before backup')
+BRIEF LATENCY warm, n=28 (in-process): median 9.7 ms, p95 14.3 ms, max 16.1 ms
+

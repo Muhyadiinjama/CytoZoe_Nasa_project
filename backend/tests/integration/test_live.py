@@ -27,7 +27,7 @@ def test_environment_replay_streams_every_accepted_reading_and_matches_static_to
     res = loaded_client.get("/api/replay/environment", params={"speed": 200000})
     assert res.status_code == 200 and res.headers["content-type"].startswith("text/event-stream")
     events = _parse_sse(res.text)
-    assert events[0][0] == "meta" and events[0][1]["mode"] == "REPLAY" and "not live" in events[0][1]["label"]
+    assert events[0][0] == "meta" and events[0][1]["mode"] == "HISTORICAL_REPLAY" and "not live" in events[0][1]["label"]
     items = [e for name, d in events if name == "frame" for e in d["events"]]
     readings = [e for e in items if e["kind"] == "reading"]
     excluded = [e for e in items if e["kind"] == "excluded"]
@@ -47,12 +47,18 @@ def test_health_replay_uses_prospective_baseline(loaded_client):
     rp = loaded_client.get("/api/replay/health", params={"participant": "C001"}).json()
     assert [f["visit"] for f in rp["frames"]] == ["L-92", "L-44", "L-3", "R+1", "R+45", "R+82", "R+194"]
     creat = lambda f: next(c for c in f["cards"] if c["marker"] == "creatinine")  # noqa: E731
-    assert creat(rp["frames"][0])["baseline_so_far"] is None            # n = 1
-    assert creat(rp["frames"][1])["baseline_so_far"] == pytest.approx((1.24 + 1.10) / 2)
+    # PRD v3 §6.2 (audit finding A2 fixed): baseline uses only preflight visits strictly BEFORE the replayed visit.
+    assert creat(rp["frames"][0])["baseline_so_far"] is None and creat(rp["frames"][0])["n_so_far"] == 0  # L-92
+    assert creat(rp["frames"][1])["baseline_so_far"] is None and creat(rp["frames"][1])["n_so_far"] == 1  # L-44
     l3 = creat(rp["frames"][2])
-    assert l3["baseline_so_far"] == pytest.approx((1.24 + 1.10 + 1.37) / 3) and l3["needs_review"] is True
+    assert l3["baseline_so_far"] == pytest.approx((1.24 + 1.10) / 2) and l3["n_so_far"] == 2  # excludes L-3 itself
+    assert l3["delta"] == pytest.approx(1.37 - 1.17) and l3["needs_review"] is True
+    assert rp["frames"][2]["baseline_visits"] == ["L-92", "L-44"]
+    r1 = creat(rp["frames"][3])
+    assert r1["baseline_so_far"] == pytest.approx((1.24 + 1.10 + 1.37) / 3) and r1["n_so_far"] == 3  # all prior preflight
     assert any(e["kind"] == "flag" and e["marker"] == "creatinine" for e in rp["frames"][2]["events"])
-    assert "not live" in rp["label"]
+    assert any(e["kind"] == "baseline" for e in rp["frames"][2]["events"])
+    assert rp["mode"] == "HISTORICAL_REPLAY" and "not live" in rp["label"]
 
 
 @needs_raw

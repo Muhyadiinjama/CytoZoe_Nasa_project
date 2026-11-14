@@ -20,7 +20,8 @@ DISCLAIMER = (
 def build_packet(conn: sqlite3.Connection) -> dict[str, Any]:
     datasets = [
         {k: r[k] for k in ("id", "kind", "title", "provider", "file_name", "sha256", "byte_count", "source_url",
-                            "download_url", "license_note", "citation", "fetched_at", "imported_at", "parser_version")}
+                            "download_url", "license_note", "citation", "fetched_at", "imported_at", "parser_version",
+                            "provenance") if k in r.keys()}
         for r in conn.execute("SELECT * FROM datasets ORDER BY id")
     ]
     items = reviews.all_full(conn)
@@ -44,6 +45,11 @@ def build_packet(conn: sqlite3.Connection) -> dict[str, Any]:
             "reviews": [r for r in items if r["case"] == "environment"],
         },
     }
+
+
+def _provenance_label(p: str | None) -> str:
+    return {"NASA_PINNED_VERIFIED": "Verified NASA snapshot (SHA-256 registered in the reviewed manifest)"}.get(
+        p or "", "NOT a verified NASA snapshot")
 
 
 def _e(value: Any) -> str:
@@ -103,7 +109,7 @@ def _review_html(r: dict[str, Any]) -> str:
 def render_html(packet: dict[str, Any]) -> str:
     ds_rows = "".join(
         f"<tr><td>{_e(d['title'])}<br><small>{_e(d['provider'])}</small></td><td>{_e(d['file_name'])}</td>"
-        f"<td><code>{_e(d['sha256'])}</code></td><td><a href=\"{_e(d['source_url'])}\">{_e(d['source_url'])}</a><br><small>{_e(d['license_note'])}</small></td></tr>"
+        f"<td><code>{_e(d['sha256'])}</code><br><small>{_e(_provenance_label(d.get('provenance')))}</small></td><td><a href=\"{_e(d['source_url'])}\">{_e(d['source_url'])}</a><br><small>{_e(d['license_note'])}</small></td></tr>"
         for d in packet["datasets"]
     )
 

@@ -76,17 +76,22 @@ def test_t08_radlab_quality(loaded_client):
     assert len(env["segments"]) == len(integ["excluded_intervals"]) + 1
 
 
-def test_t13_t14_t15_import_safety(loaded_client):
+def test_t13_t14_t15_import_safety(loaded_client, register_hash):
     from app.errors import AppError
+    from app.engines.quality import sha256_bytes
     from app.services import importer
 
     # T15 idempotent
     res = loaded_client.post("/api/import", files={"file": ("cmp.csv", CMP_FILE.read_bytes(), "text/csv")}).json()
     assert res["status"] == "ALREADY_IMPORTED"
-    # T13 changed bytes are not silently imported
+    # T13 changed bytes are not silently imported (PRD v3: rejected as unverified before any version logic)
     original = CMP_FILE.read_bytes()
     changed = original.replace(b",1.37,", b",1.38,", 1)
     assert changed != original
+    r = loaded_client.post("/api/import", files={"file": ("cmp.csv", changed, "text/csv")})
+    assert r.status_code == 422 and r.json()["code"] == "SOURCE_HASH_MISMATCH"
+    # Even once registered as a reviewed version, the UI cannot replace a loaded dataset silently.
+    register_hash("HEALTH_CMP", sha256_bytes(changed))
     r = loaded_client.post("/api/import", files={"file": ("cmp.csv", changed, "text/csv")})
     assert r.status_code == 409 and r.json()["code"] == "DATASET_VERSION_CHANGE"
     # Schema mismatch / non-CSV refused
@@ -189,7 +194,8 @@ def test_status_errors_and_security(loaded_client):
     st = loaded_client.get("/api/status").json()
     assert st["db_status"] == "OK" and st["ready"] == {"health": True, "environment": True}
     nf = loaded_client.get("/api/evidence/nope")
-    assert nf.status_code == 404 and set(nf.json()) == {"code", "message", "details"}
+    # PRD v3 error contract: {code, message, details, request_id}
+    assert nf.status_code == 404 and set(nf.json()) == {"code", "message", "details", "request_id"}
     assert loaded_client.get("/api/health", params={"participant": "C001", "sample": "L-999"}).status_code == 404
     cross = loaded_client.post("/api/reviews", json={"finding_id": "radlab-dostel1:summary", "note": "x"},
                                headers={"Origin": "https://evil.example"})

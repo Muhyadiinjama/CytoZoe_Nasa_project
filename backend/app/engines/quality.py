@@ -19,6 +19,8 @@ from ..config import MAX_IMPORT_BYTES
 from ..errors import SchemaMismatch
 
 PARSER_VERSION = "e1-quality-v1"
+MAX_ROWS = 100_000          # resource bound for uploads; the pinned files have 28 and 1,202 rows
+MAX_LINE_BYTES = 20_000     # the widest pinned line is < 1 kB
 SCHEMA_VERSION = "1.0"
 
 # (stem, display name, source unit token)
@@ -73,11 +75,30 @@ def parse_number(text: str) -> tuple[float | None, str | None]:
     return value, None
 
 
-def _read_table(raw: bytes) -> pd.DataFrame:
+def precheck(raw: bytes) -> None:
+    """Cheap structural limits, applied before hashing or parsing so errors say why a file was refused."""
     if len(raw) > MAX_IMPORT_BYTES:
         raise SchemaMismatch("FILE_TOO_LARGE", "The file exceeds the 10 MB import limit.", {"bytes": len(raw)})
     if b"\x00" in raw:
         raise SchemaMismatch("BINARY_CONTENT", "The file contains binary content and is not a documented CSV.")
+    lines = raw.count(b"\n") + 1
+    if lines > MAX_ROWS + 1:
+        raise SchemaMismatch("TOO_MANY_ROWS", f"The file has more than {MAX_ROWS:,} rows.", {"rows": lines})
+    if max((len(line) for line in raw.split(b"\n")), default=0) > MAX_LINE_BYTES:
+        raise SchemaMismatch("LINE_TOO_LONG", f"A line exceeds {MAX_LINE_BYTES:,} bytes.")
+
+
+def _read_table(raw: bytes) -> pd.DataFrame:
+    precheck(raw)
+    if len(raw) > MAX_IMPORT_BYTES:
+        raise SchemaMismatch("FILE_TOO_LARGE", "The file exceeds the 10 MB import limit.", {"bytes": len(raw)})
+    if b"\x00" in raw:
+        raise SchemaMismatch("BINARY_CONTENT", "The file contains binary content and is not a documented CSV.")
+    lines = raw.count(b"\n") + 1
+    if lines > MAX_ROWS + 1:
+        raise SchemaMismatch("TOO_MANY_ROWS", f"The file has more than {MAX_ROWS:,} rows.", {"rows": lines})
+    if max((len(line) for line in raw.split(b"\n")), default=0) > MAX_LINE_BYTES:
+        raise SchemaMismatch("LINE_TOO_LONG", f"A line exceeds {MAX_LINE_BYTES:,} bytes.")
     try:
         raw.decode("utf-8-sig")
     except UnicodeDecodeError as exc:

@@ -33,6 +33,23 @@ def client(data_dir):
 
 
 @pytest.fixture()
+def register_hash():
+    """Temporarily register an extra SHA-256 as a reviewed NASA version (simulates a deliberate manifest update)."""
+    from app.sources import manifest
+
+    added: list[tuple[dict, str]] = []
+
+    def _register(kind: str, sha: str) -> None:
+        entry = next(e for e in manifest()["datasets"] if e["kind"] == kind)
+        entry.setdefault("accepted_sha256", []).append(sha)
+        added.append((entry, sha))
+
+    yield _register
+    for entry, sha in added:
+        entry["accepted_sha256"].remove(sha)
+
+
+@pytest.fixture()
 def loaded_client(client):
     from app.services import importer
 
