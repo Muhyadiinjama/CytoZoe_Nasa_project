@@ -1,0 +1,44 @@
+- dialog "Why readings were excluded":
+  - heading "Why readings were excluded" [level=2]
+  - button "Close"
+  - paragraph: 4 timestamps each appear twice in the source file with different rates. All 8 of those rows are kept in the raw table but left out of the charts and the dose estimate. Nothing was averaged, summed or chosen.
+  - table:
+    - rowgroup:
+      - row "Source timestamp Source line Rate (µGy/h)":
+        - columnheader "Source timestamp"
+        - columnheader "Source line"
+        - columnheader "Rate (µGy/h)"
+    - rowgroup:
+      - row "2022-03-01T09:15:00 465 10.1122485512821":
+        - cell "2022-03-01T09:15:00"
+        - cell "465"
+        - cell "10.1122485512821"
+      - row "466 9.853933":
+        - cell
+        - cell "466"
+        - cell "9.853933"
+      - row "2022-03-01T09:20:00 469 5.61126966666667":
+        - cell "2022-03-01T09:20:00"
+        - cell "469"
+        - cell "5.61126966666667"
+      - row "470 4.474783":
+        - cell
+        - cell "470"
+        - cell "4.474783"
+      - row "2022-03-01T18:25:00 947 5.46090767412141":
+        - cell "2022-03-01T18:25:00"
+        - cell "947"
+        - cell "5.46090767412141"
+      - row "948 5.312235":
+        - cell
+        - cell "948"
+        - cell "5.312235"
+      - row "2022-03-01T18:30:00 951 6.03754233333333":
+        - cell "2022-03-01T18:30:00"
+        - cell "951"
+        - cell "6.03754233333333"
+      - row "952 5.625719":
+        - cell
+        - cell "952"
+        - cell "5.625719"
+  - paragraph: "Excluded intervals: 4 × conflicting timestamp inside. An interval is also excluded when readings are more than 300 s apart (an engineering coverage rule, not a NASA safety threshold)."

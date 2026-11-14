@@ -1,0 +1,56 @@
+- 'dialog "Evidence: Creatinine, C001 L-3"':
+  - 'heading "Evidence: Creatinine, C001 L-3" [level=2]'
+  - button "Close"
+  - heading "Observed" [level=3]
+  - text: 1.370 mg/dL
+  - paragraph: Creatinine · C001 · L-3 · Preflight · historical research sample
+  - text: ▲ Outside supplied range (above)
+  - heading "Compared with" [level=3]
+  - paragraph: "Supplied range (same source row): 0.6 to 1.35 mg/dL."
+  - paragraph: "Compared with retrospective preflight mean: 1.2367 mg/dL (n=3: 1.24, 1.1, 1.37). Difference +0.1333 mg/dL (+10.78%)."
+  - paragraph: "Retrospective: the mean uses all preflight visits, including ones after an earlier sample. Rule health-compare-v1."
+  - heading "Source" [level=3]
+  - term: File
+  - definition: LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv
+  - term: Line
+  - definition: 2 (header is line 1)
+  - term: SHA-256
+  - definition: 5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9
+  - term: Source
+  - definition: https://osdr.nasa.gov/bio/repo/data/studies/OSD-575
+  - term: Terms
+  - definition: Study page lists CC0-1.0. Cite NASA OSDR OSD-575.
+  - heading "Limits" [level=3]
+  - list:
+    - listitem: Historical Inspiration4 research sample, not live monitoring.
+    - listitem: "Preflight sample: a difference here cannot be a spaceflight effect."
+    - listitem: Descriptive comparison only; not a diagnosis or a clinical abnormality threshold.
+    - listitem: Four participants are not a clinical validation cohort.
+    - listitem: Not matched to any ISS radiation record.
+  - heading "Follow-up" [level=3]
+  - text: Follow-up note
+  - textbox "Follow-up note"
+  - paragraph: Saved locally on this computer and included in the review packet. It is your note, not medical advice. 0/4000
+  - text: Status
+  - combobox "Status":
+    - option "Open"
+    - option "Follow-up requested" [selected]
+    - option "Reviewed"
+  - text: Follow-up date (optional)
+  - textbox "Follow-up date (optional)"
+  - button "Record follow-up"
+  - status
+  - region "Evidence assistant":
+    - heading "Evidence assistant" [level=3]
+    - button "Explain this result"
+    - button "How was this calculated?"
+    - button "What can this dataset not tell us?"
+    - textbox "Ask about this result"
+    - button "Ask"
+    - text: Verified explanation
+    - heading "Explain this result" [level=3]
+    - paragraph: Creatinine for C001 at L-3 (preflight) is 1.370 mg/dL, above the supplied upper bound (supplied range 0.6 to 1.35 mg/dL).
+    - paragraph: C001's retrospective preflight mean is 1.237 mg/dL (n=3); this value differs by +0.133 mg/dL.
+    - paragraph: This is a numerical comparison with the values supplied in the source file. It is not a diagnosis.
+    - paragraph: "Evidence id: osd575:5eb1e7f025dd:C001_serum_L-3:creatinine:health-compare-v1"
+    - paragraph: Answers come from fixed templates over the calculated evidence ("Verified explanation"). Optional local AI wording is off on this computer.

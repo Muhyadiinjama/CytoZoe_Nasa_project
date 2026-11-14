@@ -1,0 +1,6 @@
+# Verified versions (Python 3.13). Install: python -m pip install -r backend/requirements.txt
+starlette==1.7.0
+uvicorn==0.54.0
+pydantic==2.13.5
+pandas==3.0.5
+pytest==9.1.1

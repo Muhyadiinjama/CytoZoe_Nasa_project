@@ -1,0 +1,112 @@
+- link "Skip to main content":
+  - /url: "#page-title"
+- complementary:
+  - text: CytoZoe Understand the change. Keep the evidence.
+  - navigation "Main":
+    - link "Health overview":
+      - /url: /overview
+    - link "Health trends":
+      - /url: /health
+    - link "Radiation review":
+      - /url: /environment
+    - link "Review log":
+      - /url: /reviews
+  - paragraph: Public research demo. Not clinical software.
+  - status "Local service running": Local workspace · service running
+  - button "Sources and data quality": Sources & quality
+- main:
+  - heading "Health trends" [level=1]
+  - paragraph: What changed? One marker across the actual visits. Dots are real samples; nothing is interpolated.
+  - text: NASA OSD-575 · Inspiration4 Participant (anonymised code)
+  - combobox "Participant (anonymised code)":
+    - option "C001" [selected]
+    - option "C002"
+    - option "C003"
+    - option "C004"
+  - text: Visit (actual sample)
+  - combobox "Visit (actual sample)":
+    - option "L-92 · Preflight"
+    - option "L-44 · Preflight"
+    - option "L-3 · Preflight" [selected]
+    - option "R+1 · After return"
+    - option "R+45 · After return"
+    - option "R+82 · After return"
+    - option "R+194 · After return"
+  - button "Previous actual sample": ← Previous
+  - button "Next actual sample": Next →
+  - text: Historical research sample
+  - tablist "Blood marker":
+    - tab "Glucose"
+    - tab "Sodium"
+    - tab "Potassium"
+    - tab "Creatinine" [selected]
+    - tab "Calcium"
+  - tabpanel "Creatinine":
+    - heading "Creatinine (mg/dL) · C001" [level=2]
+    - text: Visits are in order, not to time scale
+    - group "Creatinine in mg/dL by actual visit for C001. Each dot is a real sample; use Tab and Enter to select one. A table with every value follows.":
+      - text: 0.60 0.80 1.00 1.20 1.40 1.60 Creatinine (mg/dL) Before launch After return L-92
+      - 'button "L-92: 1.240 mg/dL, not outside supplied range"'
+      - text: L-44
+      - 'button "L-44: 1.100 mg/dL, not outside supplied range"'
+      - text: L-3
+      - 'button "L-3: 1.370 mg/dL, outside supplied range, selected" [pressed]'
+      - text: R+1
+      - 'button "R+1: 1.120 mg/dL, not outside supplied range"'
+      - text: R+45
+      - 'button "R+45: 1.110 mg/dL, not outside supplied range"'
+      - text: R+82
+      - 'button "R+82: 1.250 mg/dL, not outside supplied range"'
+      - text: R+194
+      - 'button "R+194: 1.290 mg/dL, not outside supplied range"'
+    - text: Measured sample Measured, outside supplied range Calculated retrospective preflight mean 1.237 (n=3) Supplied range (source)
+    - group: Show data table
+  - complementary "Evidence for C001 L-3":
+    - heading "Evidence for C001 L-3" [level=2]
+    - heading "Observed" [level=3]
+    - text: 1.370 mg/dL
+    - paragraph: Creatinine · C001 · L-3 · Preflight · historical research sample
+    - text: ▲ Outside supplied range (above)
+    - heading "Compared with" [level=3]
+    - paragraph: "Supplied range (same source row): 0.6 to 1.35 mg/dL."
+    - paragraph: "Compared with retrospective preflight mean: 1.2367 mg/dL (n=3: 1.24, 1.1, 1.37). Difference +0.1333 mg/dL (+10.78%)."
+    - paragraph: "Retrospective: the mean uses all preflight visits, including ones after an earlier sample. Rule health-compare-v1."
+    - heading "Source" [level=3]
+    - term: File
+    - definition: LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv
+    - term: Line
+    - definition: 2 (header is line 1)
+    - term: SHA-256
+    - definition: 5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9
+    - term: Source
+    - definition: https://osdr.nasa.gov/bio/repo/data/studies/OSD-575
+    - term: Terms
+    - definition: Study page lists CC0-1.0. Cite NASA OSDR OSD-575.
+    - heading "Limits" [level=3]
+    - list:
+      - listitem: Historical Inspiration4 research sample, not live monitoring.
+      - listitem: "Preflight sample: a difference here cannot be a spaceflight effect."
+      - listitem: Descriptive comparison only; not a diagnosis or a clinical abnormality threshold.
+      - listitem: Four participants are not a clinical validation cohort.
+      - listitem: Not matched to any ISS radiation record.
+    - heading "Follow-up" [level=3]
+    - text: Follow-up note
+    - textbox "Follow-up note"
+    - paragraph: Saved locally on this computer and included in the review packet. It is your note, not medical advice. 0/4000
+    - text: Status
+    - combobox "Status":
+      - option "Open"
+      - option "Follow-up requested" [selected]
+      - option "Reviewed"
+    - text: Follow-up date (optional)
+    - textbox "Follow-up date (optional)"
+    - button "Record follow-up"
+    - status
+    - region "Evidence assistant":
+      - heading "Evidence assistant" [level=3]
+      - button "Explain this result"
+      - button "How was this calculated?"
+      - button "What can this dataset not tell us?"
+      - textbox "Ask about this result"
+      - button "Ask"
+      - paragraph: Answers come from fixed templates over the calculated evidence ("Verified explanation"). Optional local AI wording is off on this computer.

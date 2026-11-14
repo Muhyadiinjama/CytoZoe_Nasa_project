@@ -1,0 +1,8 @@
+$ bash -c cd frontend && node build.mjs
+
+  dist/assets/main.js   249.7kb
+  dist/assets/main.css   12.3kb
+
+⚡ Done in 55ms
+dist ready 84e8602255
+exit=0

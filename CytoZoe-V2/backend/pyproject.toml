@@ -1,0 +1,23 @@
+[project]
+name = "cytozoe-backend"
+version = "2.0.0"
+description = "CytoZoe local evidence and review service (research demo, not clinical software)"
+requires-python = ">=3.11"
+# Exact versions verified on the build machine (Python 3.13). FastAPI was not installable there; the API is
+# written directly on Starlette + Pydantic, which FastAPI itself is built on.
+dependencies = [
+  "starlette==1.7.0",
+  "uvicorn==0.54.0",
+  "pydantic==2.13.5",
+  "pandas==3.0.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1"]
+
+[tool.setuptools]
+packages = ["app", "app.api", "app.engines", "app.services"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests", "."]

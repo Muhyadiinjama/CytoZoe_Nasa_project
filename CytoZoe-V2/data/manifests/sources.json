@@ -1,0 +1,33 @@
+{
+  "schema": "cytozoe-source-manifest-1",
+  "datasets": [
+    {
+      "key": "osd575-cmp",
+      "kind": "HEALTH_CMP",
+      "provider": "NASA Open Science Data Repository (OSDR)",
+      "study_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-575",
+      "download_url": "https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+      "file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+      "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9",
+      "license_note": "Study page lists CC0-1.0. Cite NASA OSDR OSD-575 (Inspiration4).",
+      "expected": {"rows": 28, "participants": ["C001", "C002", "C003", "C004"], "visits": ["L-92", "L-44", "L-3", "R+1", "R+45", "R+82", "R+194"], "nonmissing_selected_values": 140, "utf8_bom": true},
+      "selected_markers": ["glucose", "sodium", "potassium", "creatinine", "calcium"],
+      "sample_name_format": "{Participant}_{specimen}_{L-n|R+n}, e.g. C001_serum_L-3",
+      "normalization": "Units shown as mg/dL and mmol/L; NA/N/A/blank -> null; eGFR and other columns ignored."
+    },
+    {
+      "key": "radlab-dostel1-2022-03-01",
+      "kind": "ENV_RADIATION",
+      "provider": "NASA OSDR RadLab",
+      "documentation_url": "https://visualization.osdr.nasa.gov/radlab/gui/data-api/",
+      "instrument_url": "https://visualization.osdr.nasa.gov/radlab/gui/knowledgebase/DosTel1",
+      "download_url": "https://visualization.osdr.nasa.gov/radlab/api/?instrument_id=DosTel1&timestamp%3E=2022-03-01&timestamp%3C2022-03-02&absorbed_dose_rate&format=csv",
+      "file_name": "radlab_dostel1_2022_03_01.csv",
+      "sha256": "d3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1",
+      "license_note": "Public NASA API export. Redistribution terms NOT separately verified; check before committing the raw file to a public repo.",
+      "expected": {"raw_rows": 1202, "unique_timestamps": 1198, "conflict_groups": ["09:15:00", "09:20:00", "18:25:00", "18:30:00"], "quarantined_rows": 8, "accepted_rows": 1194},
+      "quality_decision": "Rows sharing a timestamp with different rates are all quarantined from derived analysis; raw rows are kept.",
+      "timezone": "Source timestamps carry no timezone suffix; displayed as provided."
+    }
+  ]
+}

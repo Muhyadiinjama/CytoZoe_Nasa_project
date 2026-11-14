@@ -1,0 +1,81 @@
+- link "Skip to main content":
+  - /url: "#page-title"
+- complementary:
+  - text: CytoZoe Understand the change. Keep the evidence.
+  - navigation "Main":
+    - link "Health overview":
+      - /url: /overview
+    - link "Health trends":
+      - /url: /health
+    - link "Radiation review":
+      - /url: /environment
+    - link "Review log":
+      - /url: /reviews
+  - paragraph: Public research demo. Not clinical software.
+  - status "Local service running": Local workspace · service running
+  - button "Sources and data quality": Sources & quality
+- main:
+  - heading "Review log" [level=1]
+  - paragraph: What did we decide to follow up? Saved locally on this computer, with full history.
+  - text: Saved locally Case
+  - combobox "Case":
+    - option "All" [selected]
+    - option "Health (OSD-575)"
+    - option "Environment (RadLab)"
+  - text: Status
+  - combobox "Status":
+    - option "All" [selected]
+    - option "Open"
+    - option "Follow-up requested"
+    - option "Reviewed"
+  - text: Participant (health only)
+  - combobox "Participant (health only)":
+    - option "All" [selected]
+    - option "C001"
+  - button "Hide export preview" [expanded]
+  - region "Review packet preview":
+    - heading "Review packet preview" [level=2]
+    - paragraph: Includes every saved review in separate health and environment sections, source files with SHA-256, methods, notes, history and limitations. Downloading saves a local file; nothing is transmitted.
+    - button "Download HTML"
+    - button "Download JSON"
+    - button "Download CSV (table only)"
+    - status
+    - iframe
+  - region "Reviews (1)":
+    - heading "Reviews (1)" [level=2]
+    - table "Saved reviews":
+      - caption: Saved reviews
+      - rowgroup:
+        - row "Finding Case Participant / instrument Status Updated":
+          - columnheader "Finding"
+          - columnheader "Case"
+          - columnheader "Participant / instrument"
+          - columnheader "Status"
+          - columnheader "Updated"
+      - rowgroup:
+        - 'row "Creatinine C001 L-3: outside supplied range (above) health C001 Open 11/14/2026, 2:47:03 PM"':
+          - 'cell "Creatinine C001 L-3: outside supplied range (above)"':
+            - 'button "Creatinine C001 L-3: outside supplied range (above)" [pressed]'
+          - cell "health"
+          - cell "C001"
+          - cell "Open"
+          - cell "11/14/2026, 2:47:03 PM"
+  - 'complementary "Creatinine C001 L-3: outside supplied range (above)"':
+    - 'heading "Creatinine C001 L-3: outside supplied range (above)" [level=2]'
+    - paragraph: Health · NASA OSD-575 · created 11/14/2026, 2:47:03 PM · evidence frozen at first save
+    - paragraph: "Source: LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv line 2 · SHA-256 5eb1e7f025dd8443…"
+    - text: Follow-up note
+    - textbox "Follow-up note"
+    - paragraph: Saved locally on this computer and included in the review packet. It is your note, not medical advice. 0/4000
+    - text: Status
+    - combobox "Status":
+      - option "Open" [selected]
+      - option "Follow-up requested"
+      - option "Reviewed"
+    - text: Follow-up date (optional)
+    - textbox "Follow-up date (optional)"
+    - button "Update follow-up"
+    - status: Last saved 11/14/2026, 2:47:03 PM · Open · v1
+    - heading "History" [level=3]
+    - list:
+      - listitem: Created · Open 11/14/2026, 2:47:03 PM

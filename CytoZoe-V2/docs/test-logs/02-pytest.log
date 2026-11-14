@@ -1,0 +1,4 @@
+$ python3 -m pytest -q backend/tests
+..................................                                       [100%]
+34 passed in 6.23s
+exit=0

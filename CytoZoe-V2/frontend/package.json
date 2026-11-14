@@ -1,0 +1,22 @@
+{
+  "name": "cytozoe-frontend",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "typescript": "6.0.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
+  },
+  "comment": "Versions of react, react-dom, esbuild and typescript are the ones the build was verified with. @types/react* were not installable on the build machine; see types/README.md."
+}

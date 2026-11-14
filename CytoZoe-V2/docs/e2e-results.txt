@@ -1,0 +1,76 @@
+PASS T17 C001 L-3 creatinine 1.370 flagged outside supplied range (text + icon)
+PASS T17 card shows retrospective preflight mean 1.237 (n=3)
+PASS T17 no live/health-score/sent-to-Earth/healthy wording
+PASS T17 evidence order Observed → Compared with → Source → Limits → Follow-up
+PASS T17 source line 2 shown
+PASS T17 full source SHA-256 shown
+PASS T18 “Explain this result” gives a verified, non-diagnostic answer
+PASS T18 “How was this calculated?” gives a verified, non-diagnostic answer
+PASS T18 “What can this dataset not tell us?” gives a verified, non-diagnostic answer
+PASS T18 answer area populated
+PASS T18 “Did radiation cause this?” → Not enough evidence
+PASS T22 double-click on save: exactly one review, one update, no false conflict
+PASS T28 Escape closes drawer and returns focus to opener
+PASS T19 saved status shows on card after refresh
+PASS T17 trend chart has 7 actual visit points
+PASS T17 chart and evidence panel agree
+PASS T19 saved note shown on trend evidence panel
+PASS T28 chart point selectable with keyboard (URL now sample=L-92)
+PASS URL Back restores previous sample selection
+PASS T28 marker tabs: ArrowRight moves to Calcium and keeps focus
+PASS T02 C001 R+1 glucose 90 vs 77.3333: +12.6667 (+16.38%), within range, no alarm
+PASS URL bad URL params fall back to a visible real selection
+PASS ENV separation banner
+PASS T08 quality strip 1202 / 8 excluded / 1194
+PASS T16 sensor dose shown; no health participant controls on this page
+PASS T09 conflict inspector lists the 4 timestamps with both rows
+PASS T28 rate chart readable with arrow keys
+PASS ENV environment review saved (no participant id)
+PASS T20 after server restart all 3 reviews are listed
+PASS T20 note and history intact after restart
+PASS T24 injected note does not execute in the page
+PASS REV case filter; participant filter hidden for environment
+PASS REV status filter works
+PASS T21 stale save returns conflict and keeps the draft
+PASS T21 after loading the newer version, the draft saves
+PASS T23 preview shows notes (escaped text), hash
+PASS T23 JSON export: separate health (2) and environment (1) sections
+PASS T23 exported notes match database; sources and version present
+PASS T24 HTML export escapes note markup
+PASS T24 CSV export neutralises formula-like cells
+PASS EXP export confirms a local download (no transmission wording)
+PASS T25 no model: verified explanations work, AI clearly off
+PASS T27 zero requests to non-loopback hosts during the journey
+PASS T29 /overview at 390px: no horizontal page scroll
+PASS T29 /health at 390px: no horizontal page scroll
+PASS T29 /environment at 390px: no horizontal page scroll
+PASS T29 /reviews at 390px: no horizontal page scroll
+PASS T29 /overview at 768px: no horizontal page scroll
+PASS T29 /health at 768px: no horizontal page scroll
+PASS T29 /environment at 768px: no horizontal page scroll
+PASS T29 /reviews at 768px: no horizontal page scroll
+PASS T29 /overview at 1024px: no horizontal page scroll
+PASS T29 /health at 1024px: no horizontal page scroll
+PASS T29 /environment at 1024px: no horizontal page scroll
+PASS T29 /reviews at 1024px: no horizontal page scroll
+PASS T29 /overview at 1440px: no horizontal page scroll
+PASS T29 /health at 1440px: no horizontal page scroll
+PASS T29 /environment at 1440px: no horizontal page scroll
+PASS T29 /reviews at 1440px: no horizontal page scroll
+PASS T29 phone: menu button opens navigation
+PASS T28 first Tab stop is the skip link
+PASS T28 skip link moves focus to the page title
+PASS T28 drawer opened by keyboard gets focus
+PASS T28 focus trapped in drawer; background inert
+PASS T30 bad import shows column diagnostic; last good data kept
+PASS T30 data still shown after failed import
+PASS T30 empty database: clear no-data state with importer, nothing fabricated
+PASS T30 importing the real file from the browser populates the page
+PASS T30 service stopped while open: clear “Local service unavailable” message, no fake saves
+PASS QA no console errors (ignored expected network errors: 1)
+PASS AI-01 draft labelled “AI draft — verify against evidence”, verified facts shown beside it
+PASS AI-01 draft goes into the note box only; not saved/exported until Save
+PASS AI-01 draft with invented number / clinical wording rejected → verified answer only
+PASS AI-01 model receives only evidence facts, never reviewer notes
+
+74 passed, 0 failed

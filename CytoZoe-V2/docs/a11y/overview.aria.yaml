@@ -1,0 +1,95 @@
+- link "Skip to main content":
+  - /url: "#page-title"
+- complementary:
+  - text: CytoZoe Understand the change. Keep the evidence.
+  - navigation "Main":
+    - link "Health overview":
+      - /url: /overview
+    - link "Health trends":
+      - /url: /health
+    - link "Radiation review":
+      - /url: /environment
+    - link "Review log":
+      - /url: /reviews
+  - paragraph: Public research demo. Not clinical software.
+  - status "Local service running": Local workspace · service running
+  - button "Sources and data quality": Sources & quality
+- main:
+  - heading "Health overview" [level=1]
+  - paragraph: What should I review? A numerical comparison for one actual historical blood sample.
+  - text: NASA OSD-575 · Inspiration4 Participant (anonymised code)
+  - combobox "Participant (anonymised code)":
+    - option "C001" [selected]
+    - option "C002"
+    - option "C003"
+    - option "C004"
+  - text: Visit (actual sample)
+  - combobox "Visit (actual sample)":
+    - option "L-92 · Preflight"
+    - option "L-44 · Preflight"
+    - option "L-3 · Preflight" [selected]
+    - option "R+1 · After return"
+    - option "R+45 · After return"
+    - option "R+82 · After return"
+    - option "R+194 · After return"
+  - button "Previous actual sample": ← Previous
+  - button "Next actual sample": Next →
+  - text: Historical research sample
+  - article "Glucose card":
+    - text: Glucose 69.0mg/dL Within supplied range
+    - paragraph: "vs retrospective preflight mean 77.3 (n=3): −8.3 (−10.8%)"
+    - button "Open Glucose trend": Trend
+    - button "Inspect Glucose result": Inspect
+  - article "Sodium card":
+    - text: Sodium 142.0mmol/L Within supplied range
+    - paragraph: "vs retrospective preflight mean 140.7 (n=3): +1.3 (+0.9%)"
+    - button "Open Sodium trend": Trend
+    - button "Inspect Sodium result": Inspect
+  - article "Potassium card":
+    - text: Potassium 3.90mmol/L Within supplied range
+    - paragraph: "vs retrospective preflight mean 4.23 (n=3): −0.33 (−7.9%)"
+    - button "Open Potassium trend": Trend
+    - button "Inspect Potassium result": Inspect
+  - article "Creatinine card":
+    - text: Creatinine 1.370mg/dL ▲ Outside supplied range (above)
+    - paragraph: "vs retrospective preflight mean 1.237 (n=3): +0.133 (+10.8%)"
+    - button "Open Creatinine trend": Trend
+    - button "Inspect Creatinine result": Inspect
+  - article "Calcium card":
+    - text: Calcium 9.60mg/dL Within supplied range
+    - paragraph: "vs retrospective preflight mean 9.77 (n=3): −0.17 (−1.7%)"
+    - button "Open Calcium trend": Trend
+    - button "Inspect Calcium result": Inspect
+  - region "Results to review":
+    - heading "Results to review" [level=2]
+    - text: C001 · L-3 · Preflight
+    - list:
+      - listitem:
+        - strong: Creatinine
+        - text: ▲ Outside supplied range (above)
+        - paragraph: 1.370 mg/dL compared with the supplied upper bound 1.35 mg/dL. Preflight sample.
+        - button "Inspect Creatinine result": Inspect result
+      - listitem:
+        - strong: Glucose
+        - text: Within supplied range
+        - paragraph: 69.0 mg/dL
+        - button "Inspect Glucose result": Inspect result
+      - listitem:
+        - strong: Sodium
+        - text: Within supplied range
+        - paragraph: 142.0 mmol/L
+        - button "Inspect Sodium result": Inspect result
+      - listitem:
+        - strong: Potassium
+        - text: Within supplied range
+        - paragraph: 3.90 mmol/L
+        - button "Inspect Potassium result": Inspect result
+      - listitem:
+        - strong: Calcium
+        - text: Within supplied range
+        - paragraph: 9.60 mg/dL
+        - button "Inspect Calcium result": Inspect result
+  - complementary "Available data":
+    - heading "Available data" [level=2]
+    - text: 1 outside supplied range 5 of 5 measurements available 0 C001 reviews not yet marked reviewed
+    - paragraph: "Source: LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv (line 2, sample C001_serum_L-3). Four anonymised participants, seven visits. Historical research data, not live monitoring."

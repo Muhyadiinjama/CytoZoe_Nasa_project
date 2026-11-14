@@ -1,0 +1,8 @@
+# Automated accessibility audit (v2 app)
+
+Run 2026-11-14T06:47:05.372Z · chromium 153.0.8010.12 · 52 check groups · 0 issue(s)
+
+No issues found by the automated checks.
+
+Keyboard behaviour (skip link, drawer focus trap/return, tabs, chart keys) is covered by tests/e2e/e2e.mjs (T28).
+Accessibility trees are saved here as *.aria.yaml. A manual pass with NVDA or VoiceOver is still required: see SCREEN_READER_SCRIPT.md.

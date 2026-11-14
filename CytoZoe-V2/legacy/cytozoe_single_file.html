@@ -1,0 +1,1437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CytoZoe</title>
+<style>/* CytoZoe design tokens and components. Tokens come from Design MD1 section 4. */
+:root {
+  --canvas:#F4F6F8; --surface:#FFFFFF; --nav:#102236; --nav-text:#F8FAFC;
+  --ink:#14283F; --muted:#526579; --border:#DCE4EB;
+  --control-border:#728297; --primary:#087F8C;
+  --primary-hover:#066873; --selected:#E8F5F5;
+  --review:#9A4B08; --review-bg:#FFF3DF;
+  --success:#216E4E; --success-bg:#EAF5EF;
+  --error:#B42318; --error-bg:#FEF0EE; --focus:#2458D3; --baseline:#64748B;
+  --radius:14px; --shadow:0 4px 16px rgb(16 34 54 / 5%);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color:var(--ink); background:var(--canvas);
+}
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body { font-size:15px; line-height:23px; background:var(--canvas); color:var(--ink); }
+h1, h2, h3, p { margin:0; }
+h1 { font-size:30px; line-height:38px; font-weight:600; }
+h2 { font-size:18px; line-height:26px; font-weight:600; }
+h3 { font-size:15px; line-height:23px; font-weight:600; }
+.metric-value { font-variant-numeric:tabular-nums; }
+:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; } }
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.muted { color:var(--muted); }
+.small { font-size:13px; line-height:18px; }
+.meta { font-size:12px; line-height:18px; color:var(--muted); }
+code, .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; word-break:break-all; }
+
+/* shell */
+.app { display:grid; grid-template-columns:216px minmax(0,1fr); min-height:100vh; }
+.rail { background:var(--nav); color:var(--nav-text); padding:24px 16px; display:flex; flex-direction:column; gap:24px; position:sticky; top:0; height:100vh; overflow:auto; }
+.wordmark { font-size:20px; font-weight:600; letter-spacing:.01em; }
+.wordmark small { display:block; font-size:12px; font-weight:400; opacity:.8; letter-spacing:0; line-height:18px; }
+.nav { display:flex; flex-direction:column; gap:4px; }
+.nav a { color:var(--nav-text); text-decoration:none; display:flex; align-items:center; gap:12px; min-height:44px; padding:8px 12px; border-radius:10px; font-size:15px; }
+.nav a:hover { background:rgb(255 255 255 / 8%); }
+.nav a[aria-current="page"] { background:rgb(255 255 255 / 14%); font-weight:600; }
+.nav .num { width:24px; height:24px; border-radius:50%; border:1px solid rgb(248 250 252 / 55%); display:inline-grid; place-items:center; font-size:12px; flex:none; }
+.nav a:focus-visible, .rail button:focus-visible { outline-color:#9CC0FF; }
+.rail-foot { margin-top:auto; display:flex; flex-direction:column; gap:12px; font-size:13px; line-height:18px; }
+.rail-foot .btn { background:transparent; color:var(--nav-text); border-color:rgb(248 250 252 / 55%); }
+.rail-foot .btn:hover { background:rgb(255 255 255 / 10%); }
+.main { padding:32px; min-width:0; }
+.main-inner { max-width:1360px; margin:0 auto; display:flex; flex-direction:column; gap:24px; }
+.topbar { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:flex-start; justify-content:space-between; }
+.topbar .lead { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.topbar .lead p { color:var(--muted); max-width:70ch; }
+.chips { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.menu-btn { display:none; }
+
+/* controls */
+.btn, .field, select.field {
+  min-height:44px; font:inherit; font-size:15px; border-radius:10px; padding:8px 14px;
+  border:1px solid var(--control-border); background:var(--surface); color:var(--ink);
+}
+.btn { cursor:pointer; font-weight:600; transition:background 150ms; }
+.btn:hover { background:var(--selected); }
+.btn.primary { background:var(--primary); border-color:var(--primary); color:#fff; }
+.btn.primary:hover { background:var(--primary-hover); }
+.btn[disabled] { opacity:.55; cursor:not-allowed; }
+.btn.small { min-height:44px; font-size:13px; }
+.field { width:100%; }
+textarea.field { min-height:96px; resize:vertical; line-height:22px; }
+label.lbl { display:flex; flex-direction:column; gap:4px; font-size:13px; line-height:18px; font-weight:600; color:var(--ink); min-width:0; }
+.row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+.row > label.lbl { flex:1 1 180px; }
+
+.badge { display:inline-flex; align-items:center; gap:6px; font-size:13px; line-height:18px; font-weight:600; padding:4px 10px; border-radius:999px; background:var(--selected); color:var(--primary-hover); border:1px solid transparent; }
+.badge.review { background:var(--review-bg); color:var(--review); }
+.badge.success { background:var(--success-bg); color:var(--success); }
+.badge.error { background:var(--error-bg); color:var(--error); }
+.badge.outline { background:var(--surface); color:var(--ink); border-color:var(--control-border); }
+.status-neutral { color:var(--muted); font-size:13px; line-height:18px; }
+
+/* surfaces */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow); min-width:0; }
+.card > h2 + * { margin-top:12px; }
+.card-head { display:flex; flex-wrap:wrap; gap:8px 16px; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.grid-2-1 { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:24px; align-items:start; }
+.grid-1-1 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.markers { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+.marker { display:flex; flex-direction:column; gap:8px; padding:20px; }
+.marker[aria-current="true"] { background:var(--selected); border-color:var(--primary); }
+.marker .name { font-size:13px; line-height:18px; font-weight:600; color:var(--muted); }
+.marker .val { font-size:30px; line-height:36px; font-weight:600; }
+.marker .val small { font-size:13px; font-weight:400; color:var(--muted); margin-left:4px; }
+.marker .actions { display:flex; gap:8px; margin-top:4px; flex-wrap:wrap; }
+.summary { display:flex; flex-wrap:wrap; gap:12px 32px; }
+.summary div { display:flex; flex-direction:column; }
+.summary b { font-size:30px; line-height:36px; font-weight:600; }
+.list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+.list > li { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:space-between; padding:14px 0; border-top:1px solid var(--border); }
+.list > li:first-child { border-top:0; }
+.banner { background:var(--review-bg); color:var(--review); border:1px solid #E9C58F; border-radius:12px; padding:12px 16px; font-weight:600; }
+.notice { border-radius:12px; padding:12px 16px; font-size:14px; line-height:21px; }
+.notice.error { background:var(--error-bg); color:var(--error); border:1px solid #F3B8B0; }
+.notice.success { background:var(--success-bg); color:var(--success); border:1px solid #BFE0CF; }
+.notice.info { background:var(--selected); color:var(--ink); border:1px solid var(--border); }
+.empty { padding:24px; border:1px dashed var(--control-border); border-radius:12px; display:flex; flex-direction:column; gap:12px; background:var(--surface); }
+.quality { display:flex; flex-wrap:wrap; gap:12px 32px; align-items:center; }
+.quality div { display:flex; flex-direction:column; }
+.quality b { font-size:22px; line-height:28px; font-weight:600; }
+
+/* tabs */
+.tabs { display:flex; flex-wrap:wrap; gap:8px; }
+.tabs button { min-height:44px; padding:8px 16px; border-radius:10px; border:1px solid var(--control-border); background:var(--surface); font:inherit; font-weight:600; color:var(--ink); cursor:pointer; }
+.tabs button[aria-selected="true"] { background:var(--primary); border-color:var(--primary); color:#fff; }
+
+/* charts */
+.chart { width:100%; }
+.chart svg { display:block; max-width:100%; }
+.chart text { font-family:inherit; fill:var(--muted); font-size:12px; }
+.legend { display:flex; flex-wrap:wrap; gap:8px 20px; font-size:13px; line-height:18px; color:var(--muted); margin-top:8px; }
+.legend span { display:inline-flex; align-items:center; gap:6px; }
+.legend svg { flex:none; }
+.pt:focus-visible { outline:none; }
+.pt:focus-visible circle, .pt:focus-visible path { stroke:var(--focus); stroke-width:3; }
+.readout { min-height:22px; font-size:13px; line-height:20px; color:var(--ink); margin-top:8px; }
+details.tbl { margin-top:12px; }
+details.tbl > summary { cursor:pointer; min-height:44px; display:flex; align-items:center; font-weight:600; color:var(--primary-hover); }
+.table-wrap { overflow:auto; max-height:420px; border:1px solid var(--border); border-radius:10px; }
+table { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; }
+th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; line-height:18px; white-space:nowrap; }
+th { position:sticky; top:0; background:#F4F6F8; font-weight:600; color:var(--muted); z-index:1; }
+tr[data-selected="true"] td { background:var(--selected); }
+tr.click { cursor:pointer; }
+tr.click:hover td { background:#F4F6F8; }
+
+/* evidence */
+.ev { display:flex; flex-direction:column; gap:16px; }
+.ev section { display:flex; flex-direction:column; gap:6px; }
+.ev h3 { font-size:13px; line-height:18px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
+.ev .big { font-size:30px; line-height:36px; font-weight:600; }
+.ev p, .ev li { font-size:14px; line-height:21px; }
+.ev ul { margin:0; padding-left:18px; }
+.assistant { display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--border); padding-top:16px; }
+.assistant .asks { display:flex; flex-wrap:wrap; gap:8px; }
+.answer { background:var(--selected); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+.answer p { font-size:14px; line-height:21px; }
+
+/* drawer */
+.scrim { position:fixed; inset:0; background:rgb(16 34 54 / 35%); z-index:40; }
+.drawer { position:fixed; top:0; right:0; bottom:0; width:min(480px,100vw); background:var(--surface); z-index:50; box-shadow:-8px 0 32px rgb(16 34 54 / 15%); display:flex; flex-direction:column; transform:translateX(0); transition:transform 150ms; }
+.drawer-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid var(--border); }
+.drawer-body { padding:24px; overflow:auto; flex:1; }
+[hidden] { display:none!important; }
+
+/* responsive */
+@media (max-width:1023px) {
+  .app { grid-template-columns:72px minmax(0,1fr); }
+  .rail { padding:16px 8px; align-items:center; }
+  .wordmark small, .nav .label, .rail-foot .label, .rail-foot p { display:none; }
+  .wordmark { font-size:16px; }
+  .nav a { padding:8px; justify-content:center; }
+  .main { padding:24px; }
+  .grid-2-1, .grid-1-1 { grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width:767px) {
+  .app { grid-template-columns:minmax(0,1fr); }
+  .rail { display:none; position:fixed; inset:0 auto 0 0; width:260px; z-index:60; height:100vh; align-items:stretch; padding:24px 16px; }
+  .rail.open { display:flex; }
+  .rail.open .nav .label, .rail.open .rail-foot .label, .rail.open .rail-foot p, .rail.open .wordmark small { display:inline; }
+  .rail.open .nav a { justify-content:flex-start; }
+  .menu-btn { display:inline-flex; align-items:center; }
+  .main { padding:16px; }
+  h1 { font-size:26px; line-height:32px; }
+  .drawer { width:100vw; }
+  .markers { grid-template-columns:minmax(0,1fr); }
+}
+/* keep wide tables inside their card: scroll the table, not the page */
+.grid-2-1 > *, .grid-1-1 > *, .card, details.tbl { min-width:0; max-width:100%; }
+.table-wrap { max-width:100%; }
+p, .meta, .mono, .notice, .banner, h1, h2, h3, li, td { overflow-wrap:anywhere; }
+/* accessibility helpers */
+.skip { position:absolute; left:8px; top:-60px; z-index:100; background:var(--surface); color:var(--ink); padding:10px 14px; border-radius:8px; border:2px solid var(--focus); font-weight:600; }
+.skip:focus { top:8px; }
+.linkbtn { background:none; border:0; padding:6px 0; min-height:44px; font:inherit; color:var(--primary); text-decoration:underline; text-underline-offset:3px; cursor:pointer; text-align:left; }
+.linkbtn[aria-pressed="true"] { font-weight:600; color:var(--ink); }
+.ai-draft { border-left:4px solid var(--review); }
+input[type="checkbox"] { width:24px; height:24px; accent-color:var(--primary); flex:none; }
+</style>
+</head>
+<body>
+<noscript>CytoZoe needs JavaScript. It runs entirely in your browser and sends nothing anywhere.</noscript>
+<div id="root"></div>
+<div id="drawer-host"></div>
+<script>window.CZ_EMBEDDED = {"health": {"fileName": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv", "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9", "text": "\ufeffSample Name,albumin_value_gram_per_deciliter,albumin_range_min_gram_per_deciliter,albumin_range_max_gram_per_deciliter,albumin_to_globulin_ratio_value,albumin_to_globulin_ratio_range_min,albumin_to_globulin_ratio_range_max,alkaline_phosphatase_value_units_per_liter,alkaline_phosphatase_range_min_units_per_liter,alkaline_phosphatase_range_max_units_per_liter,alt_value_units_per_liter,alt_range_min_units_per_liter,alt_max_units_per_liter,ast_value_units_per_liter,ast_range_min_units_per_liter,ast_max_units_per_liter,total_bilirubin_value_milligram_per_deciliter,total_bilirubin_range_min_milligram_per_deciliter,total_bilirubin_range_max_milligram_per_deciliter,bun_to_creatinine_ratio_value,bun_to_creatinine_ratio_range_min,bun_to_creatinine_ratio_range_max,calcium_value_milligram_per_deciliter,calcium_range_min_milligram_per_deciliter,calcium_range_max_milligram_per_deciliter,carbon_dioxide_value_millimol_per_liter,carbon_dioxide_range_min_millimol_per_liter,carbon_dioxide_range_max_millimol_per_liter,chloride_value_millimol_per_liter,chloride_range_min_millimol_per_liter,chloride_range_max_millimol_per_liter,creatinine_value_milligram_per_deciliter,creatinine_range_min_milligram_per_deciliter,creatinine_range_max_milligram_per_deciliter,egfr_african_american_value_milliliter_per_minute_per_1.73_meter_squared,egfr_african_american_range_min_milliliter_per_minute_per_1.73_meter_squared,egfr_african_american_range_max_milliliter_per_minute_per_1.73_meter_squared,egfr_non_african_american_value_milliliter_per_minute_per_1.73_meter_squared,egfr_non_african_american_range_min_milliliter_per_minute_per_1.73_meter_squared,egfr_non_african_american_range_max_milliliter_per_minute_per_1.73_meter_squared,globulin_value_gram_per_deciliter,globulin_range_min_gram_per_deciliter,globulin_range_max_gram_per_deciliter,glucose_value_milligram_per_deciliter,glucose_range_min_milligram_per_deciliter,glucose_range_max_milligram_per_deciliter,potassium_value_millimol_per_liter,potassium_range_min_millimol_per_liter,potassium_range_max_millimol_per_liter,total_protein_value_gram_per_deciliter,total_protein_range_min_gram_per_deciliter,total_protein_range_max_gram_per_deciliter,sodium_value_millimol_per_liter,sodium_range_min_millimol_per_liter,sodium_range_max_millimol_per_liter,urea_nitrogen_bun_value_milligram_per_deciliter,urea_nitrogen_bun_range_min_milligram_per_deciliter,urea_nitrogen_bun_range_max_milligram_per_deciliter\r\nC001_serum_L-3,4.9,3.6,5.1,2,1,2.5,45,36,130,13,9,46,15,10,40,1,0.2,1.2,15,6,22,9.6,8.6,10.3,26,20,32,102,98,110,1.37,0.6,1.35,75,60,N/A,65,60,N/A,2.5,1.9,3.7,69,65,99,3.9,3.5,5.3,7.4,6.1,8.1,142,135,146,20,7,25\r\nC001_serum_L-44,5,3.6,5.1,1.9,1,2.5,46,36,130,16,9,46,18,10,40,0.9,0.2,1.2,NA,6,22,10,8.6,10.3,26,20,32,101,98,110,1.1,0.6,1.35,98,60,N/A,85,60,N/A,2.7,1.9,3.7,80,65,99,4.2,3.5,5.3,7.7,6.1,8.1,139,135,146,19,7,25\r\nC001_serum_L-92,5,3.6,5.1,2.2,1,2.5,51,36,130,15,9,46,15,10,40,0.7,0.2,1.2,NA,6,22,9.7,8.6,10.3,23,20,32,104,98,110,1.24,0.6,1.35,85,60,N/A,73,60,N/A,2.3,1.9,3.7,83,65,99,4.6,3.5,5.3,7.3,6.1,8.1,141,135,146,25,7,25\r\nC001_serum_R+1,4.9,3.6,5.1,1.9,1,2.5,52,36,130,9,9,46,16,10,40,1.2,0.2,1.2,NA,6,22,9.7,8.6,10.3,24,20,32,102,98,110,1.12,0.6,1.35,96,60,N/A,83,60,N/A,2.6,1.9,3.7,90,65,99,4.4,3.5,5.3,7.5,6.1,8.1,138,135,146,18,7,25\r\nC001_serum_R+194,4.6,3.6,5.1,1.9,1,2.5,50,36,130,15,9,46,12,10,40,0.8,0.2,1.2,22,6,22,9.4,8.6,10.3,23,20,32,102,98,110,1.29,0.6,1.35,80,60,N/A,69,60,N/A,2.4,1.9,3.7,87,65,99,4.3,3.5,5.3,7,6.1,8.1,137,135,146,28,7,25\r\nC001_serum_R+45,4.9,3.6,5.1,2.1,1,2.5,46,36,130,11,9,46,13,10,40,NA,0.2,1.2,NA,6,22,9.6,8.6,10.3,28,20,32,100,98,110,1.11,0.6,1.35,97,60,N/A,84,60,N/A,2.3,1.9,3.7,84,65,99,4,3.5,5.3,7.2,6.1,8.1,138,135,146,15,7,25\r\nC001_serum_R+82,5.1,3.6,5.1,1.9,1,2.5,49,36,130,15,9,46,16,10,40,1.2,0.2,1.2,NA,6,22,10.1,8.6,10.3,27,20,32,101,98,110,1.25,0.6,1.35,84,60,N/A,73,60,N/A,2.7,1.9,3.7,91,65,99,4.3,3.5,5.3,7.8,6.1,8.1,140,135,146,22,7,25\r\nC002_serum_L-3,4.3,3.6,5.1,1.6,1,2.5,68,37,153,19,6,29,40,10,35,0.3,0.2,1.2,NA,6,22,9.3,8.6,10.4,24,20,32,106,98,110,0.96,0.5,1.05,79,60,N/A,68,60,N/A,2.7,1.9,3.7,78,65,99,3.8,3.5,5.3,7,6.1,8.1,143,135,146,17,7,25\r\nC002_serum_L-44,4.6,3.6,5.1,1.5,1,2.5,78,37,153,24,6,29,31,10,35,0.4,0.2,1.2,NA,6,22,9.7,8.6,10.4,26,20,32,103,98,110,0.88,0.5,1.05,88,60,N/A,76,60,N/A,3,1.9,3.7,72,65,99,4,3.5,5.3,7.6,6.1,8.1,141,135,146,16,7,25\r\nC002_serum_L-92,4.9,3.6,5.1,1.6,1,2.5,73,37,153,16,6,29,19,10,35,0.5,0.2,1.2,NA,6,22,10.2,8.6,10.4,23,20,32,103,98,110,0.83,0.5,1.05,95,60,N/A,82,60,N/A,3,1.9,3.7,69,65,99,3.9,3.5,5.3,7.9,6.1,8.1,142,135,146,14,7,25\r\nC002_serum_R+1,4.4,3.6,5.1,1.5,1,2.5,71,37,153,16,6,29,23,10,35,0.4,0.2,1.2,NA,6,22,9.2,8.6,10.4,22,20,32,103,98,110,0.95,0.5,1.05,80,60,N/A,69,60,N/A,3,1.9,3.7,83,65,99,3.5,3.5,5.3,7.4,6.1,8.1,137,135,146,20,7,25\r\nC002_serum_R+194,4.3,3.6,5.1,1.4,1,2.5,66,37,153,17,6,29,24,10,35,0.3,0.2,1.2,NA,6,22,9.5,8.6,10.4,20,20,32,104,98,110,1.02,0.5,1.05,73,60,N/A,63,60,N/A,3,1.9,3.7,84,65,99,4.4,3.5,5.3,7.3,6.1,8.1,138,135,146,18,7,25\r\nC002_serum_R+45,4.2,3.6,5.1,1.6,1,2.5,65,37,153,14,6,29,17,10,35,0.5,0.2,1.2,NA,6,22,9.3,8.6,10.4,21,20,32,104,98,110,1.02,0.5,1.05,74,60,N/A,64,60,N/A,2.6,1.9,3.7,44,65,99,4.1,3.5,5.3,6.8,6.1,8.1,140,135,146,19,7,25\r\nC002_serum_R+82,4.5,3.6,5.1,1.6,1,2.5,65,37,153,17,6,29,21,10,35,0.5,0.2,1.2,,,,9.7,8.6,10.4,25,20,32,105,98,110,0.82,0.5,1.05,96,60,N/A,83,60,N/A,2.8,1.9,3.7,77,65,99,3.7,3.5,5.3,7.3,6.1,8.1,141,135,146,16,7,25\r\nC003_serum_L-3,4.2,3.6,5.1,1.6,1,2.5,31,36,130,13,9,46,13,10,40,0.2,0.2,1.2,24,6,22,9.5,8.6,10.3,23,20,32,101,98,110,1.08,0.6,1.35,80,60,N/A,69,60,N/A,2.6,1.9,3.7,75,65,99,3.3,3.5,5.3,6.8,6.1,8.1,138,135,146,26,7,25\r\nC003_serum_L-44,4.9,3.6,5.1,1.3,1,2.5,41,36,130,13,9,46,17,10,40,0.4,0.2,1.2,NA,6,22,10.3,8.6,10.3,21,20,32,99,98,110,1.03,0.6,1.35,85,60,N/A,73,60,N/A,3.9,1.9,3.7,62,65,99,3.5,3.5,5.3,8.8,6.1,8.1,139,135,146,19,7,25\r\nC003_serum_L-92,4.4,3.6,5.1,1.6,1,2.5,33,36,130,12,9,46,15,10,40,0.3,0.2,1.2,NA,6,22,9.3,8.6,10.3,20,20,32,102,98,110,1,0.6,1.35,88,60,N/A,76,60,N/A,2.7,1.9,3.7,77,65,99,3.7,3.5,5.3,7.1,6.1,8.1,139,135,146,17,7,25\r\nC003_serum_R+1,4.2,3.6,5.1,1.4,1,2.5,41,31,125,19,6,29,18,10,30,0.3,0.2,1.2,NA,6,22,9.4,8.6,10.2,20,20,32,103,98,110,0.89,0.5,1.1,102,60,N/A,88,60,N/A,2.9,1.9,3.7,103,65,99,3,3.5,5.3,7.1,6.1,8.1,137,135,146,21,7,25\r\nC003_serum_R+194,4.4,3.6,5.1,1.5,1,2.5,43,31,125,10,6,29,15,10,30,0.3,0.2,1.2,25,6,22,9.6,8.6,10.2,22,20,32,101,98,110,1.1,0.5,1.1,78,60,N/A,67,60,N/A,2.9,1.9,3.7,73,65,99,3.8,3.5,5.3,7.3,6.1,8.1,137,135,146,28,7,25\r\nC003_serum_R+45,4.5,3.6,5.1,1.6,1,2.5,51,31,125,17,6,29,19,10,30,0.7,0.2,1.2,NA,6,22,9.6,8.6,10.2,23,20,32,97,98,110,0.94,0.5,1.1,95,60,N/A,82,60,N/A,2.9,1.9,3.7,36,65,99,4.4,3.5,5.3,7.4,6.1,8.1,136,135,146,19,7,25\r\nC003_serum_R+82,4.8,3.6,5.1,1.8,1,2.5,50,31,125,12,6,29,15,10,30,0.5,0.2,1.2,NA,6,22,10,8.6,10.2,23,20,32,102,98,110,0.89,0.5,1.1,101,60,N/A,87,60,N/A,2.7,1.9,3.7,80,65,99,3.7,3.5,5.3,7.5,6.1,8.1,138,135,146,23,7,25\r\nC004_serum_L-3,4.6,3.6,5.1,1.7,1,2.5,55,36,130,37,9,46,39,10,40,0.5,0.2,1.2,NA,6,22,10.2,8.6,10.3,24,20,32,103,98,110,1.13,0.6,1.35,92,60,N/A,80,60,N/A,2.7,1.9,3.7,56,65,99,3.7,3.5,5.3,7.3,6.1,8.1,141,135,146,19,7,25\r\nC004_serum_L-44,4.4,3.6,5.1,1.5,1,2.5,56,36,130,35,9,46,44,10,40,0.7,0.2,1.2,NA,6,22,10.1,8.6,10.3,24,20,32,103,98,110,1.08,0.6,1.35,98,60,N/A,85,60,N/A,2.9,1.9,3.7,83,65,99,4.2,3.5,5.3,7.3,6.1,8.1,140,135,146,19,7,25\r\nC004_serum_L-92,4.6,3.6,5.1,1.6,1,2.5,58,36,130,37,9,46,36,10,40,0.7,0.2,1.2,NA,6,22,10,8.6,10.3,23,20,32,102,98,110,1.14,0.6,1.35,92,60,N/A,79,60,N/A,2.8,1.9,3.7,100,65,99,4.2,3.5,5.3,7.4,6.1,8.1,138,135,146,22,7,25\r\nC004_serum_R+1,4.5,3.6,5.1,1.6,1,2.5,62,36,130,40,9,46,48,10,40,0.4,0.2,1.2,23,6,22,9.8,8.6,10.3,23,20,32,105,98,110,1.15,0.6,1.35,90,60,N/A,78,60,N/A,2.9,1.9,3.7,97,65,99,4,3.5,5.3,7.4,6.1,8.1,140,135,146,26,7,25\r\nC004_serum_R+194,4.3,3.6,5.1,1.5,1,2.5,57,36,130,43,9,46,38,10,40,0.5,0.2,1.2,21,6,22,9.8,8.6,10.3,19,20,32,105,98,110,1.31,0.6,1.35,77,60,N/A,67,60,N/A,2.9,1.9,3.7,84,65,99,3.8,3.5,5.3,7.2,6.1,8.1,141,135,146,27,7,25\r\nC004_serum_R+45,4.5,3.6,5.1,1.6,1,2.5,60,36,130,32,9,46,33,10,40,0.7,0.2,1.2,NA,6,22,9.8,8.6,10.3,24,20,32,102,98,110,1.08,0.6,1.35,98,60,N/A,84,60,N/A,2.8,1.9,3.7,43,65,99,5.9,3.5,5.3,7.3,6.1,8.1,139,135,146,21,7,25\r\nC004_serum_R+82,4.6,3.6,5.1,1.6,1,2.5,54,36,130,23,9,46,25,10,40,1,0.2,1.2,NA,6,22,10,8.6,10.3,24,20,32,103,98,110,1.11,0.6,1.35,94,60,N/A,81,60,N/A,2.8,1.9,3.7,80,65,99,4.2,3.5,5.3,7.4,6.1,8.1,140,135,146,16,7,25"}, "radiation": {"fileName": "radlab_dostel1_2022_03_01.csv", "sha256": "d3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1", "text": "timestamp,instrument_id,absorbed_dose_rate\r\n\"2022-03-01T00:00:00\",\"DosTel1\",6.35004766666667\r\n\"2022-03-01T00:01:25\",\"DosTel1\",4.520217\r\n\"2022-03-01T00:03:05\",\"DosTel1\",4.938943\r\n\"2022-03-01T00:04:58\",\"DosTel1\",2.56405\r\n\"2022-03-01T00:05:00\",\"DosTel1\",3.41319411821086\r\n\"2022-03-01T00:06:38\",\"DosTel1\",2.538242\r\n\"2022-03-01T00:08:18\",\"DosTel1\",2.231171\r\n\"2022-03-01T00:09:58\",\"DosTel1\",1.898369\r\n\"2022-03-01T00:10:00\",\"DosTel1\",2.017674\r\n\"2022-03-01T00:11:38\",\"DosTel1\",1.923482\r\n\"2022-03-01T00:13:18\",\"DosTel1\",2.481217\r\n\"2022-03-01T00:15:00\",\"DosTel1\",2.07516652076677\r\n\"2022-03-01T00:15:11\",\"DosTel1\",1.707203\r\n\"2022-03-01T00:16:51\",\"DosTel1\",1.984293\r\n\"2022-03-01T00:18:31\",\"DosTel1\",1.886779\r\n\"2022-03-01T00:20:00\",\"DosTel1\",2.01113166666667\r\n\"2022-03-01T00:20:11\",\"DosTel1\",2.073308\r\n\"2022-03-01T00:23:31\",\"DosTel1\",2.239671\r\n\"2022-03-01T00:25:00\",\"DosTel1\",2.44839847603834\r\n\"2022-03-01T00:25:24\",\"DosTel1\",2.570386\r\n\"2022-03-01T00:27:04\",\"DosTel1\",2.562273\r\n\"2022-03-01T00:28:44\",\"DosTel1\",3.369203\r\n\"2022-03-01T00:30:00\",\"DosTel1\",4.39851666666667\r\n\"2022-03-01T00:30:24\",\"DosTel1\",4.786103\r\n\"2022-03-01T00:32:04\",\"DosTel1\",5.040244\r\n\"2022-03-01T00:33:44\",\"DosTel1\",5.365706\r\n\"2022-03-01T00:35:00\",\"DosTel1\",6.03928778913738\r\n\"2022-03-01T00:35:37\",\"DosTel1\",5.601997\r\n\"2022-03-01T00:37:17\",\"DosTel1\",7.237726\r\n\"2022-03-01T00:38:57\",\"DosTel1\",7.261293\r\n\"2022-03-01T00:40:00\",\"DosTel1\",6.37225222044728\r\n\"2022-03-01T00:40:37\",\"DosTel1\",6.197131\r\n\"2022-03-01T00:42:17\",\"DosTel1\",5.740465\r\n\"2022-03-01T00:44:10\",\"DosTel1\",5.606247\r\n\"2022-03-01T00:45:00\",\"DosTel1\",4.885318\r\n\"2022-03-01T00:45:50\",\"DosTel1\",4.164389\r\n\"2022-03-01T00:47:30\",\"DosTel1\",3.968046\r\n\"2022-03-01T00:49:10\",\"DosTel1\",4.705974\r\n\"2022-03-01T00:50:00\",\"DosTel1\",47.0417137333333\r\n\"2022-03-01T00:50:50\",\"DosTel1\",106.433233\r\n\"2022-03-01T00:51:50\",\"DosTel1\",156.049068\r\n\"2022-03-01T00:52:10\",\"DosTel1\",186.906839\r\n\"2022-03-01T00:52:30\",\"DosTel1\",232.029037\r\n\"2022-03-01T00:52:50\",\"DosTel1\",263.270454\r\n\"2022-03-01T00:53:10\",\"DosTel1\",318.060288\r\n\"2022-03-01T00:53:30\",\"DosTel1\",358.171527\r\n\"2022-03-01T00:53:50\",\"DosTel1\",392.767621\r\n\"2022-03-01T00:54:10\",\"DosTel1\",408.644286\r\n\"2022-03-01T00:54:43\",\"DosTel1\",409.398828\r\n\"2022-03-01T00:55:00\",\"DosTel1\",364.029283827476\r\n\"2022-03-01T00:55:03\",\"DosTel1\",441.720865\r\n\"2022-03-01T00:55:23\",\"DosTel1\",444.86305\r\n\"2022-03-01T00:55:43\",\"DosTel1\",429.025792\r\n\"2022-03-01T00:56:03\",\"DosTel1\",407.282403\r\n\"2022-03-01T00:56:23\",\"DosTel1\",389.045139\r\n\"2022-03-01T00:56:43\",\"DosTel1\",358.049827\r\n\"2022-03-01T00:57:03\",\"DosTel1\",318.992164\r\n\"2022-03-01T00:57:23\",\"DosTel1\",260.118225\r\n\"2022-03-01T00:57:43\",\"DosTel1\",238.514694\r\n\"2022-03-01T00:58:03\",\"DosTel1\",170.276405\r\n\"2022-03-01T00:58:23\",\"DosTel1\",143.824568\r\n\"2022-03-01T00:58:43\",\"DosTel1\",92.338027\r\n\"2022-03-01T00:59:03\",\"DosTel1\",69.686715\r\n\"2022-03-01T00:59:23\",\"DosTel1\",39.312654\r\n\"2022-03-01T00:59:43\",\"DosTel1\",20.336689\r\n\"2022-03-01T01:00:00\",\"DosTel1\",55.5532093333333\r\n\"2022-03-01T01:00:03\",\"DosTel1\",11.961781\r\n\"2022-03-01T01:01:03\",\"DosTel1\",4.624609\r\n\"2022-03-01T01:02:43\",\"DosTel1\",2.494044\r\n\"2022-03-01T01:05:00\",\"DosTel1\",2.32746771794872\r\n\"2022-03-01T01:06:15\",\"DosTel1\",1.974326\r\n\"2022-03-01T01:07:55\",\"DosTel1\",2.458268\r\n\"2022-03-01T01:09:35\",\"DosTel1\",2.206831\r\n\"2022-03-01T01:10:00\",\"DosTel1\",2.20636766666667\r\n\"2022-03-01T01:11:15\",\"DosTel1\",1.954004\r\n\"2022-03-01T01:12:55\",\"DosTel1\",2.475035\r\n\"2022-03-01T01:14:47\",\"DosTel1\",2.291828\r\n\"2022-03-01T01:15:00\",\"DosTel1\",3.05114237179487\r\n\"2022-03-01T01:16:27\",\"DosTel1\",4.455697\r\n\"2022-03-01T01:18:07\",\"DosTel1\",2.828623\r\n\"2022-03-01T01:19:47\",\"DosTel1\",4.329206\r\n\"2022-03-01T01:20:00\",\"DosTel1\",4.414409\r\n\"2022-03-01T01:21:27\",\"DosTel1\",6.085398\r\n\"2022-03-01T01:23:07\",\"DosTel1\",5.5085\r\n\"2022-03-01T01:24:59\",\"DosTel1\",7.645479\r\n\"2022-03-01T01:25:00\",\"DosTel1\",7.22419134615385\r\n\"2022-03-01T01:26:39\",\"DosTel1\",8.724478\r\n\"2022-03-01T01:28:19\",\"DosTel1\",10.784727\r\n\"2022-03-01T01:29:59\",\"DosTel1\",8.880099\r\n\"2022-03-01T01:30:00\",\"DosTel1\",9.26410533333333\r\n\"2022-03-01T01:31:39\",\"DosTel1\",8.12749\r\n\"2022-03-01T01:33:19\",\"DosTel1\",5.992442\r\n\"2022-03-01T01:35:00\",\"DosTel1\",5.1561186025641\r\n\"2022-03-01T01:35:11\",\"DosTel1\",4.944739\r\n\"2022-03-01T01:36:51\",\"DosTel1\",4.430816\r\n\"2022-03-01T01:38:31\",\"DosTel1\",3.056105\r\n\"2022-03-01T01:40:00\",\"DosTel1\",2.51117166666667\r\n\"2022-03-01T01:40:11\",\"DosTel1\",2.651056\r\n\"2022-03-01T01:41:51\",\"DosTel1\",1.826354\r\n\"2022-03-01T01:43:31\",\"DosTel1\",1.865839\r\n\"2022-03-01T01:45:00\",\"DosTel1\",1.82737682051282\r\n\"2022-03-01T01:45:23\",\"DosTel1\",1.846598\r\n\"2022-03-01T01:47:03\",\"DosTel1\",1.765078\r\n\"2022-03-01T01:48:43\",\"DosTel1\",1.789418\r\n\"2022-03-01T01:50:00\",\"DosTel1\",1.74049215533981\r\n\"2022-03-01T01:50:23\",\"DosTel1\",2.129406\r\n\"2022-03-01T01:52:03\",\"DosTel1\",1.533964\r\n\"2022-03-01T01:55:00\",\"DosTel1\",2.7699365\r\n\"2022-03-01T01:55:35\",\"DosTel1\",3.333737\r\n\"2022-03-01T01:57:15\",\"DosTel1\",2.206136\r\n\"2022-03-01T01:58:55\",\"DosTel1\",3.077046\r\n\"2022-03-01T02:00:00\",\"DosTel1\",3.89439145686901\r\n\"2022-03-01T02:00:35\",\"DosTel1\",3.382958\r\n\"2022-03-01T02:02:15\",\"DosTel1\",5.070302\r\n\"2022-03-01T02:04:08\",\"DosTel1\",5.636305\r\n\"2022-03-01T02:05:00\",\"DosTel1\",6.78276\r\n\"2022-03-01T02:05:48\",\"DosTel1\",6.602798\r\n\"2022-03-01T02:07:28\",\"DosTel1\",8.109177\r\n\"2022-03-01T02:09:08\",\"DosTel1\",7.81161\r\n\"2022-03-01T02:10:00\",\"DosTel1\",8.39463544408946\r\n\"2022-03-01T02:10:48\",\"DosTel1\",8.793016\r\n\"2022-03-01T02:12:28\",\"DosTel1\",8.558038\r\n\"2022-03-01T02:14:21\",\"DosTel1\",7.911056\r\n\"2022-03-01T02:15:00\",\"DosTel1\",7.23533\r\n\"2022-03-01T02:16:01\",\"DosTel1\",6.559604\r\n\"2022-03-01T02:17:41\",\"DosTel1\",6.75332\r\n\"2022-03-01T02:19:21\",\"DosTel1\",4.35795\r\n\"2022-03-01T02:20:00\",\"DosTel1\",5.01935566666667\r\n\"2022-03-01T02:21:01\",\"DosTel1\",3.946797\r\n\"2022-03-01T02:22:41\",\"DosTel1\",3.559751\r\n\"2022-03-01T02:24:34\",\"DosTel1\",3.088559\r\n\"2022-03-01T02:25:00\",\"DosTel1\",5.48479406930693\r\n\"2022-03-01T02:26:14\",\"DosTel1\",10.564276\r\n\"2022-03-01T02:27:44\",\"DosTel1\",95.335717\r\n\"2022-03-01T02:28:04\",\"DosTel1\",137.891006\r\n\"2022-03-01T02:28:24\",\"DosTel1\",176.135402\r\n\"2022-03-01T02:28:44\",\"DosTel1\",207.612106\r\n\"2022-03-01T02:29:04\",\"DosTel1\",240.811158\r\n\"2022-03-01T02:29:24\",\"DosTel1\",265.462218\r\n\"2022-03-01T02:29:44\",\"DosTel1\",273.183808\r\n\"2022-03-01T02:30:00\",\"DosTel1\",232.8615444\r\n\"2022-03-01T02:30:04\",\"DosTel1\",299.075437\r\n\"2022-03-01T02:30:24\",\"DosTel1\",297.555923\r\n\"2022-03-01T02:30:44\",\"DosTel1\",293.12333\r\n\"2022-03-01T02:31:04\",\"DosTel1\",290.210637\r\n\"2022-03-01T02:31:24\",\"DosTel1\",259.622152\r\n\"2022-03-01T02:31:44\",\"DosTel1\",247.014007\r\n\"2022-03-01T02:32:04\",\"DosTel1\",216.561903\r\n\"2022-03-01T02:32:24\",\"DosTel1\",193.328362\r\n\"2022-03-01T02:32:44\",\"DosTel1\",178.608428\r\n\"2022-03-01T02:33:04\",\"DosTel1\",142.642338\r\n\"2022-03-01T02:33:24\",\"DosTel1\",118.775569\r\n\"2022-03-01T02:33:44\",\"DosTel1\",101.810556\r\n\"2022-03-01T02:34:04\",\"DosTel1\",74.064833\r\n\"2022-03-01T02:34:24\",\"DosTel1\",51.491564\r\n\"2022-03-01T02:34:57\",\"DosTel1\",33.765055\r\n\"2022-03-01T02:35:00\",\"DosTel1\",38.6514148083141\r\n\"2022-03-01T02:35:17\",\"DosTel1\",19.836366\r\n\"2022-03-01T02:35:37\",\"DosTel1\",11.786765\r\n\"2022-03-01T02:36:37\",\"DosTel1\",4.697861\r\n\"2022-03-01T02:39:57\",\"DosTel1\",1.951376\r\n\"2022-03-01T02:40:00\",\"DosTel1\",2.055575\r\n\"2022-03-01T02:41:37\",\"DosTel1\",2.159774\r\n\"2022-03-01T02:43:17\",\"DosTel1\",2.942828\r\n\"2022-03-01T02:45:00\",\"DosTel1\",2.46256889456869\r\n\"2022-03-01T02:45:10\",\"DosTel1\",1.97618\r\n\"2022-03-01T02:46:50\",\"DosTel1\",2.406265\r\n\"2022-03-01T02:48:30\",\"DosTel1\",2.950246\r\n\"2022-03-01T02:50:00\",\"DosTel1\",3.36951266666667\r\n\"2022-03-01T02:50:10\",\"DosTel1\",3.281966\r\n\"2022-03-01T02:51:50\",\"DosTel1\",3.876326\r\n\"2022-03-01T02:53:30\",\"DosTel1\",4.201865\r\n\"2022-03-01T02:55:00\",\"DosTel1\",6.18755573482428\r\n\"2022-03-01T02:55:23\",\"DosTel1\",5.867111\r\n\"2022-03-01T02:57:03\",\"DosTel1\",8.751831\r\n\"2022-03-01T02:58:43\",\"DosTel1\",7.060082\r\n\"2022-03-01T03:00:00\",\"DosTel1\",8.23770266666667\r\n\"2022-03-01T03:00:23\",\"DosTel1\",8.450015\r\n\"2022-03-01T03:02:03\",\"DosTel1\",9.203011\r\n\"2022-03-01T03:03:43\",\"DosTel1\",6.343635\r\n\"2022-03-01T03:05:00\",\"DosTel1\",6.08508899361022\r\n\"2022-03-01T03:05:36\",\"DosTel1\",5.932095\r\n\"2022-03-01T03:07:16\",\"DosTel1\",5.945926\r\n\"2022-03-01T03:08:56\",\"DosTel1\",4.787262\r\n\"2022-03-01T03:10:00\",\"DosTel1\",3.94067942307692\r\n\"2022-03-01T03:10:36\",\"DosTel1\",4.227441\r\n\"2022-03-01T03:12:16\",\"DosTel1\",2.928765\r\n\"2022-03-01T03:14:08\",\"DosTel1\",2.366394\r\n\"2022-03-01T03:15:00\",\"DosTel1\",2.064783\r\n\"2022-03-01T03:15:48\",\"DosTel1\",2.184577\r\n\"2022-03-01T03:17:28\",\"DosTel1\",1.643378\r\n\"2022-03-01T03:19:08\",\"DosTel1\",1.747693\r\n\"2022-03-01T03:20:00\",\"DosTel1\",1.74553132051282\r\n\"2022-03-01T03:20:48\",\"DosTel1\",1.71663\r\n\"2022-03-01T03:22:28\",\"DosTel1\",1.769406\r\n\"2022-03-01T03:24:20\",\"DosTel1\",1.65211\r\n\"2022-03-01T03:25:00\",\"DosTel1\",1.65211\r\n\"2022-03-01T03:27:40\",\"DosTel1\",2.541719\r\n\"2022-03-01T03:29:20\",\"DosTel1\",2.17036\r\n\"2022-03-01T03:30:00\",\"DosTel1\",2.553181\r\n\"2022-03-01T03:31:00\",\"DosTel1\",2.947464\r\n\"2022-03-01T03:32:40\",\"DosTel1\",3.385585\r\n\"2022-03-01T03:34:32\",\"DosTel1\",4.428189\r\n\"2022-03-01T03:35:00\",\"DosTel1\",4.87144717948718\r\n\"2022-03-01T03:36:12\",\"DosTel1\",6.978871\r\n\"2022-03-01T03:37:52\",\"DosTel1\",7.572382\r\n\"2022-03-01T03:39:32\",\"DosTel1\",9.184543\r\n\"2022-03-01T03:40:00\",\"DosTel1\",9.18080833333334\r\n\"2022-03-01T03:41:12\",\"DosTel1\",10.7855\r\n\"2022-03-01T03:42:52\",\"DosTel1\",10.023772\r\n\"2022-03-01T03:44:44\",\"DosTel1\",9.22681\r\n\"2022-03-01T03:45:00\",\"DosTel1\",9.92879475641026\r\n\"2022-03-01T03:46:24\",\"DosTel1\",10.524405\r\n\"2022-03-01T03:48:04\",\"DosTel1\",8.431856\r\n\"2022-03-01T03:49:44\",\"DosTel1\",7.541783\r\n\"2022-03-01T03:50:00\",\"DosTel1\",7.36125466666667\r\n\"2022-03-01T03:51:24\",\"DosTel1\",6.110125\r\n\"2022-03-01T03:53:04\",\"DosTel1\",5.016136\r\n\"2022-03-01T03:54:56\",\"DosTel1\",3.807711\r\n\"2022-03-01T03:55:00\",\"DosTel1\",3.9520392051282\r\n\"2022-03-01T03:56:36\",\"DosTel1\",2.904579\r\n\"2022-03-01T03:58:16\",\"DosTel1\",2.492962\r\n\"2022-03-01T03:59:56\",\"DosTel1\",2.770361\r\n\"2022-03-01T04:00:00\",\"DosTel1\",2.44523466666667\r\n\"2022-03-01T04:01:36\",\"DosTel1\",2.072381\r\n\"2022-03-01T04:03:16\",\"DosTel1\",2.444668\r\n\"2022-03-01T04:05:00\",\"DosTel1\",4.25846352715655\r\n\"2022-03-01T04:05:09\",\"DosTel1\",5.283258\r\n\"2022-03-01T04:08:29\",\"DosTel1\",2.403483\r\n\"2022-03-01T04:10:00\",\"DosTel1\",2.324436\r\n\"2022-03-01T04:10:09\",\"DosTel1\",2.499839\r\n\"2022-03-01T04:11:49\",\"DosTel1\",2.069986\r\n\"2022-03-01T04:13:29\",\"DosTel1\",2.371107\r\n\"2022-03-01T04:15:00\",\"DosTel1\",2.81747089776358\r\n\"2022-03-01T04:15:22\",\"DosTel1\",2.644179\r\n\"2022-03-01T04:17:02\",\"DosTel1\",3.495154\r\n\"2022-03-01T04:18:42\",\"DosTel1\",2.728403\r\n\"2022-03-01T04:20:00\",\"DosTel1\",3.17244833333333\r\n\"2022-03-01T04:20:22\",\"DosTel1\",2.712409\r\n\"2022-03-01T04:22:02\",\"DosTel1\",4.076533\r\n\"2022-03-01T04:23:42\",\"DosTel1\",3.917357\r\n\"2022-03-01T04:25:00\",\"DosTel1\",5.03029182428115\r\n\"2022-03-01T04:25:35\",\"DosTel1\",5.076948\r\n\"2022-03-01T04:27:15\",\"DosTel1\",6.241252\r\n\"2022-03-01T04:28:55\",\"DosTel1\",6.688954\r\n\"2022-03-01T04:30:00\",\"DosTel1\",7.23801571565495\r\n\"2022-03-01T04:30:35\",\"DosTel1\",6.506056\r\n\"2022-03-01T04:32:15\",\"DosTel1\",8.371663\r\n\"2022-03-01T04:34:08\",\"DosTel1\",8.031211\r\n\"2022-03-01T04:35:00\",\"DosTel1\",7.49044966666667\r\n\"2022-03-01T04:35:48\",\"DosTel1\",6.650396\r\n\"2022-03-01T04:37:28\",\"DosTel1\",7.789742\r\n\"2022-03-01T04:39:08\",\"DosTel1\",5.513987\r\n\"2022-03-01T04:40:00\",\"DosTel1\",4.90314416613418\r\n\"2022-03-01T04:40:48\",\"DosTel1\",5.421958\r\n\"2022-03-01T04:42:28\",\"DosTel1\",3.903448\r\n\"2022-03-01T04:44:21\",\"DosTel1\",3.163974\r\n\"2022-03-01T04:45:00\",\"DosTel1\",2.955461\r\n\"2022-03-01T04:46:01\",\"DosTel1\",2.746948\r\n\"2022-03-01T04:47:41\",\"DosTel1\",1.962581\r\n\"2022-03-01T04:49:21\",\"DosTel1\",1.746147\r\n\"2022-03-01T04:50:00\",\"DosTel1\",1.91444133333333\r\n\"2022-03-01T04:51:01\",\"DosTel1\",2.034596\r\n\"2022-03-01T04:52:41\",\"DosTel1\",1.506456\r\n\"2022-03-01T04:54:34\",\"DosTel1\",1.732702\r\n\"2022-03-01T04:55:00\",\"DosTel1\",1.6705751283293\r\n\"2022-03-01T04:56:14\",\"DosTel1\",1.732239\r\n\"2022-03-01T04:59:34\",\"DosTel1\",2.558641\r\n\"2022-03-01T05:00:00\",\"DosTel1\",2.556246\r\n\"2022-03-01T05:01:14\",\"DosTel1\",2.553851\r\n\"2022-03-01T05:02:54\",\"DosTel1\",2.5581\r\n\"2022-03-01T05:04:47\",\"DosTel1\",3.30051\r\n\"2022-03-01T05:05:00\",\"DosTel1\",3.51587763578275\r\n\"2022-03-01T05:06:27\",\"DosTel1\",4.813534\r\n\"2022-03-01T05:08:07\",\"DosTel1\",6.348657\r\n\"2022-03-01T05:09:47\",\"DosTel1\",7.423328\r\n\"2022-03-01T05:10:00\",\"DosTel1\",7.97748266666667\r\n\"2022-03-01T05:11:27\",\"DosTel1\",10.160463\r\n\"2022-03-01T05:13:07\",\"DosTel1\",10.2698\r\n\"2022-03-01T05:14:59\",\"DosTel1\",13.424425\r\n\"2022-03-01T05:15:00\",\"DosTel1\",12.1075381410256\r\n\"2022-03-01T05:16:39\",\"DosTel1\",12.848918\r\n\"2022-03-01T05:18:19\",\"DosTel1\",12.826587\r\n\"2022-03-01T05:19:59\",\"DosTel1\",12.062232\r\n\"2022-03-01T05:20:00\",\"DosTel1\",12.1828763333333\r\n\"2022-03-01T05:21:39\",\"DosTel1\",11.65981\r\n\"2022-03-01T05:23:19\",\"DosTel1\",8.306833\r\n\"2022-03-01T05:25:00\",\"DosTel1\",7.9497563974359\r\n\"2022-03-01T05:25:11\",\"DosTel1\",7.935087\r\n\"2022-03-01T05:26:51\",\"DosTel1\",7.5645\r\n\"2022-03-01T05:28:31\",\"DosTel1\",4.638981\r\n\"2022-03-01T05:30:00\",\"DosTel1\",4.2005\r\n\"2022-03-01T05:30:11\",\"DosTel1\",3.963101\r\n\"2022-03-01T05:31:51\",\"DosTel1\",3.999418\r\n\"2022-03-01T05:33:31\",\"DosTel1\",2.736826\r\n\"2022-03-01T05:35:00\",\"DosTel1\",2.38797151282051\r\n\"2022-03-01T05:35:23\",\"DosTel1\",2.340044\r\n\"2022-03-01T05:37:03\",\"DosTel1\",2.045182\r\n\"2022-03-01T05:38:43\",\"DosTel1\",2.697418\r\n\"2022-03-01T05:40:00\",\"DosTel1\",2.34439733333333\r\n\"2022-03-01T05:40:23\",\"DosTel1\",2.167887\r\n\"2022-03-01T05:43:43\",\"DosTel1\",2.258525\r\n\"2022-03-01T05:45:00\",\"DosTel1\",2.53345224358974\r\n\"2022-03-01T05:45:35\",\"DosTel1\",2.384397\r\n\"2022-03-01T05:47:15\",\"DosTel1\",2.990426\r\n\"2022-03-01T05:48:55\",\"DosTel1\",3.275166\r\n\"2022-03-01T05:50:00\",\"DosTel1\",3.70897852564103\r\n\"2022-03-01T05:50:35\",\"DosTel1\",3.543679\r\n\"2022-03-01T05:52:15\",\"DosTel1\",4.2439\r\n\"2022-03-01T05:54:07\",\"DosTel1\",5.151822\r\n\"2022-03-01T05:55:00\",\"DosTel1\",5.570471\r\n\"2022-03-01T05:55:47\",\"DosTel1\",5.344688\r\n\"2022-03-01T05:57:27\",\"DosTel1\",6.214903\r\n\"2022-03-01T05:59:07\",\"DosTel1\",6.381883\r\n\"2022-03-01T06:00:00\",\"DosTel1\",7.48598813738019\r\n\"2022-03-01T06:00:47\",\"DosTel1\",7.878294\r\n\"2022-03-01T06:02:27\",\"DosTel1\",8.115899\r\n\"2022-03-01T06:04:20\",\"DosTel1\",8.353118\r\n\"2022-03-01T06:05:00\",\"DosTel1\",8.690054\r\n\"2022-03-01T06:06:00\",\"DosTel1\",9.02699\r\n\"2022-03-01T06:07:40\",\"DosTel1\",7.505853\r\n\"2022-03-01T06:09:20\",\"DosTel1\",8.244708\r\n\"2022-03-01T06:10:00\",\"DosTel1\",7.475872\r\n\"2022-03-01T06:11:00\",\"DosTel1\",6.677055\r\n\"2022-03-01T06:12:40\",\"DosTel1\",6.530164\r\n\"2022-03-01T06:14:33\",\"DosTel1\",4.362046\r\n\"2022-03-01T06:15:00\",\"DosTel1\",5.09780585303514\r\n\"2022-03-01T06:16:13\",\"DosTel1\",4.215001\r\n\"2022-03-01T06:17:53\",\"DosTel1\",2.9453\r\n\"2022-03-01T06:19:33\",\"DosTel1\",2.465145\r\n\"2022-03-01T06:20:00\",\"DosTel1\",2.55132633333333\r\n\"2022-03-01T06:21:13\",\"DosTel1\",2.243534\r\n\"2022-03-01T06:22:53\",\"DosTel1\",1.917918\r\n\"2022-03-01T06:24:46\",\"DosTel1\",2.391738\r\n\"2022-03-01T06:25:00\",\"DosTel1\",2.22287550798722\r\n\"2022-03-01T06:26:26\",\"DosTel1\",2.398615\r\n\"2022-03-01T06:28:06\",\"DosTel1\",1.873566\r\n\"2022-03-01T06:30:00\",\"DosTel1\",2.172034\r\n\"2022-03-01T06:31:26\",\"DosTel1\",2.76897\r\n\"2022-03-01T06:33:06\",\"DosTel1\",1.754956\r\n\"2022-03-01T06:34:59\",\"DosTel1\",2.323509\r\n\"2022-03-01T06:35:00\",\"DosTel1\",2.36311798083067\r\n\"2022-03-01T06:36:39\",\"DosTel1\",3.08995\r\n\"2022-03-01T06:38:19\",\"DosTel1\",4.329515\r\n\"2022-03-01T06:39:59\",\"DosTel1\",5.1434\r\n\"2022-03-01T06:40:00\",\"DosTel1\",5.533536\r\n\"2022-03-01T06:41:39\",\"DosTel1\",7.127693\r\n\"2022-03-01T06:43:19\",\"DosTel1\",8.68847\r\n\"2022-03-01T06:45:00\",\"DosTel1\",10.6773942811502\r\n\"2022-03-01T06:45:12\",\"DosTel1\",10.604997\r\n\"2022-03-01T06:46:52\",\"DosTel1\",12.997276\r\n\"2022-03-01T06:48:32\",\"DosTel1\",12.985068\r\n\"2022-03-01T06:50:00\",\"DosTel1\",12.5093423333333\r\n\"2022-03-01T06:50:12\",\"DosTel1\",13.334869\r\n\"2022-03-01T06:51:52\",\"DosTel1\",11.20809\r\n\"2022-03-01T06:53:32\",\"DosTel1\",12.903934\r\n\"2022-03-01T06:55:00\",\"DosTel1\",11.3447838402556\r\n\"2022-03-01T06:55:25\",\"DosTel1\",10.582744\r\n\"2022-03-01T06:57:05\",\"DosTel1\",10.344984\r\n\"2022-03-01T06:58:45\",\"DosTel1\",9.649631\r\n\"2022-03-01T07:00:00\",\"DosTel1\",7.35625766666667\r\n\"2022-03-01T07:00:25\",\"DosTel1\",6.789637\r\n\"2022-03-01T07:02:05\",\"DosTel1\",5.629505\r\n\"2022-03-01T07:03:45\",\"DosTel1\",3.727273\r\n\"2022-03-01T07:05:00\",\"DosTel1\",3.46912188178914\r\n\"2022-03-01T07:05:38\",\"DosTel1\",3.980177\r\n\"2022-03-01T07:07:18\",\"DosTel1\",2.666356\r\n\"2022-03-01T07:08:58\",\"DosTel1\",2.793928\r\n\"2022-03-01T07:10:00\",\"DosTel1\",2.42451052564103\r\n\"2022-03-01T07:10:38\",\"DosTel1\",2.250257\r\n\"2022-03-01T07:14:10\",\"DosTel1\",2.018369\r\n\"2022-03-01T07:15:00\",\"DosTel1\",2.0739265\r\n\"2022-03-01T07:15:50\",\"DosTel1\",2.129484\r\n\"2022-03-01T07:17:30\",\"DosTel1\",2.427746\r\n\"2022-03-01T07:19:10\",\"DosTel1\",2.666356\r\n\"2022-03-01T07:20:00\",\"DosTel1\",2.75575733333333\r\n\"2022-03-01T07:20:50\",\"DosTel1\",3.17317\r\n\"2022-03-01T07:22:30\",\"DosTel1\",4.364209\r\n\"2022-03-01T07:24:22\",\"DosTel1\",4.399367\r\n\"2022-03-01T07:25:00\",\"DosTel1\",4.74491252564103\r\n\"2022-03-01T07:26:02\",\"DosTel1\",5.516846\r\n\"2022-03-01T07:27:42\",\"DosTel1\",5.852429\r\n\"2022-03-01T07:29:22\",\"DosTel1\",7.625698\r\n\"2022-03-01T07:30:00\",\"DosTel1\",7.92236333333333\r\n\"2022-03-01T07:31:02\",\"DosTel1\",10.288963\r\n\"2022-03-01T07:32:42\",\"DosTel1\",10.019909\r\n\"2022-03-01T07:34:34\",\"DosTel1\",11.035778\r\n\"2022-03-01T07:35:00\",\"DosTel1\",10.4625275897436\r\n\"2022-03-01T07:36:14\",\"DosTel1\",10.38501\r\n\"2022-03-01T07:37:54\",\"DosTel1\",10.222511\r\n\"2022-03-01T07:39:34\",\"DosTel1\",10.6706\r\n\"2022-03-01T07:40:00\",\"DosTel1\",10.054732\r\n\"2022-03-01T07:41:14\",\"DosTel1\",9.271085\r\n\"2022-03-01T07:42:54\",\"DosTel1\",7.767334\r\n\"2022-03-01T07:44:46\",\"DosTel1\",7.02137\r\n\"2022-03-01T07:45:00\",\"DosTel1\",6.84502278205128\r\n\"2022-03-01T07:46:26\",\"DosTel1\",5.635687\r\n\"2022-03-01T07:48:06\",\"DosTel1\",4.110223\r\n\"2022-03-01T07:49:46\",\"DosTel1\",3.327478\r\n\"2022-03-01T07:50:00\",\"DosTel1\",3.55470333333333\r\n\"2022-03-01T07:51:26\",\"DosTel1\",3.226409\r\n\"2022-03-01T07:53:06\",\"DosTel1\",2.870426\r\n\"2022-03-01T07:54:58\",\"DosTel1\",2.074004\r\n\"2022-03-01T07:55:00\",\"DosTel1\",2.2712118974359\r\n\"2022-03-01T07:56:38\",\"DosTel1\",1.7973\r\n\"2022-03-01T07:58:18\",\"DosTel1\",1.551118\r\n\"2022-03-01T07:59:58\",\"DosTel1\",1.748543\r\n\"2022-03-01T08:00:00\",\"DosTel1\",1.68273466666667\r\n\"2022-03-01T08:03:18\",\"DosTel1\",2.138061\r\n\"2022-03-01T08:05:00\",\"DosTel1\",2.23801644871795\r\n\"2022-03-01T08:05:10\",\"DosTel1\",1.98723\r\n\"2022-03-01T08:06:50\",\"DosTel1\",2.600753\r\n\"2022-03-01T08:08:30\",\"DosTel1\",2.875835\r\n\"2022-03-01T08:10:00\",\"DosTel1\",4.018246\r\n\"2022-03-01T08:10:10\",\"DosTel1\",3.064451\r\n\"2022-03-01T08:11:50\",\"DosTel1\",6.114452\r\n\"2022-03-01T08:13:30\",\"DosTel1\",6.083544\r\n\"2022-03-01T08:15:00\",\"DosTel1\",8.63784783386581\r\n\"2022-03-01T08:15:23\",\"DosTel1\",9.498877\r\n\"2022-03-01T08:17:03\",\"DosTel1\",10.663182\r\n\"2022-03-01T08:18:43\",\"DosTel1\",11.254838\r\n\"2022-03-01T08:20:00\",\"DosTel1\",12.9175853333333\r\n\"2022-03-01T08:20:23\",\"DosTel1\",14.499405\r\n\"2022-03-01T08:22:03\",\"DosTel1\",12.998513\r\n\"2022-03-01T08:23:43\",\"DosTel1\",13.357818\r\n\"2022-03-01T08:25:00\",\"DosTel1\",13.2345812587859\r\n\"2022-03-01T08:25:36\",\"DosTel1\",13.428984\r\n\"2022-03-01T08:27:16\",\"DosTel1\",12.900921\r\n\"2022-03-01T08:28:56\",\"DosTel1\",11.608039\r\n\"2022-03-01T08:30:00\",\"DosTel1\",10.762485370607\r\n\"2022-03-01T08:30:36\",\"DosTel1\",10.879769\r\n\"2022-03-01T08:32:16\",\"DosTel1\",9.910417\r\n\"2022-03-01T08:34:09\",\"DosTel1\",7.185182\r\n\"2022-03-01T08:35:00\",\"DosTel1\",5.44508733333333\r\n\"2022-03-01T08:35:49\",\"DosTel1\",5.184198\r\n\"2022-03-01T08:37:29\",\"DosTel1\",3.965882\r\n\"2022-03-01T08:39:09\",\"DosTel1\",3.334587\r\n\"2022-03-01T08:40:00\",\"DosTel1\",3.17362977316294\r\n\"2022-03-01T08:40:49\",\"DosTel1\",3.098063\r\n\"2022-03-01T08:44:22\",\"DosTel1\",2.02401\r\n\"2022-03-01T08:45:00\",\"DosTel1\",2.3978035\r\n\"2022-03-01T08:46:02\",\"DosTel1\",2.771597\r\n\"2022-03-01T08:47:42\",\"DosTel1\",2.851649\r\n\"2022-03-01T08:49:22\",\"DosTel1\",2.573013\r\n\"2022-03-01T08:50:00\",\"DosTel1\",2.49654166666667\r\n\"2022-03-01T08:51:02\",\"DosTel1\",2.064963\r\n\"2022-03-01T08:52:42\",\"DosTel1\",1.879824\r\n\"2022-03-01T08:54:35\",\"DosTel1\",2.072999\r\n\"2022-03-01T08:55:00\",\"DosTel1\",2.20196361661342\r\n\"2022-03-01T08:56:15\",\"DosTel1\",2.694946\r\n\"2022-03-01T08:57:55\",\"DosTel1\",3.394007\r\n\"2022-03-01T08:59:35\",\"DosTel1\",5.366015\r\n\"2022-03-01T09:00:00\",\"DosTel1\",4.94221466666667\r\n\"2022-03-01T09:01:15\",\"DosTel1\",6.066622\r\n\"2022-03-01T09:02:55\",\"DosTel1\",7.356953\r\n\"2022-03-01T09:04:48\",\"DosTel1\",9.026758\r\n\"2022-03-01T09:05:00\",\"DosTel1\",9.25700507667732\r\n\"2022-03-01T09:06:28\",\"DosTel1\",11.634311\r\n\"2022-03-01T09:08:08\",\"DosTel1\",13.039157\r\n\"2022-03-01T09:09:48\",\"DosTel1\",11.271065\r\n\"2022-03-01T09:10:00\",\"DosTel1\",11.9912213333333\r\n\"2022-03-01T09:11:28\",\"DosTel1\",11.663442\r\n\"2022-03-01T09:13:08\",\"DosTel1\",11.053704\r\n\"2022-03-01T09:15:00\",\"DosTel1\",10.1122485512821\r\n\"2022-03-01T09:15:00\",\"DosTel1\",9.853933\r\n\"2022-03-01T09:16:40\",\"DosTel1\",9.316134\r\n\"2022-03-01T09:18:20\",\"DosTel1\",7.677624\r\n\"2022-03-01T09:20:00\",\"DosTel1\",5.61126966666667\r\n\"2022-03-01T09:20:00\",\"DosTel1\",4.474783\r\n\"2022-03-01T09:21:40\",\"DosTel1\",4.681402\r\n\"2022-03-01T09:23:20\",\"DosTel1\",2.981617\r\n\"2022-03-01T09:25:00\",\"DosTel1\",2.6771436025641\r\n\"2022-03-01T09:25:12\",\"DosTel1\",2.937496\r\n\"2022-03-01T09:26:52\",\"DosTel1\",2.075781\r\n\"2022-03-01T09:28:32\",\"DosTel1\",2.653374\r\n\"2022-03-01T09:30:00\",\"DosTel1\",2.28552123300971\r\n\"2022-03-01T09:30:12\",\"DosTel1\",1.805027\r\n\"2022-03-01T09:31:52\",\"DosTel1\",2.338654\r\n\"2022-03-01T09:35:00\",\"DosTel1\",2.112639\r\n\"2022-03-01T09:35:24\",\"DosTel1\",2.05345\r\n\"2022-03-01T09:37:04\",\"DosTel1\",2.171828\r\n\"2022-03-01T09:38:44\",\"DosTel1\",2.445518\r\n\"2022-03-01T09:40:00\",\"DosTel1\",2.91794666666667\r\n\"2022-03-01T09:40:24\",\"DosTel1\",2.818268\r\n\"2022-03-01T09:42:04\",\"DosTel1\",3.490054\r\n\"2022-03-01T09:43:44\",\"DosTel1\",4.162303\r\n\"2022-03-01T09:45:00\",\"DosTel1\",4.62567511538462\r\n\"2022-03-01T09:45:36\",\"DosTel1\",4.192979\r\n\"2022-03-01T09:47:16\",\"DosTel1\",5.577348\r\n\"2022-03-01T09:48:56\",\"DosTel1\",7.923729\r\n\"2022-03-01T09:50:00\",\"DosTel1\",8.9970217051282\r\n\"2022-03-01T09:50:36\",\"DosTel1\",8.337664\r\n\"2022-03-01T09:52:16\",\"DosTel1\",10.544031\r\n\"2022-03-01T09:54:08\",\"DosTel1\",11.889997\r\n\"2022-03-01T09:55:00\",\"DosTel1\",11.4683863333333\r\n\"2022-03-01T09:55:48\",\"DosTel1\",11.747125\r\n\"2022-03-01T09:57:28\",\"DosTel1\",10.768037\r\n\"2022-03-01T09:59:08\",\"DosTel1\",11.874466\r\n\"2022-03-01T10:00:00\",\"DosTel1\",13.0285221538462\r\n\"2022-03-01T10:00:48\",\"DosTel1\",15.706362\r\n\"2022-03-01T10:02:28\",\"DosTel1\",11.668001\r\n\"2022-03-01T10:04:20\",\"DosTel1\",12.858809\r\n\"2022-03-01T10:05:00\",\"DosTel1\",12.3193485\r\n\"2022-03-01T10:06:00\",\"DosTel1\",11.779888\r\n\"2022-03-01T10:07:40\",\"DosTel1\",8.005558\r\n\"2022-03-01T10:09:20\",\"DosTel1\",7.280224\r\n\"2022-03-01T10:10:00\",\"DosTel1\",6.75666866666667\r\n\"2022-03-01T10:11:00\",\"DosTel1\",4.984224\r\n\"2022-03-01T10:12:40\",\"DosTel1\",3.595605\r\n\"2022-03-01T10:14:33\",\"DosTel1\",3.686706\r\n\"2022-03-01T10:15:00\",\"DosTel1\",3.40235579872204\r\n\"2022-03-01T10:16:13\",\"DosTel1\",2.899634\r\n\"2022-03-01T10:17:53\",\"DosTel1\",2.175768\r\n\"2022-03-01T10:20:00\",\"DosTel1\",2.28623833333333\r\n\"2022-03-01T10:21:13\",\"DosTel1\",2.507179\r\n\"2022-03-01T10:22:53\",\"DosTel1\",1.983057\r\n\"2022-03-01T10:24:46\",\"DosTel1\",2.017288\r\n\"2022-03-01T10:25:00\",\"DosTel1\",2.1242908658147\r\n\"2022-03-01T10:26:26\",\"DosTel1\",2.390888\r\n\"2022-03-01T10:28:06\",\"DosTel1\",2.207835\r\n\"2022-03-01T10:29:46\",\"DosTel1\",2.253038\r\n\"2022-03-01T10:30:00\",\"DosTel1\",2.38875\r\n\"2022-03-01T10:31:26\",\"DosTel1\",2.705377\r\n\"2022-03-01T10:33:06\",\"DosTel1\",3.354754\r\n\"2022-03-01T10:34:59\",\"DosTel1\",6.083157\r\n\"2022-03-01T10:35:00\",\"DosTel1\",5.34439457507987\r\n\"2022-03-01T10:36:39\",\"DosTel1\",6.853926\r\n\"2022-03-01T10:38:19\",\"DosTel1\",9.110518\r\n\"2022-03-01T10:39:59\",\"DosTel1\",11.146428\r\n\"2022-03-01T10:40:00\",\"DosTel1\",11.0302396666667\r\n\"2022-03-01T10:41:39\",\"DosTel1\",12.833773\r\n\"2022-03-01T10:43:19\",\"DosTel1\",12.354235\r\n\"2022-03-01T10:45:00\",\"DosTel1\",12.6183356389776\r\n\"2022-03-01T10:45:12\",\"DosTel1\",12.678151\r\n\"2022-03-01T10:46:52\",\"DosTel1\",12.856954\r\n\"2022-03-01T10:48:32\",\"DosTel1\",13.567915\r\n\"2022-03-01T10:50:00\",\"DosTel1\",10.2433996666667\r\n\"2022-03-01T10:50:12\",\"DosTel1\",9.830675\r\n\"2022-03-01T10:51:52\",\"DosTel1\",7.331609\r\n\"2022-03-01T10:53:32\",\"DosTel1\",6.544614\r\n\"2022-03-01T10:55:00\",\"DosTel1\",4.51016639616613\r\n\"2022-03-01T10:55:25\",\"DosTel1\",4.096623\r\n\"2022-03-01T10:57:05\",\"DosTel1\",2.624784\r\n\"2022-03-01T10:58:45\",\"DosTel1\",2.453168\r\n\"2022-03-01T11:00:00\",\"DosTel1\",2.539092\r\n\"2022-03-01T11:00:25\",\"DosTel1\",2.921269\r\n\"2022-03-01T11:02:05\",\"DosTel1\",2.242839\r\n\"2022-03-01T11:03:45\",\"DosTel1\",2.186818\r\n\"2022-03-01T11:05:00\",\"DosTel1\",2.10493141853035\r\n\"2022-03-01T11:07:18\",\"DosTel1\",1.930513\r\n\"2022-03-01T11:08:58\",\"DosTel1\",2.524952\r\n\"2022-03-01T11:10:00\",\"DosTel1\",2.4380875\r\n\"2022-03-01T11:10:38\",\"DosTel1\",2.417933\r\n\"2022-03-01T11:12:18\",\"DosTel1\",2.378525\r\n\"2022-03-01T11:14:10\",\"DosTel1\",2.87228\r\n\"2022-03-01T11:15:00\",\"DosTel1\",3.178501\r\n\"2022-03-01T11:15:50\",\"DosTel1\",3.484722\r\n\"2022-03-01T11:17:30\",\"DosTel1\",4.283848\r\n\"2022-03-01T11:19:10\",\"DosTel1\",4.441634\r\n\"2022-03-01T11:20:00\",\"DosTel1\",5.03017333333333\r\n\"2022-03-01T11:20:50\",\"DosTel1\",6.365038\r\n\"2022-03-01T11:22:30\",\"DosTel1\",6.467421\r\n\"2022-03-01T11:24:22\",\"DosTel1\",9.494009\r\n\"2022-03-01T11:25:00\",\"DosTel1\",8.85058093589744\r\n\"2022-03-01T11:26:02\",\"DosTel1\",10.876292\r\n\"2022-03-01T11:27:42\",\"DosTel1\",10.461121\r\n\"2022-03-01T11:29:22\",\"DosTel1\",14.031767\r\n\"2022-03-01T11:30:00\",\"DosTel1\",12.0312986666667\r\n\"2022-03-01T11:31:02\",\"DosTel1\",11.601008\r\n\"2022-03-01T11:32:42\",\"DosTel1\",14.147054\r\n\"2022-03-01T11:34:34\",\"DosTel1\",14.136468\r\n\"2022-03-01T11:35:00\",\"DosTel1\",13.2373732307692\r\n\"2022-03-01T11:36:14\",\"DosTel1\",11.319436\r\n\"2022-03-01T11:37:54\",\"DosTel1\",13.481373\r\n\"2022-03-01T11:39:34\",\"DosTel1\",10.495119\r\n\"2022-03-01T11:40:00\",\"DosTel1\",10.920336\r\n\"2022-03-01T11:41:14\",\"DosTel1\",8.784516\r\n\"2022-03-01T11:42:54\",\"DosTel1\",7.293978\r\n\"2022-03-01T11:44:46\",\"DosTel1\",4.930675\r\n\"2022-03-01T11:45:00\",\"DosTel1\",5.52437126923077\r\n\"2022-03-01T11:46:26\",\"DosTel1\",4.136108\r\n\"2022-03-01T11:48:06\",\"DosTel1\",2.911842\r\n\"2022-03-01T11:50:00\",\"DosTel1\",2.66141\r\n\"2022-03-01T11:51:26\",\"DosTel1\",2.160546\r\n\"2022-03-01T11:53:06\",\"DosTel1\",2.061563\r\n\"2022-03-01T11:54:58\",\"DosTel1\",2.525415\r\n\"2022-03-01T11:55:00\",\"DosTel1\",2.24084441025641\r\n\"2022-03-01T11:56:38\",\"DosTel1\",2.157069\r\n\"2022-03-01T11:58:18\",\"DosTel1\",1.779142\r\n\"2022-03-01T11:59:58\",\"DosTel1\",2.834804\r\n\"2022-03-01T12:00:00\",\"DosTel1\",2.26179566666667\r\n\"2022-03-01T12:01:38\",\"DosTel1\",2.171441\r\n\"2022-03-01T12:03:18\",\"DosTel1\",2.773993\r\n\"2022-03-01T12:05:00\",\"DosTel1\",3.17019268051118\r\n\"2022-03-01T12:05:11\",\"DosTel1\",3.499326\r\n\"2022-03-01T12:06:51\",\"DosTel1\",3.288765\r\n\"2022-03-01T12:08:31\",\"DosTel1\",4.578479\r\n\"2022-03-01T12:10:00\",\"DosTel1\",6.14685366666667\r\n\"2022-03-01T12:10:11\",\"DosTel1\",5.542886\r\n\"2022-03-01T12:11:51\",\"DosTel1\",8.319196\r\n\"2022-03-01T12:13:31\",\"DosTel1\",9.990237\r\n\"2022-03-01T12:15:00\",\"DosTel1\",10.7255858817891\r\n\"2022-03-01T12:15:24\",\"DosTel1\",10.46313\r\n\"2022-03-01T12:17:04\",\"DosTel1\",11.818986\r\n\"2022-03-01T12:18:44\",\"DosTel1\",12.363276\r\n\"2022-03-01T12:20:00\",\"DosTel1\",12.0873446666667\r\n\"2022-03-01T12:20:24\",\"DosTel1\",11.760106\r\n\"2022-03-01T12:22:04\",\"DosTel1\",12.138652\r\n\"2022-03-01T12:23:44\",\"DosTel1\",11.324922\r\n\"2022-03-01T12:25:00\",\"DosTel1\",9.20619356549521\r\n\"2022-03-01T12:25:37\",\"DosTel1\",9.081079\r\n\"2022-03-01T12:27:17\",\"DosTel1\",6.937145\r\n\"2022-03-01T12:28:57\",\"DosTel1\",6.922696\r\n\"2022-03-01T12:30:00\",\"DosTel1\",4.37017214057508\r\n\"2022-03-01T12:30:37\",\"DosTel1\",4.028394\r\n\"2022-03-01T12:32:17\",\"DosTel1\",2.41376\r\n\"2022-03-01T12:34:10\",\"DosTel1\",2.204513\r\n\"2022-03-01T12:35:00\",\"DosTel1\",2.312021\r\n\"2022-03-01T12:35:50\",\"DosTel1\",2.365775\r\n\"2022-03-01T12:39:10\",\"DosTel1\",2.619066\r\n\"2022-03-01T12:40:00\",\"DosTel1\",2.3134635\r\n\"2022-03-01T12:40:50\",\"DosTel1\",2.007861\r\n\"2022-03-01T12:42:30\",\"DosTel1\",2.763175\r\n\"2022-03-01T12:44:23\",\"DosTel1\",2.639852\r\n\"2022-03-01T12:45:00\",\"DosTel1\",2.83197723642172\r\n\"2022-03-01T12:46:03\",\"DosTel1\",3.101849\r\n\"2022-03-01T12:47:43\",\"DosTel1\",3.250517\r\n\"2022-03-01T12:49:23\",\"DosTel1\",4.226591\r\n\"2022-03-01T12:50:00\",\"DosTel1\",6.62033833333333\r\n\"2022-03-01T12:51:03\",\"DosTel1\",12.383907\r\n\"2022-03-01T12:52:43\",\"DosTel1\",10.651514\r\n\"2022-03-01T12:54:36\",\"DosTel1\",8.148971\r\n\"2022-03-01T12:55:00\",\"DosTel1\",8.62049834504792\r\n\"2022-03-01T12:56:16\",\"DosTel1\",6.796978\r\n\"2022-03-01T12:57:56\",\"DosTel1\",8.850273\r\n\"2022-03-01T12:59:36\",\"DosTel1\",9.430957\r\n\"2022-03-01T13:00:00\",\"DosTel1\",9.842085\r\n\"2022-03-01T13:01:16\",\"DosTel1\",11.245025\r\n\"2022-03-01T13:02:56\",\"DosTel1\",11.120697\r\n\"2022-03-01T13:04:49\",\"DosTel1\",11.453345\r\n\"2022-03-01T13:05:00\",\"DosTel1\",11.5781701629393\r\n\"2022-03-01T13:06:29\",\"DosTel1\",12.21994\r\n\"2022-03-01T13:08:09\",\"DosTel1\",12.338086\r\n\"2022-03-01T13:09:49\",\"DosTel1\",15.440167\r\n\"2022-03-01T13:10:00\",\"DosTel1\",13.0708373333333\r\n\"2022-03-01T13:11:29\",\"DosTel1\",11.434259\r\n\"2022-03-01T13:13:09\",\"DosTel1\",9.340474\r\n\"2022-03-01T13:15:00\",\"DosTel1\",8.24069732268371\r\n\"2022-03-01T13:15:02\",\"DosTel1\",9.300216\r\n\"2022-03-01T13:16:42\",\"DosTel1\",5.938431\r\n\"2022-03-01T13:18:22\",\"DosTel1\",4.928744\r\n\"2022-03-01T13:20:00\",\"DosTel1\",3.32102253398058\r\n\"2022-03-01T13:20:02\",\"DosTel1\",3.581001\r\n\"2022-03-01T13:21:42\",\"DosTel1\",2.440032\r\n\"2022-03-01T13:25:00\",\"DosTel1\",2.5837925\r\n\"2022-03-01T13:25:14\",\"DosTel1\",2.473103\r\n\"2022-03-01T13:26:54\",\"DosTel1\",2.694482\r\n\"2022-03-01T13:28:34\",\"DosTel1\",1.68804\r\n\"2022-03-01T13:30:00\",\"DosTel1\",2.27026933333333\r\n\"2022-03-01T13:30:14\",\"DosTel1\",2.951327\r\n\"2022-03-01T13:31:54\",\"DosTel1\",2.171441\r\n\"2022-03-01T13:33:34\",\"DosTel1\",1.846444\r\n\"2022-03-01T13:35:00\",\"DosTel1\",2.25770842307692\r\n\"2022-03-01T13:35:26\",\"DosTel1\",2.447682\r\n\"2022-03-01T13:37:06\",\"DosTel1\",2.528351\r\n\"2022-03-01T13:38:46\",\"DosTel1\",2.216876\r\n\"2022-03-01T13:40:00\",\"DosTel1\",3.28835333333333\r\n\"2022-03-01T13:40:26\",\"DosTel1\",3.585869\r\n\"2022-03-01T13:42:06\",\"DosTel1\",4.062315\r\n\"2022-03-01T13:43:46\",\"DosTel1\",4.677307\r\n\"2022-03-01T13:45:00\",\"DosTel1\",7.09816116666667\r\n\"2022-03-01T13:45:38\",\"DosTel1\",7.032651\r\n\"2022-03-01T13:47:18\",\"DosTel1\",9.875028\r\n\"2022-03-01T13:48:58\",\"DosTel1\",9.395181\r\n\"2022-03-01T13:50:00\",\"DosTel1\",10.6311127435897\r\n\"2022-03-01T13:50:38\",\"DosTel1\",10.688681\r\n\"2022-03-01T13:52:18\",\"DosTel1\",11.683223\r\n\"2022-03-01T13:54:10\",\"DosTel1\",11.470035\r\n\"2022-03-01T13:55:00\",\"DosTel1\",10.607895\r\n\"2022-03-01T13:55:50\",\"DosTel1\",9.745755\r\n\"2022-03-01T13:57:30\",\"DosTel1\",10.429517\r\n\"2022-03-01T13:59:10\",\"DosTel1\",9.375168\r\n\"2022-03-01T14:00:00\",\"DosTel1\",9.24002266666667\r\n\"2022-03-01T14:00:50\",\"DosTel1\",7.915383\r\n\"2022-03-01T14:02:30\",\"DosTel1\",5.646427\r\n\"2022-03-01T14:04:22\",\"DosTel1\",5.177939\r\n\"2022-03-01T14:05:00\",\"DosTel1\",4.91218885897436\r\n\"2022-03-01T14:06:02\",\"DosTel1\",3.824092\r\n\"2022-03-01T14:07:42\",\"DosTel1\",2.678719\r\n\"2022-03-01T14:09:22\",\"DosTel1\",2.478667\r\n\"2022-03-01T14:10:00\",\"DosTel1\",2.545351\r\n\"2022-03-01T14:12:42\",\"DosTel1\",2.421332\r\n\"2022-03-01T14:14:35\",\"DosTel1\",2.517534\r\n\"2022-03-01T14:15:00\",\"DosTel1\",3.0539588370607\r\n\"2022-03-01T14:16:15\",\"DosTel1\",4.305252\r\n\"2022-03-01T14:17:55\",\"DosTel1\",6.511929\r\n\"2022-03-01T14:19:35\",\"DosTel1\",16.240607\r\n\"2022-03-01T14:20:00\",\"DosTel1\",25.7992515517241\r\n\"2022-03-01T14:21:45\",\"DosTel1\",64.733709\r\n\"2022-03-01T14:22:05\",\"DosTel1\",78.628012\r\n\"2022-03-01T14:22:25\",\"DosTel1\",92.603836\r\n\"2022-03-01T14:22:45\",\"DosTel1\",96.88923\r\n\"2022-03-01T14:23:05\",\"DosTel1\",108.615337\r\n\"2022-03-01T14:23:25\",\"DosTel1\",103.68783\r\n\"2022-03-01T14:23:45\",\"DosTel1\",102.701092\r\n\"2022-03-01T14:24:05\",\"DosTel1\",95.637456\r\n\"2022-03-01T14:24:25\",\"DosTel1\",89.839116\r\n\"2022-03-01T14:24:58\",\"DosTel1\",67.143373\r\n\"2022-03-01T14:25:00\",\"DosTel1\",54.1364016300268\r\n\"2022-03-01T14:25:18\",\"DosTel1\",54.663883\r\n\"2022-03-01T14:25:38\",\"DosTel1\",50.824724\r\n\"2022-03-01T14:25:58\",\"DosTel1\",36.339691\r\n\"2022-03-01T14:26:18\",\"DosTel1\",27.164266\r\n\"2022-03-01T14:27:18\",\"DosTel1\",12.682787\r\n\"2022-03-01T14:28:58\",\"DosTel1\",7.394352\r\n\"2022-03-01T14:30:00\",\"DosTel1\",7.86639070607029\r\n\"2022-03-01T14:30:38\",\"DosTel1\",7.297455\r\n\"2022-03-01T14:32:18\",\"DosTel1\",8.787607\r\n\"2022-03-01T14:34:11\",\"DosTel1\",9.621196\r\n\"2022-03-01T14:35:00\",\"DosTel1\",10.0333155\r\n\"2022-03-01T14:35:51\",\"DosTel1\",10.445435\r\n\"2022-03-01T14:37:31\",\"DosTel1\",9.959716\r\n\"2022-03-01T14:39:11\",\"DosTel1\",13.351791\r\n\"2022-03-01T14:40:00\",\"DosTel1\",11.7303576666667\r\n\"2022-03-01T14:40:51\",\"DosTel1\",11.879566\r\n\"2022-03-01T14:42:31\",\"DosTel1\",11.456744\r\n\"2022-03-01T14:44:24\",\"DosTel1\",10.506092\r\n\"2022-03-01T14:45:00\",\"DosTel1\",11.1616618913738\r\n\"2022-03-01T14:46:04\",\"DosTel1\",11.483789\r\n\"2022-03-01T14:47:44\",\"DosTel1\",8.159634\r\n\"2022-03-01T14:49:24\",\"DosTel1\",6.760352\r\n\"2022-03-01T14:50:00\",\"DosTel1\",6.49588233333333\r\n\"2022-03-01T14:51:04\",\"DosTel1\",4.567661\r\n\"2022-03-01T14:52:44\",\"DosTel1\",3.622263\r\n\"2022-03-01T14:54:37\",\"DosTel1\",3.101695\r\n\"2022-03-01T14:55:00\",\"DosTel1\",2.96699846325879\r\n\"2022-03-01T14:56:17\",\"DosTel1\",2.091853\r\n\"2022-03-01T14:57:57\",\"DosTel1\",1.758201\r\n\"2022-03-01T14:59:37\",\"DosTel1\",2.043869\r\n\"2022-03-01T15:00:00\",\"DosTel1\",1.94864633333333\r\n\"2022-03-01T15:02:57\",\"DosTel1\",1.905246\r\n\"2022-03-01T15:04:50\",\"DosTel1\",1.551659\r\n\"2022-03-01T15:05:00\",\"DosTel1\",1.75507571246006\r\n\"2022-03-01T15:06:30\",\"DosTel1\",1.7888\r\n\"2022-03-01T15:08:10\",\"DosTel1\",1.822567\r\n\"2022-03-01T15:09:50\",\"DosTel1\",2.092935\r\n\"2022-03-01T15:10:00\",\"DosTel1\",2.31951633333333\r\n\"2022-03-01T15:11:30\",\"DosTel1\",3.043047\r\n\"2022-03-01T15:13:10\",\"DosTel1\",2.677483\r\n\"2022-03-01T15:15:00\",\"DosTel1\",3.76953220127796\r\n\"2022-03-01T15:15:03\",\"DosTel1\",3.833905\r\n\"2022-03-01T15:16:43\",\"DosTel1\",4.939175\r\n\"2022-03-01T15:18:23\",\"DosTel1\",4.896599\r\n\"2022-03-01T15:20:00\",\"DosTel1\",6.858098\r\n\"2022-03-01T15:20:03\",\"DosTel1\",7.463122\r\n\"2022-03-01T15:21:43\",\"DosTel1\",8.214573\r\n\"2022-03-01T15:23:23\",\"DosTel1\",8.829565\r\n\"2022-03-01T15:25:00\",\"DosTel1\",9.07767076923077\r\n\"2022-03-01T15:25:15\",\"DosTel1\",8.919584\r\n\"2022-03-01T15:26:55\",\"DosTel1\",9.513636\r\n\"2022-03-01T15:28:35\",\"DosTel1\",9.80108\r\n\"2022-03-01T15:30:00\",\"DosTel1\",9.37583766666667\r\n\"2022-03-01T15:30:15\",\"DosTel1\",9.429566\r\n\"2022-03-01T15:31:55\",\"DosTel1\",8.896867\r\n\"2022-03-01T15:33:35\",\"DosTel1\",7.542092\r\n\"2022-03-01T15:35:00\",\"DosTel1\",7.48713655128205\r\n\"2022-03-01T15:35:27\",\"DosTel1\",7.33385\r\n\"2022-03-01T15:37:07\",\"DosTel1\",7.578873\r\n\"2022-03-01T15:38:47\",\"DosTel1\",4.907185\r\n\"2022-03-01T15:40:00\",\"DosTel1\",4.19413766666667\r\n\"2022-03-01T15:40:27\",\"DosTel1\",4.273726\r\n\"2022-03-01T15:42:07\",\"DosTel1\",3.401502\r\n\"2022-03-01T15:43:47\",\"DosTel1\",2.66821\r\n\"2022-03-01T15:45:00\",\"DosTel1\",2.49616032051282\r\n\"2022-03-01T15:47:19\",\"DosTel1\",2.131415\r\n\"2022-03-01T15:48:59\",\"DosTel1\",6.803314\r\n\"2022-03-01T15:50:00\",\"DosTel1\",74.925656\r\n\"2022-03-01T15:50:39\",\"DosTel1\",60.792166\r\n\"2022-03-01T15:50:59\",\"DosTel1\",79.212174\r\n\"2022-03-01T15:51:19\",\"DosTel1\",108.66479\r\n\"2022-03-01T15:51:39\",\"DosTel1\",140.984896\r\n\"2022-03-01T15:51:59\",\"DosTel1\",183.503096\r\n\"2022-03-01T15:52:19\",\"DosTel1\",217.008524\r\n\"2022-03-01T15:52:39\",\"DosTel1\",258.963425\r\n\"2022-03-01T15:52:59\",\"DosTel1\",306.538173\r\n\"2022-03-01T15:53:19\",\"DosTel1\",341.538775\r\n\"2022-03-01T15:53:39\",\"DosTel1\",388.608177\r\n\"2022-03-01T15:53:59\",\"DosTel1\",454.785289\r\n\"2022-03-01T15:54:19\",\"DosTel1\",483.449366\r\n\"2022-03-01T15:54:51\",\"DosTel1\",499.324486\r\n\"2022-03-01T15:55:00\",\"DosTel1\",509.909707232877\r\n\"2022-03-01T15:55:11\",\"DosTel1\",621.439663\r\n\"2022-03-01T15:55:31\",\"DosTel1\",661.167644\r\n\"2022-03-01T15:55:51\",\"DosTel1\",661.013104\r\n\"2022-03-01T15:56:11\",\"DosTel1\",651.339287\r\n\"2022-03-01T15:56:31\",\"DosTel1\",638.409313\r\n\"2022-03-01T15:56:51\",\"DosTel1\",609.814393\r\n\"2022-03-01T15:57:11\",\"DosTel1\",578.221011\r\n\"2022-03-01T15:57:31\",\"DosTel1\",544.211397\r\n\"2022-03-01T15:57:51\",\"DosTel1\",499.647474\r\n\"2022-03-01T15:58:11\",\"DosTel1\",434.844995\r\n\"2022-03-01T15:58:31\",\"DosTel1\",384.133858\r\n\"2022-03-01T15:58:51\",\"DosTel1\",325.018451\r\n\"2022-03-01T15:59:11\",\"DosTel1\",262.923898\r\n\"2022-03-01T15:59:31\",\"DosTel1\",211.27084\r\n\"2022-03-01T15:59:51\",\"DosTel1\",150.03244\r\n\"2022-03-01T16:00:00\",\"DosTel1\",200.53629975\r\n\"2022-03-01T16:00:11\",\"DosTel1\",119.052195\r\n\"2022-03-01T16:00:31\",\"DosTel1\",85.012832\r\n\"2022-03-01T16:00:51\",\"DosTel1\",63.52057\r\n\"2022-03-01T16:01:11\",\"DosTel1\",42.232687\r\n\"2022-03-01T16:01:31\",\"DosTel1\",29.090607\r\n\"2022-03-01T16:01:51\",\"DosTel1\",19.196184\r\n\"2022-03-01T16:02:51\",\"DosTel1\",9.056739\r\n\"2022-03-01T16:04:43\",\"DosTel1\",6.327717\r\n\"2022-03-01T16:05:00\",\"DosTel1\",8.10037393589744\r\n\"2022-03-01T16:06:23\",\"DosTel1\",8.801902\r\n\"2022-03-01T16:08:03\",\"DosTel1\",9.835156\r\n\"2022-03-01T16:09:43\",\"DosTel1\",8.263176\r\n\"2022-03-01T16:10:00\",\"DosTel1\",9.425548\r\n\"2022-03-01T16:11:23\",\"DosTel1\",10.178312\r\n\"2022-03-01T16:13:03\",\"DosTel1\",9.678762\r\n\"2022-03-01T16:14:56\",\"DosTel1\",10.381764\r\n\"2022-03-01T16:15:00\",\"DosTel1\",10.1257182300319\r\n\"2022-03-01T16:16:36\",\"DosTel1\",10.374733\r\n\"2022-03-01T16:18:16\",\"DosTel1\",8.584155\r\n\"2022-03-01T16:19:56\",\"DosTel1\",7.538538\r\n\"2022-03-01T16:20:00\",\"DosTel1\",7.97647833333333\r\n\"2022-03-01T16:21:36\",\"DosTel1\",7.806742\r\n\"2022-03-01T16:23:16\",\"DosTel1\",6.023737\r\n\"2022-03-01T16:25:00\",\"DosTel1\",4.66511815015974\r\n\"2022-03-01T16:25:09\",\"DosTel1\",4.72421\r\n\"2022-03-01T16:26:49\",\"DosTel1\",3.070787\r\n\"2022-03-01T16:28:29\",\"DosTel1\",2.221899\r\n\"2022-03-01T16:30:00\",\"DosTel1\",2.022671\r\n\"2022-03-01T16:30:09\",\"DosTel1\",1.984062\r\n\"2022-03-01T16:31:49\",\"DosTel1\",1.862052\r\n\"2022-03-01T16:33:29\",\"DosTel1\",1.877043\r\n\"2022-03-01T16:35:00\",\"DosTel1\",1.75541041214057\r\n\"2022-03-01T16:37:02\",\"DosTel1\",1.496333\r\n\"2022-03-01T16:38:42\",\"DosTel1\",1.939786\r\n\"2022-03-01T16:40:00\",\"DosTel1\",1.993231\r\n\"2022-03-01T16:40:22\",\"DosTel1\",1.699631\r\n\"2022-03-01T16:42:02\",\"DosTel1\",2.340276\r\n\"2022-03-01T16:43:42\",\"DosTel1\",2.69\r\n\"2022-03-01T16:45:00\",\"DosTel1\",2.78284760383387\r\n\"2022-03-01T16:45:35\",\"DosTel1\",2.700741\r\n\"2022-03-01T16:47:15\",\"DosTel1\",2.969872\r\n\"2022-03-01T16:48:55\",\"DosTel1\",5.340206\r\n\"2022-03-01T16:50:00\",\"DosTel1\",5.247843\r\n\"2022-03-01T16:50:35\",\"DosTel1\",4.847688\r\n\"2022-03-01T16:52:15\",\"DosTel1\",5.555635\r\n\"2022-03-01T16:53:55\",\"DosTel1\",6.113293\r\n\"2022-03-01T16:55:00\",\"DosTel1\",6.83368117891374\r\n\"2022-03-01T16:55:48\",\"DosTel1\",6.756565\r\n\"2022-03-01T16:57:28\",\"DosTel1\",7.724836\r\n\"2022-03-01T16:59:08\",\"DosTel1\",7.754044\r\n\"2022-03-01T17:00:00\",\"DosTel1\",8.50754190734824\r\n\"2022-03-01T17:00:48\",\"DosTel1\",8.707942\r\n\"2022-03-01T17:02:28\",\"DosTel1\",8.997009\r\n\"2022-03-01T17:04:21\",\"DosTel1\",8.084682\r\n\"2022-03-01T17:05:00\",\"DosTel1\",6.951904\r\n\"2022-03-01T17:06:01\",\"DosTel1\",5.819126\r\n\"2022-03-01T17:07:41\",\"DosTel1\",5.458043\r\n\"2022-03-01T17:09:21\",\"DosTel1\",4.273803\r\n\"2022-03-01T17:10:00\",\"DosTel1\",4.56372\r\n\"2022-03-01T17:11:01\",\"DosTel1\",3.959314\r\n\"2022-03-01T17:12:41\",\"DosTel1\",2.757921\r\n\"2022-03-01T17:14:34\",\"DosTel1\",3.105713\r\n\"2022-03-01T17:15:00\",\"DosTel1\",2.81462675079872\r\n\"2022-03-01T17:16:14\",\"DosTel1\",2.587618\r\n\"2022-03-01T17:17:54\",\"DosTel1\",2.627798\r\n\"2022-03-01T17:20:00\",\"DosTel1\",2.53860266666667\r\n\"2022-03-01T17:21:14\",\"DosTel1\",2.360212\r\n\"2022-03-01T17:22:54\",\"DosTel1\",3.622495\r\n\"2022-03-01T17:24:46\",\"DosTel1\",8.830724\r\n\"2022-03-01T17:25:00\",\"DosTel1\",23.5097849315068\r\n\"2022-03-01T17:26:26\",\"DosTel1\",49.146033\r\n\"2022-03-01T17:26:46\",\"DosTel1\",60.180188\r\n\"2022-03-01T17:27:06\",\"DosTel1\",73.683119\r\n\"2022-03-01T17:27:26\",\"DosTel1\",95.793928\r\n\"2022-03-01T17:27:46\",\"DosTel1\",116.595782\r\n\"2022-03-01T17:28:06\",\"DosTel1\",147.030114\r\n\"2022-03-01T17:28:26\",\"DosTel1\",167.180583\r\n\"2022-03-01T17:28:46\",\"DosTel1\",219.063905\r\n\"2022-03-01T17:29:06\",\"DosTel1\",243.341751\r\n\"2022-03-01T17:29:26\",\"DosTel1\",277.238551\r\n\"2022-03-01T17:29:46\",\"DosTel1\",315.411086\r\n\"2022-03-01T17:30:00\",\"DosTel1\",303.361139866667\r\n\"2022-03-01T17:30:06\",\"DosTel1\",366.152745\r\n\"2022-03-01T17:30:26\",\"DosTel1\",374.869959\r\n\"2022-03-01T17:30:46\",\"DosTel1\",401.913297\r\n\"2022-03-01T17:31:06\",\"DosTel1\",400.996102\r\n\"2022-03-01T17:31:26\",\"DosTel1\",396.888043\r\n\"2022-03-01T17:31:46\",\"DosTel1\",396.78991\r\n\"2022-03-01T17:32:06\",\"DosTel1\",374.662489\r\n\"2022-03-01T17:32:26\",\"DosTel1\",352.282781\r\n\"2022-03-01T17:32:46\",\"DosTel1\",313.932525\r\n\"2022-03-01T17:33:06\",\"DosTel1\",287.556027\r\n\"2022-03-01T17:33:26\",\"DosTel1\",245.638601\r\n\"2022-03-01T17:33:46\",\"DosTel1\",219.919284\r\n\"2022-03-01T17:34:06\",\"DosTel1\",172.239449\r\n\"2022-03-01T17:34:26\",\"DosTel1\",140.601251\r\n\"2022-03-01T17:34:58\",\"DosTel1\",95.05909\r\n\"2022-03-01T17:35:00\",\"DosTel1\",98.6556093333334\r\n\"2022-03-01T17:35:18\",\"DosTel1\",71.482856\r\n\"2022-03-01T17:35:38\",\"DosTel1\",47.100697\r\n\"2022-03-01T17:35:58\",\"DosTel1\",34.706203\r\n\"2022-03-01T17:36:18\",\"DosTel1\",22.899735\r\n\"2022-03-01T17:37:18\",\"DosTel1\",10.739679\r\n\"2022-03-01T17:38:58\",\"DosTel1\",7.985854\r\n\"2022-03-01T17:40:00\",\"DosTel1\",8.28765969230769\r\n\"2022-03-01T17:40:38\",\"DosTel1\",7.930606\r\n\"2022-03-01T17:42:18\",\"DosTel1\",8.875927\r\n\"2022-03-01T17:44:10\",\"DosTel1\",7.896839\r\n\"2022-03-01T17:45:00\",\"DosTel1\",8.9311365\r\n\"2022-03-01T17:45:50\",\"DosTel1\",9.965434\r\n\"2022-03-01T17:47:30\",\"DosTel1\",9.141736\r\n\"2022-03-01T17:49:10\",\"DosTel1\",8.675797\r\n\"2022-03-01T17:50:00\",\"DosTel1\",8.97277166666667\r\n\"2022-03-01T17:50:50\",\"DosTel1\",9.100782\r\n\"2022-03-01T17:52:30\",\"DosTel1\",6.711903\r\n\"2022-03-01T17:54:22\",\"DosTel1\",6.227961\r\n\"2022-03-01T17:55:00\",\"DosTel1\",5.92805844871795\r\n\"2022-03-01T17:56:02\",\"DosTel1\",4.75025\r\n\"2022-03-01T17:57:42\",\"DosTel1\",4.215774\r\n\"2022-03-01T17:59:22\",\"DosTel1\",3.047297\r\n\"2022-03-01T18:00:00\",\"DosTel1\",3.46038233333333\r\n\"2022-03-01T18:01:02\",\"DosTel1\",3.118076\r\n\"2022-03-01T18:02:42\",\"DosTel1\",2.601603\r\n\"2022-03-01T18:04:34\",\"DosTel1\",1.930745\r\n\"2022-03-01T18:05:00\",\"DosTel1\",1.94270785436893\r\n\"2022-03-01T18:06:14\",\"DosTel1\",1.579708\r\n\"2022-03-01T18:09:34\",\"DosTel1\",2.007397\r\n\"2022-03-01T18:10:00\",\"DosTel1\",1.9333725\r\n\"2022-03-01T18:11:14\",\"DosTel1\",1.859348\r\n\"2022-03-01T18:12:54\",\"DosTel1\",1.697776\r\n\"2022-03-01T18:14:47\",\"DosTel1\",1.934145\r\n\"2022-03-01T18:15:00\",\"DosTel1\",1.99241433865815\r\n\"2022-03-01T18:16:27\",\"DosTel1\",2.383625\r\n\"2022-03-01T18:18:07\",\"DosTel1\",2.419092\r\n\"2022-03-01T18:19:47\",\"DosTel1\",3.697678\r\n\"2022-03-01T18:20:00\",\"DosTel1\",3.46300933333333\r\n\"2022-03-01T18:21:27\",\"DosTel1\",4.272258\r\n\"2022-03-01T18:23:07\",\"DosTel1\",5.415854\r\n\"2022-03-01T18:25:00\",\"DosTel1\",5.46090767412141\r\n\"2022-03-01T18:25:00\",\"DosTel1\",5.312235\r\n\"2022-03-01T18:26:40\",\"DosTel1\",5.660491\r\n\"2022-03-01T18:28:20\",\"DosTel1\",5.778173\r\n\"2022-03-01T18:30:00\",\"DosTel1\",6.03754233333333\r\n\"2022-03-01T18:30:00\",\"DosTel1\",5.625719\r\n\"2022-03-01T18:31:40\",\"DosTel1\",6.708735\r\n\"2022-03-01T18:33:20\",\"DosTel1\",6.658123\r\n\"2022-03-01T18:35:00\",\"DosTel1\",6.07220415015974\r\n\"2022-03-01T18:35:13\",\"DosTel1\",5.97297\r\n\"2022-03-01T18:36:53\",\"DosTel1\",5.50935\r\n\"2022-03-01T18:38:33\",\"DosTel1\",6.4165\r\n\"2022-03-01T18:40:00\",\"DosTel1\",4.79228466666667\r\n\"2022-03-01T18:40:13\",\"DosTel1\",3.881735\r\n\"2022-03-01T18:41:53\",\"DosTel1\",4.078619\r\n\"2022-03-01T18:43:33\",\"DosTel1\",3.312333\r\n\"2022-03-01T18:45:00\",\"DosTel1\",2.76848060383387\r\n\"2022-03-01T18:45:26\",\"DosTel1\",2.425969\r\n\"2022-03-01T18:47:06\",\"DosTel1\",2.496439\r\n\"2022-03-01T18:48:46\",\"DosTel1\",2.491185\r\n\"2022-03-01T18:50:00\",\"DosTel1\",2.50341933333333\r\n\"2022-03-01T18:52:06\",\"DosTel1\",2.527888\r\n\"2022-03-01T18:53:46\",\"DosTel1\",2.251725\r\n\"2022-03-01T18:55:00\",\"DosTel1\",2.24064033546326\r\n\"2022-03-01T18:55:39\",\"DosTel1\",2.303032\r\n\"2022-03-01T18:57:19\",\"DosTel1\",2.165723\r\n\"2022-03-01T18:58:59\",\"DosTel1\",1.914055\r\n\"2022-03-01T19:00:00\",\"DosTel1\",2.45351180511182\r\n\"2022-03-01T19:00:39\",\"DosTel1\",3.05116\r\n\"2022-03-01T19:02:19\",\"DosTel1\",2.402015\r\n\"2022-03-01T19:04:12\",\"DosTel1\",2.459504\r\n\"2022-03-01T19:05:00\",\"DosTel1\",2.6378815\r\n\"2022-03-01T19:05:52\",\"DosTel1\",2.816259\r\n\"2022-03-01T19:07:32\",\"DosTel1\",3.141257\r\n\"2022-03-01T19:09:12\",\"DosTel1\",4.266154\r\n\"2022-03-01T19:10:00\",\"DosTel1\",4.09257966666667\r\n\"2022-03-01T19:10:52\",\"DosTel1\",4.870328\r\n\"2022-03-01T19:12:32\",\"DosTel1\",5.243078\r\n\"2022-03-01T19:14:25\",\"DosTel1\",6.244111\r\n\"2022-03-01T19:15:00\",\"DosTel1\",6.34248438977636\r\n\"2022-03-01T19:16:05\",\"DosTel1\",7.683187\r\n\"2022-03-01T19:17:45\",\"DosTel1\",7.775448\r\n\"2022-03-01T19:19:25\",\"DosTel1\",8.067992\r\n\"2022-03-01T19:20:00\",\"DosTel1\",8.010297\r\n\"2022-03-01T19:21:05\",\"DosTel1\",8.187451\r\n\"2022-03-01T19:22:45\",\"DosTel1\",6.985671\r\n\"2022-03-01T19:24:37\",\"DosTel1\",7.039992\r\n\"2022-03-01T19:25:00\",\"DosTel1\",6.78647805128205\r\n\"2022-03-01T19:26:17\",\"DosTel1\",6.309868\r\n\"2022-03-01T19:27:57\",\"DosTel1\",6.23252\r\n\"2022-03-01T19:29:37\",\"DosTel1\",4.748086\r\n\"2022-03-01T19:30:00\",\"DosTel1\",4.97216933333333\r\n\"2022-03-01T19:31:17\",\"DosTel1\",3.935902\r\n\"2022-03-01T19:32:57\",\"DosTel1\",2.745557\r\n\"2022-03-01T19:34:49\",\"DosTel1\",2.694946\r\n\"2022-03-01T19:35:00\",\"DosTel1\",2.56892623076923\r\n\"2022-03-01T19:36:29\",\"DosTel1\",2.24508\r\n\"2022-03-01T19:38:09\",\"DosTel1\",1.997197\r\n\"2022-03-01T19:39:49\",\"DosTel1\",1.91081\r\n\"2022-03-01T19:40:00\",\"DosTel1\",1.93960566666667\r\n\"2022-03-01T19:43:09\",\"DosTel1\",1.871556\r\n\"2022-03-01T19:45:00\",\"DosTel1\",2.09999830769231\r\n\"2022-03-01T19:45:01\",\"DosTel1\",2.16611\r\n\"2022-03-01T19:46:41\",\"DosTel1\",2.289742\r\n\"2022-03-01T19:48:21\",\"DosTel1\",2.781952\r\n\"2022-03-01T19:50:00\",\"DosTel1\",2.751739\r\n\"2022-03-01T19:50:01\",\"DosTel1\",2.411519\r\n\"2022-03-01T19:51:41\",\"DosTel1\",3.061746\r\n\"2022-03-01T19:53:21\",\"DosTel1\",4.392645\r\n\"2022-03-01T19:55:00\",\"DosTel1\",5.189145\r\n\"2022-03-01T19:55:13\",\"DosTel1\",5.615597\r\n\"2022-03-01T19:56:53\",\"DosTel1\",5.654773\r\n\"2022-03-01T19:58:33\",\"DosTel1\",6.294645\r\n\"2022-03-01T20:00:00\",\"DosTel1\",6.222604\r\n\"2022-03-01T20:00:13\",\"DosTel1\",6.034941\r\n\"2022-03-01T20:01:53\",\"DosTel1\",6.338226\r\n\"2022-03-01T20:03:33\",\"DosTel1\",7.728545\r\n\"2022-03-01T20:05:00\",\"DosTel1\",6.71561423076923\r\n\"2022-03-01T20:05:25\",\"DosTel1\",6.120633\r\n\"2022-03-01T20:07:05\",\"DosTel1\",6.176113\r\n\"2022-03-01T20:08:45\",\"DosTel1\",5.351256\r\n\"2022-03-01T20:10:00\",\"DosTel1\",4.95375333333333\r\n\"2022-03-01T20:10:25\",\"DosTel1\",5.341365\r\n\"2022-03-01T20:12:05\",\"DosTel1\",4.168639\r\n\"2022-03-01T20:13:45\",\"DosTel1\",2.928069\r\n\"2022-03-01T20:15:00\",\"DosTel1\",2.94584344089457\r\n\"2022-03-01T20:15:38\",\"DosTel1\",3.419197\r\n\"2022-03-01T20:17:18\",\"DosTel1\",2.492575\r\n\"2022-03-01T20:18:58\",\"DosTel1\",1.946045\r\n\"2022-03-01T20:20:00\",\"DosTel1\",2.07405566666667\r\n\"2022-03-01T20:20:38\",\"DosTel1\",2.175537\r\n\"2022-03-01T20:22:18\",\"DosTel1\",2.100585\r\n\"2022-03-01T20:23:58\",\"DosTel1\",1.652419\r\n\"2022-03-01T20:25:00\",\"DosTel1\",1.652419\r\n\"2022-03-01T20:27:31\",\"DosTel1\",1.818781\r\n\"2022-03-01T20:29:11\",\"DosTel1\",2.239825\r\n\"2022-03-01T20:30:00\",\"DosTel1\",2.139503\r\n\"2022-03-01T20:30:51\",\"DosTel1\",2.359903\r\n\"2022-03-01T20:32:31\",\"DosTel1\",1.687577\r\n\"2022-03-01T20:34:24\",\"DosTel1\",2.525802\r\n\"2022-03-01T20:35:00\",\"DosTel1\",2.26115239936102\r\n\"2022-03-01T20:36:04\",\"DosTel1\",2.644643\r\n\"2022-03-01T20:37:44\",\"DosTel1\",2.501152\r\n\"2022-03-01T20:39:24\",\"DosTel1\",3.02257\r\n\"2022-03-01T20:40:00\",\"DosTel1\",2.97510066666667\r\n\"2022-03-01T20:41:04\",\"DosTel1\",3.40158\r\n\"2022-03-01T20:42:44\",\"DosTel1\",3.430633\r\n\"2022-03-01T20:44:37\",\"DosTel1\",4.103655\r\n\"2022-03-01T20:45:00\",\"DosTel1\",4.44815312779553\r\n\"2022-03-01T20:46:17\",\"DosTel1\",5.942449\r\n\"2022-03-01T20:47:57\",\"DosTel1\",4.661312\r\n\"2022-03-01T20:49:37\",\"DosTel1\",5.56568\r\n\"2022-03-01T20:50:00\",\"DosTel1\",5.76673666666667\r\n\"2022-03-01T20:51:17\",\"DosTel1\",7.073218\r\n\"2022-03-01T20:52:57\",\"DosTel1\",6.637492\r\n\"2022-03-01T20:54:50\",\"DosTel1\",6.533719\r\n\"2022-03-01T20:55:00\",\"DosTel1\",6.79805589776358\r\n\"2022-03-01T20:56:30\",\"DosTel1\",7.24383\r\n\"2022-03-01T20:58:10\",\"DosTel1\",6.439604\r\n\"2022-03-01T20:59:50\",\"DosTel1\",6.53256\r\n\"2022-03-01T21:00:00\",\"DosTel1\",6.67404133333333\r\n\"2022-03-01T21:01:30\",\"DosTel1\",7.04996\r\n\"2022-03-01T21:03:10\",\"DosTel1\",4.70582\r\n\"2022-03-01T21:05:00\",\"DosTel1\",3.97429763578275\r\n\"2022-03-01T21:05:03\",\"DosTel1\",3.862572\r\n\"2022-03-01T21:06:43\",\"DosTel1\",3.259403\r\n\"2022-03-01T21:08:23\",\"DosTel1\",2.487939\r\n\"2022-03-01T21:10:00\",\"DosTel1\",2.48576344794189\r\n\"2022-03-01T21:10:03\",\"DosTel1\",2.760393\r\n\"2022-03-01T21:11:43\",\"DosTel1\",2.355808\r\n\"2022-03-01T21:15:00\",\"DosTel1\",2.3560395\r\n\"2022-03-01T21:15:16\",\"DosTel1\",2.493889\r\n\"2022-03-01T21:16:56\",\"DosTel1\",2.21819\r\n\"2022-03-01T21:18:36\",\"DosTel1\",3.451496\r\n\"2022-03-01T21:20:00\",\"DosTel1\",2.67892466666667\r\n\"2022-03-01T21:20:16\",\"DosTel1\",2.239516\r\n\"2022-03-01T21:21:56\",\"DosTel1\",2.345762\r\n\"2022-03-01T21:23:36\",\"DosTel1\",3.863654\r\n\"2022-03-01T21:25:00\",\"DosTel1\",3.79797451282051\r\n\"2022-03-01T21:25:28\",\"DosTel1\",3.565778\r\n\"2022-03-01T21:27:08\",\"DosTel1\",3.95661\r\n\"2022-03-01T21:28:48\",\"DosTel1\",4.830843\r\n\"2022-03-01T21:30:00\",\"DosTel1\",6.60612066666667\r\n\"2022-03-01T21:30:28\",\"DosTel1\",8.495372\r\n\"2022-03-01T21:32:08\",\"DosTel1\",6.492147\r\n\"2022-03-01T21:33:48\",\"DosTel1\",6.862503\r\n\"2022-03-01T21:35:00\",\"DosTel1\",7.63874402564103\r\n\"2022-03-01T21:35:40\",\"DosTel1\",8.659107\r\n\"2022-03-01T21:37:20\",\"DosTel1\",7.487771\r\n\"2022-03-01T21:39:00\",\"DosTel1\",6.704408\r\n\"2022-03-01T21:40:00\",\"DosTel1\",5.26301761538461\r\n\"2022-03-01T21:40:40\",\"DosTel1\",4.940798\r\n\"2022-03-01T21:42:20\",\"DosTel1\",4.263758\r\n\"2022-03-01T21:44:12\",\"DosTel1\",3.796197\r\n\"2022-03-01T21:45:00\",\"DosTel1\",3.518914\r\n\"2022-03-01T21:45:52\",\"DosTel1\",3.241631\r\n\"2022-03-01T21:47:32\",\"DosTel1\",3.28807\r\n\"2022-03-01T21:49:12\",\"DosTel1\",2.240521\r\n\"2022-03-01T21:50:00\",\"DosTel1\",2.549575\r\n\"2022-03-01T21:50:52\",\"DosTel1\",2.120134\r\n\"2022-03-01T21:52:32\",\"DosTel1\",1.809972\r\n\"2022-03-01T21:54:24\",\"DosTel1\",2.093862\r\n\"2022-03-01T21:55:00\",\"DosTel1\",2.16868321794872\r\n\"2022-03-01T21:56:04\",\"DosTel1\",2.645261\r\n\"2022-03-01T21:57:44\",\"DosTel1\",2.236194\r\n\"2022-03-01T21:59:24\",\"DosTel1\",2.53291\r\n\"2022-03-01T22:00:00\",\"DosTel1\",2.39031716504854\r\n\"2022-03-01T22:01:04\",\"DosTel1\",2.395756\r\n\"2022-03-01T22:04:36\",\"DosTel1\",1.825426\r\n\"2022-03-01T22:05:00\",\"DosTel1\",2.7450165\r\n\"2022-03-01T22:06:16\",\"DosTel1\",3.664607\r\n\"2022-03-01T22:07:56\",\"DosTel1\",2.61868\r\n\"2022-03-01T22:09:36\",\"DosTel1\",3.122867\r\n\"2022-03-01T22:10:00\",\"DosTel1\",3.14130866666667\r\n\"2022-03-01T22:11:16\",\"DosTel1\",3.682379\r\n\"2022-03-01T22:12:56\",\"DosTel1\",4.188806\r\n\"2022-03-01T22:14:48\",\"DosTel1\",4.691293\r\n\"2022-03-01T22:15:00\",\"DosTel1\",4.66740952564103\r\n\"2022-03-01T22:16:28\",\"DosTel1\",5.179562\r\n\"2022-03-01T22:18:08\",\"DosTel1\",4.908113\r\n\"2022-03-01T22:19:48\",\"DosTel1\",6.083466\r\n\"2022-03-01T22:20:00\",\"DosTel1\",5.437309\r\n\"2022-03-01T22:21:28\",\"DosTel1\",5.320348\r\n\"2022-03-01T22:23:08\",\"DosTel1\",5.28009\r\n\"2022-03-01T22:25:00\",\"DosTel1\",5.9073596485623\r\n\"2022-03-01T22:25:01\",\"DosTel1\",6.732071\r\n\"2022-03-01T22:26:41\",\"DosTel1\",5.791463\r\n\"2022-03-01T22:28:21\",\"DosTel1\",7.555846\r\n\"2022-03-01T22:30:00\",\"DosTel1\",10.3960593333333\r\n\"2022-03-01T22:30:01\",\"DosTel1\",9.938544\r\n\"2022-03-01T22:31:41\",\"DosTel1\",13.693788\r\n\"2022-03-01T22:33:21\",\"DosTel1\",18.882313\r\n\"2022-03-01T22:35:00\",\"DosTel1\",15.7777136389776\r\n\"2022-03-01T22:35:14\",\"DosTel1\",19.249114\r\n\"2022-03-01T22:36:54\",\"DosTel1\",8.798116\r\n\"2022-03-01T22:38:34\",\"DosTel1\",3.842173\r\n\"2022-03-01T22:40:00\",\"DosTel1\",3.34826333333333\r\n\"2022-03-01T22:40:14\",\"DosTel1\",3.410234\r\n\"2022-03-01T22:41:54\",\"DosTel1\",2.792383\r\n\"2022-03-01T22:43:34\",\"DosTel1\",2.417933\r\n\"2022-03-01T22:45:00\",\"DosTel1\",2.35754833546326\r\n\"2022-03-01T22:45:27\",\"DosTel1\",2.323431\r\n\"2022-03-01T22:48:47\",\"DosTel1\",1.81059\r\n\"2022-03-01T22:50:00\",\"DosTel1\",2.79634933333333\r\n\"2022-03-01T22:50:27\",\"DosTel1\",2.539942\r\n\"2022-03-01T22:52:07\",\"DosTel1\",4.038516\r\n\"2022-03-01T22:53:47\",\"DosTel1\",2.398924\r\n\"2022-03-01T22:55:00\",\"DosTel1\",2.95346617252396\r\n\"2022-03-01T22:55:40\",\"DosTel1\",2.928224\r\n\"2022-03-01T22:57:20\",\"DosTel1\",3.605341\r\n\"2022-03-01T22:59:00\",\"DosTel1\",4.414203\r\n\"2022-03-01T23:00:00\",\"DosTel1\",5.50323032268371\r\n\"2022-03-01T23:00:40\",\"DosTel1\",5.066671\r\n\"2022-03-01T23:02:20\",\"DosTel1\",6.853307\r\n\"2022-03-01T23:04:13\",\"DosTel1\",6.433963\r\n\"2022-03-01T23:05:00\",\"DosTel1\",6.712251\r\n\"2022-03-01T23:05:53\",\"DosTel1\",6.990539\r\n\"2022-03-01T23:07:33\",\"DosTel1\",9.69862\r\n\"2022-03-01T23:09:13\",\"DosTel1\",8.652539\r\n\"2022-03-01T23:10:00\",\"DosTel1\",8.68584233333333\r\n\"2022-03-01T23:10:53\",\"DosTel1\",7.706368\r\n\"2022-03-01T23:12:33\",\"DosTel1\",7.109457\r\n\"2022-03-01T23:14:26\",\"DosTel1\",5.687303\r\n\"2022-03-01T23:15:00\",\"DosTel1\",5.67018639297125\r\n\"2022-03-01T23:16:06\",\"DosTel1\",4.026694\r\n\"2022-03-01T23:17:46\",\"DosTel1\",3.006884\r\n\"2022-03-01T23:19:26\",\"DosTel1\",2.440495\r\n\"2022-03-01T23:20:00\",\"DosTel1\",2.76021266666667\r\n\"2022-03-01T23:21:06\",\"DosTel1\",2.833259\r\n\"2022-03-01T23:22:46\",\"DosTel1\",1.99967\r\n\"2022-03-01T23:24:38\",\"DosTel1\",1.946354\r\n\"2022-03-01T23:25:00\",\"DosTel1\",1.98944179487179\r\n\"2022-03-01T23:26:18\",\"DosTel1\",2.021074\r\n\"2022-03-01T23:27:58\",\"DosTel1\",2.039851\r\n\"2022-03-01T23:29:38\",\"DosTel1\",2.214326\r\n\"2022-03-01T23:30:00\",\"DosTel1\",2.15616766666667\r\n\"2022-03-01T23:32:58\",\"DosTel1\",2.24593\r\n\"2022-03-01T23:34:50\",\"DosTel1\",1.953463\r\n\"2022-03-01T23:35:00\",\"DosTel1\",2.25439987179487\r\n\"2022-03-01T23:36:30\",\"DosTel1\",2.564823\r\n\"2022-03-01T23:38:10\",\"DosTel1\",2.38687\r\n\"2022-03-01T23:39:50\",\"DosTel1\",2.212626\r\n\"2022-03-01T23:40:00\",\"DosTel1\",2.71441733333333\r\n\"2022-03-01T23:41:30\",\"DosTel1\",3.543756\r\n\"2022-03-01T23:43:10\",\"DosTel1\",4.478955\r\n\"2022-03-01T23:45:00\",\"DosTel1\",5.14523544871795\r\n\"2022-03-01T23:45:02\",\"DosTel1\",4.473083\r\n\"2022-03-01T23:46:42\",\"DosTel1\",6.563622\r\n\"2022-03-01T23:48:22\",\"DosTel1\",7.469845\r\n\"2022-03-01T23:50:00\",\"DosTel1\",6.46051833333333\r\n\"2022-03-01T23:50:02\",\"DosTel1\",6.210498\r\n\"2022-03-01T23:51:42\",\"DosTel1\",5.701212\r\n\"2022-03-01T23:53:22\",\"DosTel1\",6.868761\r\n\"2022-03-01T23:55:00\",\"DosTel1\",5.61327253846154\r\n\"2022-03-01T23:55:14\",\"DosTel1\",4.910431\r\n\"2022-03-01T23:56:54\",\"DosTel1\",4.909967\r\n\"2022-03-01T23:58:34\",\"DosTel1\",4.259663\r\n"}};</script>
+<script>/* CytoZoe engines. Pure logic shared by the browser app and the Node tests.
+   E1 ingestion + quality, E2 health comparisons, E3 radiation summaries,
+   review store, export packet, verified-explanation templates.
+   No network, no dependencies. */
+(function (root) {
+  'use strict';
+
+  const RULE_VERSION = 'cz-rules-1.0';
+  const MAX_FILE_BYTES = 10 * 1024 * 1024;
+  const DEFAULT_MAX_GAP_S = 300;
+
+  const KNOWN_HASHES = {
+    health: '5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9',
+    radiation: 'd3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1'
+  };
+
+  const MARKERS = [
+    { id: 'glucose',    label: 'Glucose',    unit: 'mg/dL',  srcUnit: 'milligram_per_deciliter', dp: 0 },
+    { id: 'sodium',     label: 'Sodium',     unit: 'mmol/L', srcUnit: 'millimol_per_liter',      dp: 0 },
+    { id: 'potassium',  label: 'Potassium',  unit: 'mmol/L', srcUnit: 'millimol_per_liter',      dp: 1 },
+    { id: 'creatinine', label: 'Creatinine', unit: 'mg/dL',  srcUnit: 'milligram_per_deciliter', dp: 2 },
+    { id: 'calcium',    label: 'Calcium',    unit: 'mg/dL',  srcUnit: 'milligram_per_deciliter', dp: 1 }
+  ];
+
+  class CzError extends Error {
+    constructor(code, message, details) { super(message); this.code = code; this.details = details || {}; }
+  }
+
+  /* ---------- CSV ---------- */
+  function parseCSV(text) {
+    text = String(text).replace(/^﻿/, '');
+    const rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cur); cur = '';
+        if (row.some(x => x.trim() !== '')) rows.push(row);
+        row = [];
+      } else cur += c;
+    }
+    row.push(cur);
+    if (row.some(x => x.trim() !== '')) rows.push(row);
+    return rows;
+  }
+  function toTable(text) {
+    const rows = parseCSV(text);
+    if (rows.length < 2) throw new CzError('EMPTY_FILE', 'The file has no data rows.');
+    const headers = rows[0].map(h => h.trim());
+    return { headers, rows: rows.slice(1).map((cells, i) => ({ sourceRow: i + 2, cells })) };
+  }
+  const NULLS = new Set(['', 'na', 'n/a', 'nan', 'null', 'none']);
+  /* returns {v:number|null, bad:boolean}. Missing -> null. Text or non-finite -> null with bad=true. */
+  function parseNum(s) {
+    const t = String(s == null ? '' : s).trim();
+    if (NULLS.has(t.toLowerCase())) return { v: null, bad: false };
+    const v = Number(t);
+    return Number.isFinite(v) ? { v, bad: false } : { v: null, bad: true };
+  }
+
+  /* ---------- E1: blood (OSD-575 CMP) ---------- */
+  /* Real OSD-575 format: {Participant}_{specimen}_{Visit}, e.g. C001_serum_L-3.
+     Fallback accepts simpler names such as C001_L-92. L must carry "-", R must carry "+". */
+  const SAMPLE_RE = /^(C\d{3})_([A-Za-z]+)_([LR])([-+])(\d+)$/;
+  function parseSampleName(name) {
+    const s = String(name || '').replace(/^\uFEFF/, '').trim();
+    let p, side, sign, days, specimen = null;
+    const m = s.match(SAMPLE_RE);
+    if (m) { p = m[1]; specimen = m[2]; side = m[3]; sign = m[4]; days = m[5]; }
+    else {
+      const pm = s.match(/C\d{3}/);
+      const v = s.match(/(?:^|[^A-Za-z0-9])([LR])\s*([-+]?)\s*(\d+)(?![0-9])/);
+      if (!pm || !v) return null;
+      p = pm[0]; side = v[1]; sign = v[2]; days = v[3];
+    }
+    if (sign && sign !== (side === 'L' ? '-' : '+')) return null;
+    days = parseInt(days, 10);
+    return { participant: p, specimen, visit: side === 'L' ? 'L-' + days : 'R+' + days, phase: side === 'L' ? 'pre' : 'post', relDay: side === 'L' ? -days : days };
+  }
+
+  function ingestBlood(text) {
+    const t = toTable(text);
+    const col = {}; t.headers.forEach((h, i) => { if (!(h in col)) col[h] = i; });
+    if (!('Sample Name' in col)) throw new CzError('MISSING_COLUMN', 'Missing column "Sample Name". This does not look like the OSD-575 CMP file.', { column: 'Sample Name' });
+    const missing = [];
+    MARKERS.forEach(m => { if (!(`${m.id}_value_${m.srcUnit}` in col)) missing.push(`${m.id}_value_${m.srcUnit}`); });
+    if (missing.length) throw new CzError('MISSING_COLUMN', 'Missing marker columns: ' + missing.join(', '), { columns: missing });
+
+    const obs = [], samples = [], seen = new Set(), unparsed = [], badValues = [];
+    t.rows.forEach(r => {
+      const name = (r.cells[col['Sample Name']] || '').trim();
+      const ps = parseSampleName(name);
+      if (!ps) { unparsed.push(name || '(blank)'); return; }
+      const sampleKey = name;
+      if (seen.has(sampleKey)) throw new CzError('DUPLICATE_SAMPLE', 'Sample appears twice: ' + name, { sample: name });
+      seen.add(sampleKey);
+      samples.push({ sample: name, participant: ps.participant, visit: ps.visit, phase: ps.phase, relDay: ps.relDay, sourceRow: r.sourceRow });
+      MARKERS.forEach(m => {
+        const val = parseNum(r.cells[col[`${m.id}_value_${m.srcUnit}`]]);
+        const mn = parseNum(r.cells[col[`${m.id}_range_min_${m.srcUnit}`]]);
+        const mx = parseNum(r.cells[col[`${m.id}_range_max_${m.srcUnit}`]]);
+        if (val.bad || mn.bad || mx.bad) badValues.push(`${name} ${m.id}`);
+        obs.push({
+          id: `${ps.participant}|${ps.visit}|${m.id}`, sourceRow: r.sourceRow, sampleName: name,
+          participant: ps.participant, visit: ps.visit, phase: ps.phase, relDay: ps.relDay,
+          marker: m.id, value: val.v, unit: m.unit, rangeLow: mn.v, rangeHigh: mx.v
+        });
+      });
+    });
+    if (unparsed.length) {
+      throw new CzError('UNPARSED_SAMPLE_NAME', `Could not read participant and visit from ${unparsed.length} sample name(s), for example "${unparsed[0]}". Expected something like C001 and L-92 or R+1.`, { examples: unparsed.slice(0, 5) });
+    }
+    const participants = {};
+    samples.forEach(s => { (participants[s.participant] = participants[s.participant] || []).push(s); });
+    Object.values(participants).forEach(a => a.sort((x, y) => x.relDay - y.relDay));
+    const visitSet = new Map(); samples.forEach(s => visitSet.set(s.visit, s.relDay));
+    const visits = [...visitSet.entries()].sort((a, b) => a[1] - b[1]).map(e => e[0]);
+    const perMarker = {}; MARKERS.forEach(m => { perMarker[m.id] = obs.filter(o => o.marker === m.id && o.value != null).length; });
+    return {
+      kind: 'health', observations: obs, participants, participantIds: Object.keys(participants).sort(), visits,
+      quality: {
+        rows: t.rows.length, columns: t.headers.length, participants: Object.keys(participants).length, visits: visits.length,
+        nonmissingByMarker: perMarker, nonmissingTotal: Object.values(perMarker).reduce((a, b) => a + b, 0),
+        invalidValuesTreatedAsMissing: badValues.length, invalidExamples: badValues.slice(0, 5)
+      }
+    };
+  }
+
+  /* ---------- E2: health comparisons ---------- */
+  function baselineFor(ds, participant, marker) {
+    const vals = ds.observations.filter(o => o.participant === participant && o.marker === marker && o.phase === 'pre' && o.value != null);
+    if (vals.length < 2) return { n: vals.length, mean: null, values: vals.map(o => o.value), visits: vals.map(o => o.visit) };
+    const mean = vals.reduce((a, o) => a + o.value, 0) / vals.length;
+    return { n: vals.length, mean, values: vals.map(o => o.value), visits: vals.map(o => o.visit) };
+  }
+  function rangeStatus(value, lo, hi) {
+    if (value == null) return { status: 'NO_VALUE', oneSided: false };
+    if (lo == null && hi == null) return { status: 'UNKNOWN', oneSided: false };
+    const oneSided = lo == null || hi == null;
+    if (lo != null && value < lo) return { status: 'BELOW', oneSided };
+    if (hi != null && value > hi) return { status: 'ABOVE', oneSided };
+    return { status: 'WITHIN', oneSided };
+  }
+  function compare(value, baseline) {
+    if (value == null || baseline == null || baseline.mean == null) return { delta: null, pct: null };
+    const delta = value - baseline.mean;
+    const pct = baseline.mean !== 0 ? 100 * delta / baseline.mean : null;
+    return { delta, pct };
+  }
+  function healthCards(ds, participant, visit) {
+    return MARKERS.map(m => {
+      const o = ds.observations.find(x => x.participant === participant && x.visit === visit && x.marker === m.id);
+      const b = baselineFor(ds, participant, m.id);
+      if (!o) return { marker: m.id, label: m.label, unit: m.unit, dp: m.dp, available: false, status: 'NO_VALUE', baseline: b };
+      const rs = rangeStatus(o.value, o.rangeLow, o.rangeHigh);
+      const c = compare(o.value, b);
+      return {
+        marker: m.id, label: m.label, unit: m.unit, dp: m.dp, available: o.value != null, obs: o,
+        value: o.value, rangeLow: o.rangeLow, rangeHigh: o.rangeHigh, status: rs.status, oneSided: rs.oneSided,
+        baseline: b, delta: c.delta, pct: c.pct, phase: o.phase, visit: o.visit, findingKey: findingKey('health', o.id)
+      };
+    });
+  }
+  function healthTrend(ds, participant, marker) {
+    const m = MARKERS.find(x => x.id === marker);
+    const list = (ds.participants[participant] || []).map(s => {
+      const o = ds.observations.find(x => x.participant === participant && x.visit === s.visit && x.marker === marker);
+      const rs = o ? rangeStatus(o.value, o.rangeLow, o.rangeHigh) : { status: 'NO_VALUE' };
+      return { visit: s.visit, phase: s.phase, obs: o, value: o ? o.value : null, rangeLow: o ? o.rangeLow : null, rangeHigh: o ? o.rangeHigh : null, status: rs.status };
+    });
+    const withR = list.filter(p => p.value != null);
+    const lows = new Set(withR.map(p => p.rangeLow)), highs = new Set(withR.map(p => p.rangeHigh));
+    const consistent = withR.length > 0 && lows.size === 1 && highs.size === 1;
+    const b = baselineFor(ds, participant, marker);
+    list.forEach(p => { const c = compare(p.value, b); p.delta = c.delta; p.pct = c.pct; });
+    return { marker, label: m.label, unit: m.unit, dp: m.dp, points: list, baseline: b, rangeConsistent: consistent };
+  }
+  function findingKey(kind, id) { return `${kind}:${id}:${RULE_VERSION}`; }
+
+  /* ---------- E1/E3: radiation ---------- */
+  function ingestRadiation(text, opts) {
+    opts = opts || {};
+    const t = toTable(text);
+    const col = {}; t.headers.forEach((h, i) => { if (!(h in col)) col[h] = i; });
+    if (!('timestamp' in col) || !('absorbed_dose_rate' in col)) {
+      throw new CzError('MISSING_COLUMN', 'Missing "timestamp" or "absorbed_dose_rate". This does not look like a RadLab CSV export.', { columns: t.headers.slice(0, 12) });
+    }
+    const hasInst = 'instrument_id' in col;
+    const instruments = hasInst ? [...new Set(t.rows.map(r => (r.cells[col.instrument_id] || '').trim()).filter(Boolean))].sort() : [];
+    const instrument = opts.instrument || (instruments.includes('DosTel1') ? 'DosTel1' : (instruments[0] || 'unknown'));
+    const spacecraft = ('spacecraft' in col) ? ([...new Set(t.rows.map(r => (r.cells[col.spacecraft] || '').trim()).filter(Boolean))][0] || null) : null;
+
+    const rows = [];
+    let invalidTs = 0, invalidRate = 0;
+    t.rows.forEach(r => {
+      if (hasInst && (r.cells[col.instrument_id] || '').trim() !== instrument) return;
+      const ts = (r.cells[col.timestamp] || '').trim();
+      const ms = Date.parse(ts + (/[zZ]|[+-]\d\d:?\d\d$/.test(ts) ? '' : 'Z'));
+      if (!ts || !Number.isFinite(ms)) { invalidTs++; return; }
+      const pr = parseNum(r.cells[col.absorbed_dose_rate]);
+      if (pr.bad) invalidRate++;
+      rows.push({ sourceRow: r.sourceRow, ts, ms, rate: pr.v, status: 'OK' });
+    });
+    if (!rows.length) throw new CzError('NO_ROWS', `No usable rows for instrument ${instrument}.`, { instruments });
+
+    const groups = new Map();
+    rows.forEach(r => { (groups.get(r.ms) || groups.set(r.ms, []).get(r.ms)).push(r); });
+    const conflictGroups = []; let identicalDupExtras = 0;
+    const series = [];
+    [...groups.keys()].sort((a, b) => a - b).forEach(ms => {
+      const g = groups.get(ms);
+      if (g.length > 1) {
+        const vals = g.map(x => x.rate);
+        const allSame = vals.every(v => v != null && v === vals[0]);
+        if (!allSame) {
+          g.forEach(x => { x.status = 'CONFLICT'; });
+          conflictGroups.push({ ts: g[0].ts, ms, rows: g.map(x => ({ sourceRow: x.sourceRow, rate: x.rate })) });
+          series.push({ ms, ts: g[0].ts, rate: null, status: 'CONFLICT', sourceRow: g[0].sourceRow });
+          return;
+        }
+        g.slice(1).forEach(x => { x.status = 'DUPLICATE_IDENTICAL'; identicalDupExtras++; });
+      }
+      const keep = g[0];
+      if (keep.rate == null) { keep.status = 'INVALID'; series.push({ ms, ts: keep.ts, rate: null, status: 'INVALID', sourceRow: keep.sourceRow }); }
+      else series.push({ ms, ts: keep.ts, rate: keep.rate, status: 'OK', sourceRow: keep.sourceRow });
+    });
+    const quarantined = rows.filter(r => r.status === 'CONFLICT').length;
+    return {
+      kind: 'radiation', instrument, instruments, spacecraft, rows, series, conflictGroups,
+      quality: {
+        fileRows: t.rows.length, instrumentRows: rows.length, uniqueTimestamps: groups.size,
+        conflictGroups: conflictGroups.length, quarantinedRows: quarantined, identicalDuplicateRows: identicalDupExtras,
+        invalidRateRows: rows.filter(r => r.status === 'INVALID').length, invalidTimestampRows: invalidTs,
+        unambiguousRows: rows.length - quarantined - identicalDupExtras - rows.filter(r => r.status === 'INVALID').length,
+        first: series[0].ts, last: series[series.length - 1].ts
+      }
+    };
+  }
+
+  /* Trapezoid per accepted interval. series items: {ms, rate, status}. */
+  function integrate(series, opts) {
+    const maxGap = (opts && opts.maxGapS) || DEFAULT_MAX_GAP_S;
+    const s = [...series].sort((a, b) => a.ms - b.ms);
+    const intervals = []; let total = 0, covered = 0;
+    for (let k = 0; k + 1 < s.length; k++) {
+      const a = s[k], b = s[k + 1];
+      const dt = (b.ms - a.ms) / 1000;
+      let reason = null;
+      if (a.status === 'CONFLICT' || b.status === 'CONFLICT') reason = 'conflict';
+      else if (a.status !== 'OK' || b.status !== 'OK' || !Number.isFinite(a.rate) || !Number.isFinite(b.rate)) reason = 'invalid';
+      else if (dt <= 0) reason = 'order';
+      else if (dt > maxGap) reason = 'gap';
+      const accepted = reason === null;
+      const dose = accepted ? ((a.rate + b.rate) / 2) * (dt / 3600) : 0;
+      if (accepted) { total += dose; covered += dt; }
+      intervals.push({ from: a.ms, to: b.ms, fromTs: a.ts, toTs: b.ts, dtS: dt, accepted, reason, dose, cumulative: total });
+    }
+    return { intervals, totalDose: total, coveredSeconds: covered, maxGapS: maxGap, excluded: intervals.filter(i => !i.accepted) };
+  }
+
+  /* ---------- review store (idempotent, versioned, audit trail) ---------- */
+  const STATUSES = ['OPEN', 'FOLLOW_UP_REQUESTED', 'REVIEWED'];
+  function createReviewStore(storage, key) {
+    key = key || 'cz.reviews.v1';
+    let state = { reviews: [], events: [], seq: 0 };
+    try { const raw = storage && storage.getItem(key); if (raw) { const p = JSON.parse(raw); if (p && Array.isArray(p.reviews) && Array.isArray(p.events)) state = p; } } catch (e) {}
+    function persist() {
+      try { if (storage) storage.setItem(key, JSON.stringify(state)); }
+      catch (e) { throw new CzError('SAVE_FAILED', 'Could not save to this browser. Your draft is still on screen. Try again.', {}); }
+    }
+    function event(reviewId, action, before, after) { state.events.push({ id: ++state.seq, reviewId, action, before, after, timestamp: new Date().toISOString() }); }
+    return {
+      list() { return state.reviews.map(r => ({ ...r })); },
+      events() { return state.events.map(e => ({ ...e })); },
+      byFinding(k) { const r = state.reviews.find(x => x.findingKey === k); return r ? { ...r } : null; },
+      /* create or open: same findingKey returns the existing review, never a duplicate */
+      create(finding) {
+        const ex = state.reviews.find(x => x.findingKey === finding.findingKey);
+        if (ex) return { review: { ...ex }, created: false };
+        const now = new Date().toISOString();
+        const r = { id: 'rev-' + (++state.seq), findingKey: finding.findingKey, kind: finding.kind, title: finding.title, subject: finding.subject,
+          participant: finding.participant || null, instrument: finding.instrument || null, summary: finding.summary || '',
+          evidence: finding.evidence || null, status: 'OPEN', note: '', followUpDate: null, createdAt: now, updatedAt: now, version: 1 };
+        state.reviews.unshift(r); event(r.id, 'CREATED', null, { status: r.status });
+        persist();
+        return { review: { ...r }, created: true };
+      },
+      update(id, patch, expectedVersion) {
+        const r = state.reviews.find(x => x.id === id);
+        if (!r) throw new CzError('NOT_FOUND', 'Review not found.', {});
+        if (expectedVersion != null && expectedVersion !== r.version) throw new CzError('VERSION_CONFLICT', 'This review changed since you opened it. Reload it and try again.', { current: r.version });
+        if (patch.status && !STATUSES.includes(patch.status)) throw new CzError('VALIDATION', 'Unknown status.', {});
+        const before = { status: r.status, note: r.note, followUpDate: r.followUpDate };
+        if (patch.status !== undefined) r.status = patch.status;
+        if (patch.note !== undefined) r.note = String(patch.note).slice(0, 4000);
+        if (patch.followUpDate !== undefined) r.followUpDate = patch.followUpDate || null;
+        r.version += 1; r.updatedAt = new Date().toISOString();
+        event(r.id, 'UPDATED', before, { status: r.status, note: r.note, followUpDate: r.followUpDate });
+        persist();
+        return { ...r };
+      },
+      clearAll() { state = { reviews: [], events: [], seq: 0 }; persist(); }
+    };
+  }
+
+  /* ---------- export packet ---------- */
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function buildPacket(ctx) {
+    const reviews = ctx.reviews;
+    return {
+      title: 'CytoZoe review packet', exportedAt: new Date().toISOString(), ruleVersion: RULE_VERSION,
+      notice: 'Local download only. Not transmitted anywhere. Historical research data; not a clinical record and not medical advice.',
+      health: {
+        source: ctx.health ? ctx.health.source : null,
+        reviews: reviews.filter(r => r.kind === 'health')
+      },
+      environment: {
+        source: ctx.radiation ? ctx.radiation.source : null,
+        reviews: reviews.filter(r => r.kind === 'environment')
+      },
+      formulas: [
+        'Baseline = mean of available preflight (L-) values for the same participant and marker; needs at least 2 values.',
+        'Delta = value - baseline. Percent = 100 x (value - baseline) / baseline, only when baseline is not 0.',
+        'Range status: below if value < lower bound, above if value > upper bound; equality is inside. Missing bounds give one-sided or UNKNOWN.',
+        'Interval dose (uGy) = ((rate_i + rate_j) / 2) x (seconds between readings / 3600), only for adjacent unambiguous readings no more than ' + DEFAULT_MAX_GAP_S + ' s apart.'
+      ],
+      limits: [
+        'The health and radiation records are separate cases. They are not paired and no exposure-health relationship is claimed.',
+        'Four people are not a clinical validation cohort. Baseline changes are descriptive, not abnormality thresholds.',
+        'Estimated dose is at the sensor over covered intervals only. It is not personal dose, organ dose or risk.',
+        'The 300 s gap rule is an engineering coverage rule, not a NASA health threshold.'
+      ]
+    };
+  }
+  function packetHTML(p) {
+    const rev = r => `<tr><td>${esc(r.title)}</td><td>${esc(r.subject)}</td><td>${esc(r.status)}</td><td>${esc(r.followUpDate || '')}</td><td>${esc(r.note)}</td><td>${esc(r.updatedAt)}</td></tr>`;
+    const src = s => s ? `<p>Source file: ${esc(s.fileName)} &middot; SHA-256 <code>${esc(s.sha256)}</code> &middot; imported ${esc(s.importedAt)}</p>${s.url ? `<p>Public source: ${esc(s.url)}</p>` : ''}${s.quality ? `<p>Data quality: ${esc(s.quality)}</p>` : ''}` : '<p>No dataset loaded.</p>';
+    const table = list => list.length ? `<table><thead><tr><th>Finding</th><th>Subject</th><th>Status</th><th>Follow-up date</th><th>Note</th><th>Updated</th></tr></thead><tbody>${list.map(rev).join('')}</tbody></table>` : '<p>No saved reviews in this section.</p>';
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(p.title)}</title><style>body{font:15px/1.5 system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 16px;color:#14283F}h1{font-size:28px}h2{margin-top:32px;border-bottom:1px solid #DCE4EB;padding-bottom:6px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #DCE4EB;padding:6px 8px;text-align:left;vertical-align:top;font-size:13px}code{word-break:break-all}.n{background:#FFF3DF;color:#9A4B08;padding:8px 12px;border-radius:8px}</style></head><body><h1>${esc(p.title)}</h1><p>Exported ${esc(p.exportedAt)} &middot; rules ${esc(p.ruleVersion)}</p><p class="n">${esc(p.notice)}</p><h2>Health review (historical blood samples)</h2>${src(p.health.source)}${table(p.health.reviews)}<h2>Environment review (separate radiation case)</h2>${src(p.environment.source)}${table(p.environment.reviews)}<h2>Formulas</h2><ul>${p.formulas.map(f => `<li>${esc(f)}</li>`).join('')}</ul><h2>Limits</h2><ul>${p.limits.map(f => `<li>${esc(f)}</li>`).join('')}</ul></body></html>`;
+  }
+  function reviewsCSV(list) {
+    const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const head = ['id', 'case', 'finding', 'subject', 'participant_or_instrument', 'status', 'follow_up_date', 'note', 'created_at', 'updated_at'];
+    return [head.join(',')].concat(list.map(r => [r.id, r.kind, r.title, r.subject, r.participant || r.instrument || '', r.status, r.followUpDate || '', r.note, r.createdAt, r.updatedAt].map(q).join(','))).join('\n');
+  }
+
+  /* ---------- verified explanation templates (deterministic; no generative model) ---------- */
+  const fmt = (v, dp) => v == null ? 'n/a' : Number(v).toFixed(dp);
+  function explainHealth(card, question) {
+    const q = String(question || '').toLowerCase();
+    const o = card.obs;
+    if (isUnsupported(q)) return unsupportedReply();
+    if (q === 'how') {
+      return { mode: 'Verified explanation', sourceIds: [o.id], title: 'How this was calculated', paragraphs: [
+        `Value: ${fmt(card.value, card.dp + 1)} ${card.unit} from source row ${o.sourceRow}, sample ${o.sampleName}.`,
+        card.baseline.mean == null ? `Baseline: not available (needs at least 2 preflight values; this participant has ${card.baseline.n}).` :
+          `Baseline = mean of ${card.baseline.n} preflight values (${card.baseline.values.join(', ')}) = ${fmt(card.baseline.mean, 4)} ${card.unit}.`,
+        card.delta == null ? 'Delta: not available.' : `Delta = ${fmt(card.value, 4)} - ${fmt(card.baseline.mean, 4)} = ${fmt(card.delta, 4)} ${card.unit}${card.pct == null ? '' : ` (${fmt(card.pct, 2)}%)`}.`,
+        `Range check: lower ${card.rangeLow == null ? 'n/a' : card.rangeLow}, upper ${card.rangeHigh == null ? 'n/a' : card.rangeHigh}. Strictly below the lower or above the upper bound counts as outside; equal counts as inside.`,
+        'Displayed numbers are rounded. The comparisons use the unrounded source values.'
+      ] };
+    }
+    if (q === 'limits') {
+      return { mode: 'Verified explanation', sourceIds: [o.id], title: 'What this dataset cannot tell us', paragraphs: [
+        'It has four participants and seven visits each. That is a small descriptive sample, not a clinical validation cohort.',
+        'A difference from baseline has many possible causes. It is not an abnormality threshold and it does not show that spaceflight caused it.',
+        card.phase === 'pre' ? 'This is a preflight sample, so a value outside the supplied range here cannot be a spaceflight effect.' : 'This is a post-return sample. The preflight baseline is retrospective, calculated from all preflight visits.',
+        'The radiation case is a separate record. It is not paired with these people.'
+      ] };
+    }
+    const where = card.status === 'ABOVE' ? 'above the supplied upper bound' : card.status === 'BELOW' ? 'below the supplied lower bound' : card.status === 'WITHIN' ? 'within the supplied range' : 'without supplied bounds to compare against';
+    return { mode: 'Verified explanation', sourceIds: [o.id], title: 'Explain this result', paragraphs: [
+      `${card.label} for ${o.participant} at ${o.visit} (${o.phase === 'pre' ? 'preflight' : 'after return'}) is ${fmt(card.value, card.dp + 1)} ${card.unit}, ${where}${card.rangeHigh != null || card.rangeLow != null ? ` (supplied range ${card.rangeLow == null ? 'no lower bound' : card.rangeLow} to ${card.rangeHigh == null ? 'no upper bound' : card.rangeHigh} ${card.unit})` : ''}.`,
+      card.baseline.mean == null ? 'There are not enough preflight values to compute a personal baseline.' : `The participant's preflight mean is ${fmt(card.baseline.mean, 2)} ${card.unit} (n=${card.baseline.n}); this value differs by ${fmt(card.delta, 2)} ${card.unit}.`,
+      'This describes a numerical comparison. It is not a diagnosis.'
+    ] };
+  }
+  function explainEnvironment(ctx, question) {
+    const q = String(question || '').toLowerCase();
+    if (isUnsupported(q)) return unsupportedReply();
+    const Q = ctx.quality, I = ctx.integration;
+    if (q === 'how') return { mode: 'Verified explanation', sourceIds: ['radiation'], title: 'How this was calculated', paragraphs: [
+      `Interval dose = ((rate_i + rate_j) / 2) x (seconds / 3600) for adjacent readings no more than ${I.maxGapS} s apart, both unambiguous.`,
+      `Accepted intervals cover ${fmt(I.coveredSeconds / 3600, 2)} h and sum to ${fmt(I.totalDose, 3)} uGy at the sensor.`,
+      `${I.excluded.length} intervals were excluded (conflicts or gaps). Nothing is extrapolated before the first or after the last reading.`
+    ] };
+    if (q === 'limits') return { mode: 'Verified explanation', sourceIds: ['radiation'], title: 'What this dataset cannot tell us', paragraphs: [
+      'This is one instrument on one day. It is not personal dose, organ dose or health risk.',
+      'It is not paired with any health record, so it says nothing about effects on a person.',
+      'The source describes a nominal 300 s cadence; this export may differ, so the dose is an estimate over covered intervals, not a certified value.'
+    ] };
+    return { mode: 'Verified explanation', sourceIds: ['radiation'], title: 'Explain this result', paragraphs: [
+      `${Q.conflictGroups} timestamp group(s) had different values for the same time. All ${Q.quarantinedRows} rows in them were set aside, not averaged or guessed.`,
+      'The charts break at those times, so no line or dose is drawn across the excluded interval.'
+    ] };
+  }
+  function isUnsupported(q) { return /diagnos|disease|treat|prescrib|medicat|cause|caus|because of|link|correl|danger|safe|risk|cancer|ignore previous|system prompt/.test(q) && q !== 'how' && q !== 'limits' && q !== 'explain'; }
+  function unsupportedReply() {
+    return { mode: 'Verified explanation', sourceIds: [], title: 'Not enough evidence', paragraphs: [
+      'This tool cannot diagnose, recommend treatment, or say whether radiation or spaceflight caused a result.',
+      'The health and radiation records are separate cases and are not paired, so no link can be drawn from them.',
+      'You can ask: Explain this result, How was this calculated, or What can this dataset not tell us.'
+    ] };
+  }
+
+  /* ---------- Optional local AI wording (PRD: Ollama, wording only) ----------
+     The model gets only the verified facts. Its draft is checked: every number must already be in the facts,
+     and clinical/causal wording is rejected. Any failure falls back to the verified template. */
+  const AI_DEFAULTS = { enabled: false, endpoint: 'http://localhost:11434', model: '', timeoutMs: 15000 };
+  const AI_BANNED = /diagnos|disease|disorder|kidney (?:damage|failure|injury)|treat|therap|medicat|prescri|you should|we recommend|recommend(?:ed|s)? (?:that|you)|\bsafe\b|unsafe|danger|harmful|risk of|at risk|caused by|because of (?:the )?(?:radiation|spaceflight|flight)|due to (?:the )?(?:radiation|spaceflight|flight)|linked to|correlat|healthy|unhealthy|normal for (?:you|this person)/i;
+  function aiEvidence(verified) {
+    return { title: verified.title, facts: verified.paragraphs.slice(), sourceIds: (verified.sourceIds || []).slice() };
+  }
+  function aiPrompt(ev) {
+    return [
+      'You rewrite verified facts from a research data viewer into short plain English for a non-specialist reviewer.',
+      'Rules: Use ONLY the facts below. Do not add any number that is not written in the facts. Do not diagnose, give medical advice,',
+      'suggest treatment, judge safety or risk, or say what caused a value. Do not link radiation to any person. Keep it under 120 words.',
+      'Reply with the rewritten text only.',
+      '', 'QUESTION: ' + ev.title, 'FACTS:', ...ev.facts.map((f, i) => (i + 1) + '. ' + f)
+    ].join('\n');
+  }
+  function numbersIn(s) {
+    return (String(s).replace(/(\d),(?=\d{3}\b)/g, '$1').match(/[-+−]?\d+(?:\.\d+)?/g) || []).map(x => x.replace('−', '-'));
+  }
+  /* A draft number is allowed if it equals a fact number, or is that number rounded to the draft's decimals.
+     Sign is ignored (drafts may say "0.13 higher"); small ordinals 1-10 (list words, n=3) are allowed if present in facts or < 11. */
+  function checkDraft(draft, ev) {
+    const text = String(draft || '').trim(), problems = [];
+    if (!text) problems.push('The model returned no text.');
+    if (text.length > 1500) problems.push('The draft is too long.');
+    const banned = text.match(AI_BANNED); if (banned) problems.push(`Contains wording the tool does not allow: "${banned[0]}".`);
+    const facts = numbersIn(ev.facts.join(' ')).map(x => Math.abs(parseFloat(x)));
+    const bad = [];
+    for (const raw of numbersIn(text)) {
+      const v = Math.abs(parseFloat(raw)); const dec = (raw.split('.')[1] || '').length;
+      const okNum = facts.some(f => Math.abs(f - v) < 1e-9 || Math.abs(+f.toFixed(dec) - v) < 1e-9);
+      if (!okNum) bad.push(raw);
+    }
+    if (bad.length) problems.push(`Contains number(s) not in the evidence: ${[...new Set(bad)].slice(0, 5).join(', ')}.`);
+    return { ok: problems.length === 0, problems };
+  }
+  async function callLocalModel(settings, prompt, fetchImpl) {
+    const f = fetchImpl || (typeof fetch === 'function' ? fetch : null);
+    if (!f) throw new CzError('AI_UNAVAILABLE', 'No network function available.', {});
+    if (!settings || !settings.model) throw new CzError('AI_NOT_CONFIGURED', 'No local model name is set.', {});
+    const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+    const ms = settings.timeoutMs || AI_DEFAULTS.timeoutMs;
+    let timer, timedOut = false;
+    const tErr = () => new CzError('AI_TIMEOUT', `No reply from the local model within ${Math.max(1, Math.round(ms / 1000))} s.`, {});
+    const timeout = new Promise((_, rej) => { timer = setTimeout(() => { timedOut = true; rej(tErr()); if (ctl) ctl.abort(); }, ms); });
+    try {
+      const res = await Promise.race([f(String(settings.endpoint || AI_DEFAULTS.endpoint).replace(/\/+$/, '') + '/api/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl ? ctl.signal : undefined,
+        body: JSON.stringify({ model: settings.model, prompt, stream: false, options: { temperature: 0 } })
+      }), timeout]);
+      if (!res.ok) throw new CzError('AI_UNAVAILABLE', `The local model server answered ${res.status}.`, {});
+      const j = await Promise.race([res.json(), timeout]);
+      if (!j || typeof j.response !== 'string') throw new CzError('AI_BAD_RESPONSE', 'The local model reply was not in the expected format.', {});
+      return j.response.trim();
+    } catch (e) {
+      if (timedOut) throw tErr();
+      if (e instanceof CzError) throw e;
+      throw new CzError('AI_UNAVAILABLE', 'Could not reach the local model server. Is Ollama running and allowed for this page?', {});
+    } finally { clearTimeout(timer); }
+  }
+  /* Full pipeline: never throws. Returns { kind: 'draft', text } or { kind: 'fallback', reason }. */
+  async function aiDraft(settings, verified, fetchImpl) {
+    if (!settings || !settings.enabled) return { kind: 'off' };
+    if (verified.title === 'Not enough evidence') return { kind: 'fallback', reason: 'Unsupported questions are answered by the verified template only.' };
+    const ev = aiEvidence(verified);
+    try {
+      const text = await callLocalModel(settings, aiPrompt(ev), fetchImpl);
+      const chk = checkDraft(text, ev);
+      if (!chk.ok) return { kind: 'fallback', reason: 'AI draft rejected. ' + chk.problems.join(' ') };
+      return { kind: 'draft', text, model: settings.model };
+    } catch (e) { return { kind: 'fallback', reason: e.message || 'Local model failed.' }; }
+  }
+
+  /* ---------- pure-JS SHA-256 fallback (for browsers without crypto.subtle on file://) ---------- */
+  function sha256Js(bytes) {
+    const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    const l = b.length, nb = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(nb);
+    m.set(b); m[l] = 0x80; const bits = l * 8, dv = new DataView(m.buffer);
+    dv.setUint32(nb - 8, Math.floor(bits / 0x100000000)); dv.setUint32(nb - 4, bits >>> 0);
+    let H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    const W = new Uint32Array(64), r = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let o = 0; o < nb; o += 64) {
+      for (let i = 0; i < 16; i++) W[i] = dv.getUint32(o + i * 4);
+      for (let i = 16; i < 64; i++) { const s0 = r(W[i-15],7) ^ r(W[i-15],18) ^ (W[i-15] >>> 3), s1 = r(W[i-2],17) ^ r(W[i-2],19) ^ (W[i-2] >>> 10); W[i] = (W[i-16] + s0 + W[i-7] + s1) >>> 0; }
+      let [a, bb, c, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (h + (r(e,6) ^ r(e,11) ^ r(e,25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) >>> 0;
+        const t2 = ((r(a,2) ^ r(a,13) ^ r(a,22)) + ((a & bb) ^ (a & c) ^ (bb & c))) >>> 0;
+        h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = bb; bb = a; a = (t1 + t2) >>> 0;
+      }
+      H = [a, bb, c, d, e, f, g, h].map((x, i) => (x + H[i]) >>> 0);
+    }
+    return H.map(x => x.toString(16).padStart(8, '0')).join('');
+  }
+
+  /* ---------- SHA-256 (browser crypto.subtle or Node crypto) ---------- */
+  async function sha256Hex(bytes) {
+    if (root.crypto && root.crypto.subtle && typeof root.crypto.subtle.digest === 'function') {
+      try { const d = await root.crypto.subtle.digest('SHA-256', bytes); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join(''); } catch (e) { /* fall through */ }
+    }
+    return sha256Js(bytes);
+  }
+
+  const CZ = { RULE_VERSION, MAX_FILE_BYTES, DEFAULT_MAX_GAP_S, KNOWN_HASHES, MARKERS, STATUSES, CzError,
+    parseCSV, parseNum, parseSampleName, ingestBlood, baselineFor, rangeStatus, compare, healthCards, healthTrend, findingKey,
+    ingestRadiation, integrate, createReviewStore, buildPacket, packetHTML, reviewsCSV, esc, explainHealth, explainEnvironment, sha256Hex, sha256Js,
+    AI_DEFAULTS, aiEvidence, aiPrompt, checkDraft, callLocalModel, aiDraft };
+  if (typeof module !== 'undefined' && module.exports) module.exports = CZ; else root.CZ = CZ;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* CytoZoe interface. Uses window.CZ (engines.js). No network, no external libraries. */
+(function () {
+  'use strict';
+  const CZ = window.CZ;
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const URLS = {
+    health: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-575',
+    radiation: 'https://visualization.osdr.nasa.gov/radlab/gui/data-api/'
+  };
+  const AI_KEY = 'cz.ai.v1';
+  function aiSettings() { try { return Object.assign({}, CZ.AI_DEFAULTS, JSON.parse(localStorage.getItem(AI_KEY) || '{}')); } catch (e) { return Object.assign({}, CZ.AI_DEFAULTS); } }
+  function saveAi(patch) { const s = Object.assign(aiSettings(), patch); try { localStorage.setItem(AI_KEY, JSON.stringify(s)); } catch (e) {} return s; }
+  const RAW_KEY = { health: 'cz.raw.health.v1', radiation: 'cz.raw.radiation.v1' };
+
+  /* ---------- tiny DOM helpers (text only, never innerHTML) ---------- */
+  function h(tag, props, ...kids) {
+    const el = document.createElement(tag);
+    let val;
+    for (const [k, v] of Object.entries(props || {})) {
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'on') for (const [ev, fn] of Object.entries(v)) el.addEventListener(ev, fn);
+      else if (k === 'value') val = v;
+      else if (v === true) el.setAttribute(k, '');
+      else el.setAttribute(k, v);
+    }
+    kids.flat(Infinity).forEach(c => { if (c == null || c === false) return; el.append(c.nodeType ? c : document.createTextNode(String(c))); });
+    if (val !== undefined) el.value = val;
+    return el;
+  }
+  function s(tag, attrs, ...kids) {
+    const el = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs || {})) if (v != null) el.setAttribute(k, v);
+    kids.flat(Infinity).forEach(c => { if (c == null) return; el.append(c.nodeType ? c : document.createTextNode(String(c))); });
+    return el;
+  }
+  const num = (v, dp) => v == null ? 'n/a' : Number(v).toFixed(dp);
+  const signed = (v, dp) => v == null ? 'n/a' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dp);
+  const visitLabel = (visit) => visit + ' · ' + (visit[0] === 'L' ? 'Preflight' : 'After return');
+  const when = iso => { try { return new Date(iso).toLocaleString(); } catch (e) { return iso; } };
+
+  /* ---------- state ---------- */
+  const store = CZ.createReviewStore(window.localStorage);
+  const S = {
+    health: null, radiation: null, meta: { health: null, radiation: null },
+    ui: { participant: null, visit: null, marker: 'creatinine', instrument: null },
+    raw: {}, notice: null, drawer: null, charts: [], saving: false, pendingReview: null,
+    filters: { kind: 'all', status: 'all', participant: 'all' }, selectedReview: null, packetOpen: false, answers: {}
+  };
+
+  /* ---------- import (E1) ---------- */
+  async function importFile(kind, file) {
+    try {
+      if (!file) return;
+      if (!/\.csv$/i.test(file.name)) throw new CZ.CzError('BAD_TYPE', 'Only .csv files are accepted.');
+      if (file.size > CZ.MAX_FILE_BYTES) throw new CZ.CzError('TOO_LARGE', 'That file is over 10 MB. Use the documented CSV only.');
+      const buf = await file.arrayBuffer();
+      let text;
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) { throw new CZ.CzError('NOT_TEXT', 'That file is not readable text. Choose the CSV file.'); }
+      const sha = await CZ.sha256Hex(buf);
+      if (S.meta[kind] && S.meta[kind].sha256 === sha) { notify('info', 'That exact file is already loaded.'); return; }
+      const ds = kind === 'health' ? CZ.ingestBlood(text) : CZ.ingestRadiation(text);
+      const known = CZ.KNOWN_HASHES[kind] === sha;
+      const meta = { fileName: file.name, sha256: sha, importedAt: new Date().toISOString(), url: URLS[kind], knownSnapshot: known };
+      S[kind] = ds; S.meta[kind] = meta; S.raw[kind] = text;
+      let kept = true;
+      try { localStorage.setItem(RAW_KEY[kind], JSON.stringify({ text, meta })); } catch (e) { kept = false; }
+      if (kind === 'health') { S.ui.participant = ds.participantIds[0]; S.ui.visit = ds.visits.includes('L-3') ? 'L-3' : ds.participants[S.ui.participant][0].visit; S.ui.marker = 'creatinine'; }
+      else S.ui.instrument = ds.instrument;
+      notify('success', `Imported ${file.name}. ` + (kind === 'health' ? `${ds.quality.rows} samples, ${ds.quality.participants} participants, ${ds.quality.nonmissingTotal} marker values.` : `${ds.quality.instrumentRows} rows for ${ds.instrument}, ${ds.quality.conflictGroups} conflicting timestamp group(s).`) + (known ? ' Matches the file inspected for the PRD.' : ' This is not byte-identical to the file inspected for the PRD, so its numbers may differ.') + (kept ? '' : ' Could not keep a copy in this browser; re-import after closing.'));
+    } catch (e) {
+      notify('error', (e.code ? e.code + ': ' : '') + (e.message || 'Import failed.') + ' Nothing was replaced.');
+    }
+    render();
+  }
+  const EMB = window.CZ_EMBEDDED || {};
+  function adopt(kind, text, meta) {
+    const ds = kind === 'health' ? CZ.ingestBlood(text) : CZ.ingestRadiation(text);
+    S[kind] = ds; S.meta[kind] = meta; S.raw[kind] = text;
+    if (kind === 'health') { S.ui.participant = ds.participantIds[0]; S.ui.visit = ds.visits.includes('L-3') ? 'L-3' : ds.participants[S.ui.participant][0].visit; }
+    else S.ui.instrument = ds.instrument;
+  }
+  function loadBundled(kind) {
+    const e = EMB[kind]; if (!e) return false;
+    adopt(kind, e.text, { fileName: e.fileName, sha256: e.sha256, importedAt: null, url: URLS[kind], knownSnapshot: e.sha256 === CZ.KNOWN_HASHES[kind], bundled: true, verified: null });
+    return true;
+  }
+  /* Re-hash the embedded text in the browser so the shown hash is checked, not just copied. */
+  async function verifyBundled() {
+    for (const kind of ['health', 'radiation']) {
+      const m = S.meta[kind]; if (!m || !m.bundled) continue;
+      try {
+        const sha = await CZ.sha256Hex(new TextEncoder().encode(S.raw[kind]));
+        m.verified = sha === m.sha256;
+        if (!m.verified) notify('error', `The bundled ${kind} data does not match its recorded SHA-256. Re-import the source CSV.`);
+      } catch (e) { m.verified = null; }
+    }
+    render();
+  }
+  function loadSaved() {
+    ['health', 'radiation'].forEach(kind => {
+      let done = false;
+      try {
+        const raw = localStorage.getItem(RAW_KEY[kind]);
+        if (raw) { const { text, meta } = JSON.parse(raw); adopt(kind, text, meta); done = true; }
+      } catch (e) { /* a bad saved copy is ignored */ }
+      if (!done) { try { loadBundled(kind); } catch (e) { S[kind] = null; } }
+    });
+  }
+  function removeData(kind) {
+    S[kind] = null; S.meta[kind] = null; S.raw[kind] = null;
+    try { localStorage.removeItem(RAW_KEY[kind]); } catch (e) {}
+    const back = loadBundled(kind);
+    notify('info', back ? 'Imported file removed. Showing the bundled NASA file again. Saved reviews were kept.' : 'Dataset removed from this browser. Saved reviews were kept.');
+    render(); if (back) verifyBundled();
+  }
+  function switchInstrument(inst) {
+    try {
+      S.radiation = CZ.ingestRadiation(S.raw.radiation, { instrument: inst }); S.ui.instrument = inst;
+    } catch (e) { notify('error', 'Could not switch instrument.'); }
+    render();
+  }
+
+  /* ---------- notices ---------- */
+  function notify(type, text) { S.notice = { type, text, at: Date.now() }; }
+  function noticeEl() {
+    if (!S.notice) return h('div', { id: 'live', 'aria-live': 'polite', class: 'sr-only' });
+    const n = S.notice;
+    return h('div', { id: 'live', class: 'notice ' + n.type, role: n.type === 'error' ? 'alert' : 'status' }, n.text, ' ',
+      h('button', { class: 'btn small', type: 'button', 'data-fid': 'dismiss', on: { click: () => { S.notice = null; render(); } } }, 'Dismiss'));
+  }
+
+  /* ---------- findings ---------- */
+  function statusText(c) {
+    if (c.status === 'ABOVE') return 'Outside supplied range (above)';
+    if (c.status === 'BELOW') return 'Outside supplied range (below)';
+    if (c.status === 'WITHIN') return 'Within supplied range';
+    if (c.status === 'UNKNOWN') return 'No supplied range to compare';
+    return 'No measurement';
+  }
+  function healthFinding(c) {
+    const o = c.obs;
+    return {
+      findingKey: c.findingKey, kind: 'health',
+      title: `${c.label}: ${statusText(c).toLowerCase()}`, subject: `${o.participant} ${o.visit}`, participant: o.participant,
+      summary: `${c.label} ${num(c.value, c.dp + 1)} ${c.unit} (source row ${o.sourceRow}, ${o.sampleName}). Baseline ${num(c.baseline.mean, 3)} (n=${c.baseline.n}).`,
+      evidence: { observationId: o.id, sourceRow: o.sourceRow, value: c.value, unit: c.unit, rangeLow: c.rangeLow, rangeHigh: c.rangeHigh, baselineMean: c.baseline.mean, baselineN: c.baseline.n, rule: CZ.RULE_VERSION }
+    };
+  }
+  function envFindings() {
+    const ds = S.radiation; if (!ds) return [];
+    const I = envIntegration(); const Q = ds.quality;
+    const day = (Q.first || '').slice(0, 10);
+    const list = [{
+      id: 'quality', findingKey: CZ.findingKey('environment', `${S.meta.radiation.sha256.slice(0, 12)}|${ds.instrument}|quality`), kind: 'environment',
+      title: `Conflicting timestamps set aside: ${Q.conflictGroups} group(s), ${Q.quarantinedRows} rows`, subject: `${ds.instrument} ${day}`, instrument: ds.instrument,
+      summary: `${Q.quarantinedRows} rows with conflicting values at the same timestamp were excluded; ${I.excluded.length} intervals were excluded in total.`,
+      evidence: { quality: Q, excludedIntervals: I.excluded.length, rule: CZ.RULE_VERSION }
+    }];
+    const ok = ds.series.filter(p => p.status === 'OK');
+    if (ok.length) {
+      const peak = ok.reduce((a, b) => (b.rate > a.rate ? b : a));
+      list.push({
+        id: 'peak', findingKey: CZ.findingKey('environment', `${S.meta.radiation.sha256.slice(0, 12)}|${ds.instrument}|peak`), kind: 'environment',
+        title: `Highest accepted dose rate: ${num(peak.rate, 2)} µGy/h`, subject: `${ds.instrument} ${peak.ts}`, instrument: ds.instrument,
+        summary: `Highest unambiguous reading at source time ${peak.ts} (source row ${peak.sourceRow}). An observation about the record, not a health alarm.`,
+        evidence: { ts: peak.ts, rate: peak.rate, sourceRow: peak.sourceRow, rule: CZ.RULE_VERSION }
+      });
+    }
+    return list;
+  }
+  let _intCache = null;
+  function envIntegration() {
+    if (!S.radiation) return null;
+    if (_intCache && _intCache.ds === S.radiation) return _intCache.val;
+    const val = CZ.integrate(S.radiation.series); _intCache = { ds: S.radiation, val }; return val;
+  }
+
+  /* ---------- evidence block (drawer and panel) ---------- */
+  function reviewForm(finding, onDone) {
+    const existing = store.byFinding(finding.findingKey);
+    const r = existing || null;
+    const note = h('textarea', { class: 'field', id: 'rv-note', rows: 4, maxlength: 4000, 'data-fid': 'rv-note', 'aria-describedby': 'rv-help' });
+    note.value = r ? r.note : (S.pendingReview && S.pendingReview.key === finding.findingKey ? S.pendingReview.note : '');
+    const date = h('input', { class: 'field', type: 'date', id: 'rv-date', 'data-fid': 'rv-date', value: r && r.followUpDate ? r.followUpDate : '' });
+    const status = h('select', { class: 'field', id: 'rv-status', 'data-fid': 'rv-status', value: r ? r.status : 'FOLLOW_UP_REQUESTED' },
+      ...CZ.STATUSES.map(x => h('option', { value: x }, x.replace(/_/g, ' ').toLowerCase())));
+    status.value = r ? r.status : 'FOLLOW_UP_REQUESTED';
+    const msg = h('div', { role: 'status', 'aria-live': 'polite', class: 'small', id: 'rv-msg' });
+    if (r) msg.append(h('span', { class: 'badge success' }, '✓ Saved · ' + r.status.replace(/_/g, ' ').toLowerCase() + ' · v' + r.version + ' · ' + when(r.updatedAt)));
+    const save = h('button', { class: 'btn primary', type: 'button', id: 'rv-save', 'data-fid': 'rv-save' }, r ? 'Update follow-up' : 'Save follow-up');
+    save.addEventListener('click', () => {
+      if (S.saving) return; S.saving = true; save.disabled = true;
+      try {
+        S.pendingReview = { key: finding.findingKey, note: note.value };
+        const cur = store.byFinding(finding.findingKey);
+        const created = cur ? { review: cur } : store.create(finding);
+        const upd = store.update(created.review.id, { note: note.value, status: status.value, followUpDate: date.value }, created.review.version);
+        S.pendingReview = null;
+        msg.replaceChildren(h('span', { class: 'badge success' }, '✓ Saved · ' + upd.status.replace(/_/g, ' ').toLowerCase() + ' · v' + upd.version + ' · ' + when(upd.updatedAt)));
+        save.textContent = 'Update follow-up';
+        if (onDone) onDone();
+      } catch (e) {
+        msg.replaceChildren(h('span', { class: 'badge error', role: 'alert' }, '! ' + (e.message || 'Save failed.') + ' Your note is still here. Try again.'));
+      } finally { S.saving = false; save.disabled = false; }
+    });
+    return h('div', { class: 'ev' },
+      h('label', { class: 'lbl', for: 'rv-note' }, 'Follow-up note', note),
+      h('p', { id: 'rv-help', class: 'meta' }, 'Your note is saved on this device and is included in the review packet. It is not medical advice.'),
+      h('div', { class: 'row' },
+        h('label', { class: 'lbl', for: 'rv-status' }, 'Status', status),
+        h('label', { class: 'lbl', for: 'rv-date' }, 'Follow-up date (optional)', date)),
+      h('div', { class: 'row' }, save), msg);
+  }
+
+  function assistantBlock(kind, ctxFn, key) {
+    const out = h('div', { 'aria-live': 'polite', id: 'ans-' + kind });
+    const aiOut = h('div', { id: 'ai-' + kind, 'aria-live': 'polite' });
+    let token = 0;
+    const show = (q) => {
+      const r = kind === 'health' ? CZ.explainHealth(ctxFn(), q) : CZ.explainEnvironment(ctxFn(), q);
+      S.answers[key] = { q, r };
+      paint(r); runAi(r);
+    };
+    const paint = (r) => out.replaceChildren(h('div', { class: 'answer' },
+      h('span', { class: 'badge outline' }, r.mode), h('h3', {}, r.title), ...r.paragraphs.map(p => h('p', {}, p)),
+      r.sourceIds && r.sourceIds.length ? h('p', { class: 'meta' }, 'Sources: ' + r.sourceIds.join(', ')) : null));
+    const runAi = async (r) => {
+      const st = aiSettings(); const my = ++token;
+      if (!st.enabled) { aiOut.replaceChildren(); return; }
+      aiOut.replaceChildren(h('p', { class: 'small muted', role: 'status' }, `Drafting plain-language wording with local model ${st.model || '(not set)'}\u2026 The verified explanation above stays the reference.`));
+      const res = await CZ.aiDraft(st, r);
+      if (my !== token || !document.contains(aiOut)) return;
+      if (res.kind === 'draft') {
+        const use = h('button', { class: 'btn small', type: 'button', 'data-fid': 'ai-use', on: { click: () => {
+          const note = document.getElementById('rv-note');
+          if (note) { note.value = (note.value ? note.value.trim() + '\n\n' : '') + res.text; note.focus(); }
+          msg.textContent = 'Copied into the follow-up note. It is saved only when you choose Save follow-up.';
+        } } }, 'Use as note draft');
+        const msg = h('p', { class: 'meta', role: 'status' });
+        aiOut.replaceChildren(h('div', { class: 'answer ai-draft' },
+          h('span', { class: 'badge review' }, 'AI draft \u2014 verify against evidence'),
+          h('p', {}, res.text),
+          h('p', { class: 'meta' }, `Written by local model ${res.model} from the verified facts above. Numbers were checked against those facts. Not saved or exported unless you put it in a note and save.`),
+          h('div', { class: 'row' }, use, h('button', { class: 'btn small', type: 'button', 'data-fid': 'ai-discard', on: { click: () => aiOut.replaceChildren(h('p', { class: 'meta' }, 'AI draft discarded.')) } }, 'Discard draft')), msg));
+      } else if (res.kind === 'fallback') {
+        aiOut.replaceChildren(h('p', { class: 'notice info small' }, res.reason + ' The verified explanation above is unchanged.'));
+      }
+    };
+    const free = h('input', { class: 'field', type: 'text', id: 'ask-' + kind, 'data-fid': 'ask-' + kind, placeholder: 'Ask about this result', 'aria-label': 'Ask about this result' });
+    const form = h('form', { class: 'row', on: { submit: e => { e.preventDefault(); if (free.value.trim()) show(free.value.trim()); } } },
+      h('div', { style: 'flex:1 1 200px;min-width:0' }, free), h('button', { class: 'btn', type: 'submit' }, 'Ask'));
+    if (S.answers[key]) paint(S.answers[key].r);
+    const st = aiSettings();
+    return h('div', { class: 'assistant' }, h('h3', {}, 'Evidence assistant'),
+      h('div', { class: 'asks' },
+        h('button', { class: 'btn small', type: 'button', 'data-fid': 'ask-explain', on: { click: () => show('explain') } }, 'Explain this result'),
+        h('button', { class: 'btn small', type: 'button', 'data-fid': 'ask-how', on: { click: () => show('how') } }, 'How was this calculated?'),
+        h('button', { class: 'btn small', type: 'button', 'data-fid': 'ask-limits', on: { click: () => show('limits') } }, 'What can this dataset not tell us?')),
+      form, out, aiOut,
+      h('p', { class: 'meta' }, st.enabled
+        ? `Answers come from fixed templates over the calculated evidence. Optional AI wording is on (local model ${st.model || 'not set'}); it only rewords those answers.`
+        : 'Answers come from fixed templates over the calculated evidence. Optional local AI wording is off (turn it on under Sources & quality).'));
+  }
+
+  function aiSettingsBlock() {
+    const st = aiSettings();
+    const status = h('p', { class: 'small', role: 'status', id: 'ai-status' });
+    const on = h('input', { type: 'checkbox', id: 'ai-on', 'data-fid': 'ai-on' }); on.checked = !!st.enabled;
+    const ep = h('input', { class: 'field', type: 'url', id: 'ai-ep', 'data-fid': 'ai-ep', value: st.endpoint });
+    const model = h('input', { class: 'field', type: 'text', id: 'ai-model', 'data-fid': 'ai-model', value: st.model, placeholder: 'e.g. llama3.2:3b', autocomplete: 'off' });
+    const save = () => {
+      if (on.checked && !model.value.trim()) { on.checked = false; status.textContent = 'Enter the name of a model already downloaded in Ollama first.'; return; }
+      saveAi({ enabled: on.checked, endpoint: ep.value.trim() || CZ.AI_DEFAULTS.endpoint, model: model.value.trim() });
+      status.textContent = on.checked ? 'AI wording is on. Verified answers are still shown first.' : 'AI wording is off. Only verified answers are shown.';
+    };
+    on.addEventListener('change', save); ep.addEventListener('change', save); model.addEventListener('change', save);
+    const test = h('button', { class: 'btn', type: 'button', 'data-fid': 'ai-test', on: { click: async () => {
+      status.textContent = 'Checking\u2026';
+      try {
+        const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 5000);
+        const r = await fetch((ep.value.trim() || CZ.AI_DEFAULTS.endpoint).replace(/\/+$/, '') + '/api/tags', { signal: ctl.signal }); clearTimeout(tm);
+        const j = await r.json(); const names = (j.models || []).map(m => m.name);
+        status.textContent = names.length ? `Connected. Models available: ${names.join(', ')}.` + (model.value && !names.includes(model.value.trim()) ? ` "${model.value.trim()}" is not among them.` : '') : 'Connected, but no models are downloaded.';
+      } catch (e) { status.textContent = 'Could not reach a local model server at that address. The verified answers still work.'; }
+    } } }, 'Test connection');
+    return h('section', { class: 'ev' }, h('h3', {}, 'Optional AI wording (local model)'),
+      h('p', { class: 'small' }, 'Off by default. When on, a model already installed in Ollama on this computer rewords the verified answers. It sees only those facts, cannot change numbers or notes, and any draft with a number not in the facts or with medical wording is rejected. No cloud service is used.'),
+      h('label', { class: 'lbl', for: 'ai-on', style: 'flex-direction:row;align-items:center;gap:8px' }, on, 'Use local AI wording'),
+      h('label', { class: 'lbl', for: 'ai-ep' }, 'Ollama address', ep),
+      h('label', { class: 'lbl', for: 'ai-model' }, 'Model name', model),
+      h('div', { class: 'row' }, test), status,
+      h('p', { class: 'meta' }, 'Because this page opens from a file, start Ollama with OLLAMA_ORIGINS="*" (or the page address) so the browser may call it. Replies taking over 15 s fall back to the verified answer.'));
+  }
+
+  function healthEvidence(card) {
+    const o = card.obs, m = S.meta.health, b = card.baseline;
+    const finding = healthFinding(card);
+    return h('div', { class: 'ev' },
+      h('section', {}, h('h3', {}, 'Observed'),
+        h('div', { class: 'big metric-value' }, num(card.value, card.dp + 1), ' ', h('span', { class: 'small muted' }, card.unit)),
+        h('p', {}, `${card.label} · ${o.participant} · ${visitLabel(o.visit)}`),
+        h('span', { class: 'badge ' + (card.status === 'ABOVE' || card.status === 'BELOW' ? 'review' : 'outline') }, (card.status === 'ABOVE' || card.status === 'BELOW' ? '▲ ' : '') + statusText(card))),
+      h('section', {}, h('h3', {}, 'Compared with'),
+        h('p', {}, card.rangeLow == null && card.rangeHigh == null ? 'No supplied range for this sample.' : `Supplied range: ${card.rangeLow == null ? 'no lower bound' : card.rangeLow} to ${card.rangeHigh == null ? 'no upper bound' : card.rangeHigh} ${card.unit}${card.oneSided ? ' (one-sided comparison)' : ''}.`),
+        b.mean == null ? h('p', {}, `Personal baseline not available: needs at least 2 preflight values, found ${b.n}.`)
+          : h('p', {}, `Retrospective preflight mean: ${num(b.mean, 3)} ${card.unit} (n=${b.n}: ${b.values.join(', ')}). Difference: ${signed(card.delta, 3)} ${card.unit}${card.pct == null ? '' : ` (${signed(card.pct, 1)}%)`}.`)),
+      h('section', {}, h('h3', {}, 'Source'),
+        h('p', {}, `Row ${o.sourceRow}, sample ${o.sampleName}.`),
+        h('p', { class: 'meta' }, 'File: ' + m.fileName), h('p', { class: 'meta mono' }, 'SHA-256 ' + m.sha256), h('p', { class: 'meta' }, m.url)),
+      h('section', {}, h('h3', {}, 'Limits'),
+        h('ul', {}, h('li', {}, 'Descriptive comparison only. Not a diagnosis or abnormality threshold.'),
+          h('li', {}, card.phase === 'pre' ? 'Preflight sample: cannot be a spaceflight effect.' : 'Many things can change between visits, so a difference does not show a cause.'),
+          h('li', {}, 'Four people are not a clinical validation cohort.'))),
+      h('section', {}, h('h3', {}, 'Follow-up'), reviewForm(finding, () => { S.noReRender = true; })),
+      assistantBlock('health', () => card, finding.findingKey));
+  }
+
+  function envEvidence(f) {
+    const ds = S.radiation, m = S.meta.radiation, I = envIntegration(), Q = ds.quality;
+    const body = f.id === 'quality'
+      ? [h('p', {}, `${Q.conflictGroups} timestamp group(s) had different values at the same time; ${Q.quarantinedRows} rows were set aside. Nothing was averaged or guessed.`),
+        ...ds.conflictGroups.map(g => h('p', { class: 'small' }, `${g.ts}: source rows ${g.rows.map(r => r.sourceRow + ' (' + r.rate + ')').join(', ')}`))]
+      : [h('p', {}, f.summary)];
+    return h('div', { class: 'ev' },
+      h('section', {}, h('h3', {}, 'Observed'), h('p', { class: 'big' }, f.title), ...body),
+      h('section', {}, h('h3', {}, 'Compared with'), h('p', {}, 'Compared with nothing. This is a separate environment record, not paired with any person.')),
+      h('section', {}, h('h3', {}, 'Source'), h('p', {}, `${ds.instrument}${ds.spacecraft ? ' on ' + ds.spacecraft : ''}, ${Q.first} to ${Q.last} (source clock; timezone not stated).`),
+        h('p', { class: 'meta' }, 'File: ' + m.fileName), h('p', { class: 'meta mono' }, 'SHA-256 ' + m.sha256), h('p', { class: 'meta' }, m.url)),
+      h('section', {}, h('h3', {}, 'Limits'),
+        h('ul', {}, h('li', {}, 'Dose is estimated at the sensor over covered intervals only. Not personal dose or risk.'),
+          h('li', {}, `The ${I.maxGapS} s gap rule is an engineering coverage rule, not a NASA health threshold.`),
+          h('li', {}, 'No relationship to any health record is claimed.'))),
+      h('section', {}, h('h3', {}, 'Follow-up'), reviewForm(f, null)),
+      assistantBlock('env', () => ({ quality: Q, integration: I }), f.findingKey));
+  }
+
+  /* ---------- drawer ---------- */
+  let lastOpener = null;
+  function openDrawer(title, contentFn, opener) {
+    lastOpener = opener || document.activeElement; S.drawer = { title, contentFn }; renderDrawer(); setInert(true);
+    const t = document.getElementById('drawer-title'); if (t) t.focus();
+  }
+  function closeDrawer() { S.drawer = null; renderDrawer(); setInert(false); if (lastOpener && document.contains(lastOpener)) lastOpener.focus(); render(); }
+  function setInert(on) { const r = document.getElementById('root'); if (!r) return; if (on) { r.setAttribute('inert', ''); r.setAttribute('aria-hidden', 'true'); } else { r.removeAttribute('inert'); r.removeAttribute('aria-hidden'); } }
+  function trapTab(e) {
+    if (e.key !== 'Tab') return;
+    const f = [...e.currentTarget.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled && x.offsetParent !== null);
+    if (!f.length) return; const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && (document.activeElement === first || document.activeElement.id === 'drawer-title')) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+  function renderDrawer() {
+    const host = document.getElementById('drawer-host'); host.replaceChildren();
+    if (!S.drawer) return;
+    host.append(
+      h('div', { class: 'scrim', on: { click: closeDrawer } }),
+      h('aside', { class: 'drawer', role: 'dialog', 'aria-labelledby': 'drawer-title', 'aria-modal': 'true', on: { keydown: e => { if (e.key === 'Escape') closeDrawer(); else trapTab(e); } } },
+        h('div', { class: 'drawer-head' }, h('h2', { id: 'drawer-title', tabindex: '-1' }, S.drawer.title),
+          h('button', { class: 'btn', type: 'button', id: 'drawer-close', on: { click: closeDrawer } }, 'Close')),
+        h('div', { class: 'drawer-body' }, S.drawer.contentFn())));
+  }
+
+  /* ---------- charts ---------- */
+  function niceTicks(lo, hi, n) {
+    const span = hi - lo || 1, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+    const out = []; for (let t = Math.ceil(lo / step - 1e-9) * step; ; t += step) { out.push(+t.toFixed(10)); if (t >= hi - step * 1e-6) break; }
+    return out;
+  }
+  function registerChart(el, draw) { S.charts.push({ el, draw }); }
+  function drawAll() { S.charts.forEach(c => { if (document.contains(c.el)) c.draw(c.el); }); }
+
+  function healthChart(trend, selectedVisit) {
+    const box = h('div', { class: 'chart' });
+    const draw = (el) => {
+      const W = Math.max(280, el.clientWidth || 600), H = W < 520 ? 300 : 340, m = { l: 56, r: 20, t: 20, b: 48 };
+      const pts = trend.points;
+      const vals = pts.filter(p => p.value != null).map(p => p.value);
+      let lo = Math.min(...vals), hi = Math.max(...vals);
+      pts.forEach(p => { if (p.rangeLow != null) lo = Math.min(lo, p.rangeLow); if (p.rangeHigh != null) hi = Math.max(hi, p.rangeHigh); });
+      if (trend.baseline.mean != null) { lo = Math.min(lo, trend.baseline.mean); hi = Math.max(hi, trend.baseline.mean); }
+      const pad = (hi - lo) * 0.12 || Math.abs(hi) * 0.1 || 1; lo -= pad; hi += pad;
+      const X = i => m.l + (pts.length === 1 ? (W - m.l - m.r) / 2 : i * (W - m.l - m.r) / (pts.length - 1));
+      const Y = v => m.t + (1 - (v - lo) / (hi - lo)) * (H - m.t - m.b);
+      const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'group', 'aria-label': `${trend.label} by visit. Dots are actual samples. A table with every value follows the chart.` });
+      niceTicks(lo, hi, 5).forEach(t => {
+        svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: '#DCE4EB' }), s('text', { x: m.l - 8, y: Y(t) + 4, 'text-anchor': 'end' }, num(t, trend.dp > 0 ? Math.min(trend.dp + 1, 2) : 0)));
+      });
+      svg.append(s('text', { x: 14, y: m.t + 8, transform: `rotate(-90 14 ${m.t + 8})`, 'text-anchor': 'end' }, trend.unit));
+      if (trend.rangeConsistent) {
+        const p0 = pts.find(p => p.value != null);
+        if (p0.rangeLow != null && p0.rangeHigh != null) svg.append(s('rect', { x: m.l, y: Y(p0.rangeHigh), width: W - m.l - m.r, height: Y(p0.rangeLow) - Y(p0.rangeHigh), fill: '#E8F5F5' }));
+        else {
+          if (p0.rangeLow != null) svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(p0.rangeLow), y2: Y(p0.rangeLow), stroke: '#087F8C', 'stroke-dasharray': '2 4' }));
+          if (p0.rangeHigh != null) svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(p0.rangeHigh), y2: Y(p0.rangeHigh), stroke: '#087F8C', 'stroke-dasharray': '2 4' }));
+        }
+      } else {
+        pts.forEach((p, i) => { if (p.rangeLow != null && p.rangeHigh != null) svg.append(s('line', { x1: X(i), x2: X(i), y1: Y(p.rangeLow), y2: Y(p.rangeHigh), stroke: '#728297', 'stroke-width': 2 }), s('line', { x1: X(i) - 5, x2: X(i) + 5, y1: Y(p.rangeLow), y2: Y(p.rangeLow), stroke: '#728297', 'stroke-width': 2 }), s('line', { x1: X(i) - 5, x2: X(i) + 5, y1: Y(p.rangeHigh), y2: Y(p.rangeHigh), stroke: '#728297', 'stroke-width': 2 })); });
+      }
+      if (trend.baseline.mean != null) {
+        svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(trend.baseline.mean), y2: Y(trend.baseline.mean), stroke: '#64748B', 'stroke-width': 2, 'stroke-dasharray': '6 5' }),
+          s('text', { x: W - m.r, y: Y(trend.baseline.mean) - 6, 'text-anchor': 'end' }, 'Preflight mean ' + num(trend.baseline.mean, 2)));
+      }
+      const firstPost = pts.findIndex(p => p.phase === 'post');
+      if (firstPost > 0) { const xb = (X(firstPost - 1) + X(firstPost)) / 2; svg.append(s('line', { x1: xb, x2: xb, y1: m.t, y2: H - m.b, stroke: '#728297', 'stroke-dasharray': '2 4' }), s('text', { x: xb - 6, y: H - m.b - 6, 'text-anchor': 'end' }, 'Before launch'), s('text', { x: xb + 6, y: H - m.b - 6 }, 'After return')); }
+      pts.forEach((p, i) => {
+        svg.append(s('text', { x: X(i), y: H - m.b + 20, 'text-anchor': 'middle', 'font-weight': p.visit === selectedVisit ? 700 : 400, fill: p.visit === selectedVisit ? '#14283F' : null }, p.visit));
+        if (p.value == null) return;
+        const out = p.status === 'ABOVE' || p.status === 'BELOW', sel = p.visit === selectedVisit;
+        const g = s('g', { class: 'pt', tabindex: 0, role: 'button', 'aria-label': `${p.visit}: ${num(p.value, trend.dp + 1)} ${trend.unit}, ${out ? 'outside supplied range' : 'not outside supplied range'}${sel ? ', selected' : ''}`, style: 'cursor:pointer' });
+        if (sel) g.append(s('circle', { cx: X(i), cy: Y(p.value), r: 13, fill: 'none', stroke: '#087F8C', 'stroke-width': 2 }));
+        g.append(out ? s('path', { d: `M${X(i)} ${Y(p.value) - 9} L${X(i) + 9} ${Y(p.value)} L${X(i)} ${Y(p.value) + 9} L${X(i) - 9} ${Y(p.value)} Z`, fill: '#9A4B08', stroke: '#fff', 'stroke-width': 2 }) : s('circle', { cx: X(i), cy: Y(p.value), r: 7, fill: '#087F8C', stroke: '#fff', 'stroke-width': 2 }));
+        g.append(s('title', {}, `${p.visit}: ${num(p.value, trend.dp + 1)} ${trend.unit}`));
+        const pick = () => { S.ui.visit = p.visit; render(); };
+        g.addEventListener('click', pick); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+        svg.append(g);
+      });
+      el.replaceChildren(svg);
+    };
+    registerChart(box, draw);
+    return h('div', {}, box, h('div', { class: 'legend' },
+      h('span', {}, svgIcon('circle'), ' Measured sample'), h('span', {}, svgIcon('diamond'), ' Measured, outside supplied range'),
+      h('span', {}, svgIcon('dash'), ' Calculated preflight mean'), h('span', {}, svgIcon('band'), ' Supplied range (source)')));
+  }
+  function svgIcon(kind) {
+    const el = s('svg', { width: 22, height: 14, viewBox: '0 0 22 14', 'aria-hidden': 'true' });
+    if (kind === 'circle') el.append(s('circle', { cx: 11, cy: 7, r: 5, fill: '#087F8C' }));
+    if (kind === 'diamond') el.append(s('path', { d: 'M11 1 L17 7 L11 13 L5 7 Z', fill: '#9A4B08' }));
+    if (kind === 'dash') el.append(s('line', { x1: 1, x2: 21, y1: 7, y2: 7, stroke: '#64748B', 'stroke-width': 2, 'stroke-dasharray': '5 4' }));
+    if (kind === 'band') el.append(s('rect', { x: 1, y: 2, width: 20, height: 10, fill: '#E8F5F5', stroke: '#DCE4EB' }));
+    if (kind === 'excl') el.append(s('rect', { x: 1, y: 1, width: 20, height: 12, fill: '#FFF3DF', stroke: '#9A4B08' }));
+    if (kind === 'line') el.append(s('line', { x1: 1, x2: 21, y1: 7, y2: 7, stroke: '#087F8C', 'stroke-width': 2 }));
+    return el;
+  }
+
+  /* radiation charts: one shared time scale */
+  function timeAxis(svg, X, t0, t1, W, H, m) {
+    const hrs = (t1 - t0) / 3.6e6, step = hrs > 12 ? 3 : hrs > 6 ? 2 : 1;
+    const start = new Date(t0); start.setUTCMinutes(0, 0, 0);
+    for (let t = start.getTime(); t <= t1; t += step * 3.6e6) {
+      if (t < t0) continue; const d = new Date(t);
+      svg.append(s('line', { x1: X(t), x2: X(t), y1: m.t, y2: H - m.b, stroke: '#DCE4EB' }), s('text', { x: X(t), y: H - m.b + 18, 'text-anchor': 'middle' }, String(d.getUTCHours()).padStart(2, '0') + ':00'));
+    }
+    svg.append(s('text', { x: (m.l + W - m.r) / 2, y: H - 6, 'text-anchor': 'middle' }, 'Source timestamp (timezone not stated by the source)'));
+  }
+  function rateChart(ds, I) {
+    const box = h('div', { class: 'chart', tabindex: 0, role: 'group', 'aria-label': 'Radiation rate chart. Use the left and right arrow keys to read individual readings. A data table follows.' });
+    const readout = h('div', { class: 'readout', 'aria-live': 'polite' }, 'Select a point or press the arrow keys while the chart is focused to read a value.');
+    const ok = ds.series.filter(p => p.status === 'OK');
+    const draw = (el) => {
+      const W = Math.max(300, el.clientWidth || 800), H = 300, m = { l: 56, r: 16, t: 16, b: 44 };
+      const t0 = ds.series[0].ms, t1 = ds.series[ds.series.length - 1].ms;
+      const maxR = Math.max(...ok.map(p => p.rate)), ticks = niceTicks(0, maxR * 1.05, 5);
+      const X = t => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r), Y = v => m.t + (1 - v / (ticks[ticks.length - 1])) * (H - m.t - m.b);
+      const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
+      ticks.forEach(t => svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: '#DCE4EB' }), s('text', { x: m.l - 8, y: Y(t) + 4, 'text-anchor': 'end' }, String(t))));
+      svg.append(s('text', { x: 14, y: m.t + 8, transform: `rotate(-90 14 ${m.t + 8})`, 'text-anchor': 'end' }, 'µGy/hour'));
+      timeAxis(svg, X, t0, t1, W, H, m);
+      I.excluded.forEach(iv => svg.append(s('rect', { x: X(iv.from), y: m.t, width: Math.max(3, X(iv.to) - X(iv.from)), height: H - m.t - m.b, fill: '#FFF3DF', stroke: '#9A4B08', 'stroke-width': 0.5, opacity: 0.9 }, s('title', {}, `Excluded (${iv.reason}): ${iv.fromTs} to ${iv.toTs}`))));
+      let seg = [];
+      const flush = () => { if (seg.length > 1) svg.append(s('polyline', { points: seg.join(' '), fill: 'none', stroke: '#087F8C', 'stroke-width': 1.6, 'stroke-linejoin': 'round' })); else if (seg.length === 1) { const [x, y] = seg[0].split(',').map(Number); svg.append(s('circle', { cx: x, cy: y, r: 2, fill: '#087F8C' })); } seg = []; };
+      I.intervals.forEach((iv, k) => { const a = ds.series.find(p => p.ms === iv.from), b = ds.series.find(p => p.ms === iv.to); if (iv.accepted) { if (!seg.length) seg.push(`${X(a.ms).toFixed(1)},${Y(a.rate).toFixed(1)}`); seg.push(`${X(b.ms).toFixed(1)},${Y(b.rate).toFixed(1)}`); } else flush(); }); flush();
+      const cur = s('circle', { r: 5, fill: '#fff', stroke: '#14283F', 'stroke-width': 2, style: 'display:none' }); svg.append(cur);
+      let idx = ok.length - 1;
+      const show = (i) => { idx = Math.max(0, Math.min(ok.length - 1, i)); const p = ok[idx]; cur.setAttribute('cx', X(p.ms)); cur.setAttribute('cy', Y(p.rate)); cur.style.display = ''; readout.textContent = `${p.ts} source time · ${num(p.rate, 3)} µGy/h · source row ${p.sourceRow}`; };
+      const hit = s('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: 'transparent' });
+      hit.addEventListener('pointermove', e => { const r = svg.getBoundingClientRect(); const t = t0 + (e.clientX - r.left - m.l) / (W - m.l - m.r) * (t1 - t0); let best = 0, bd = Infinity; ok.forEach((p, i) => { const d = Math.abs(p.ms - t); if (d < bd) { bd = d; best = i; } }); show(best); });
+      svg.append(hit); el.replaceChildren(svg);
+      el.onkeydown = e => { if (e.key === 'ArrowRight') { show(idx + 1); e.preventDefault(); } else if (e.key === 'ArrowLeft') { show(idx - 1); e.preventDefault(); } else if (e.key === 'Home') { show(0); e.preventDefault(); } else if (e.key === 'End') { show(ok.length - 1); e.preventDefault(); } };
+    };
+    registerChart(box, draw);
+    return h('div', {}, box, readout, h('div', { class: 'legend' }, h('span', {}, svgIcon('line'), ' Accepted readings, joined only across accepted intervals'), h('span', {}, svgIcon('excl'), ' Excluded interval (conflict or gap): no line is drawn across it')));
+  }
+  function doseChart(ds, I) {
+    const box = h('div', { class: 'chart', role: 'img', 'aria-label': `Estimated dose accumulated over covered intervals: ${num(I.totalDose, 3)} micrograys at the sensor. A data table follows.` });
+    const draw = (el) => {
+      const W = Math.max(300, el.clientWidth || 800), H = 280, m = { l: 56, r: 16, t: 16, b: 44 };
+      const t0 = ds.series[0].ms, t1 = ds.series[ds.series.length - 1].ms;
+      const ticks = niceTicks(0, Math.max(I.totalDose, 0.001) * 1.05, 5);
+      const X = t => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r), Y = v => m.t + (1 - v / ticks[ticks.length - 1]) * (H - m.t - m.b);
+      const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
+      ticks.forEach(t => svg.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: '#DCE4EB' }), s('text', { x: m.l - 8, y: Y(t) + 4, 'text-anchor': 'end' }, String(+t.toFixed(2)))));
+      svg.append(s('text', { x: 14, y: m.t + 8, transform: `rotate(-90 14 ${m.t + 8})`, 'text-anchor': 'end' }, 'µGy (accumulated)'));
+      timeAxis(svg, X, t0, t1, W, H, m);
+      I.excluded.forEach(iv => svg.append(s('rect', { x: X(iv.from), y: m.t, width: Math.max(3, X(iv.to) - X(iv.from)), height: H - m.t - m.b, fill: '#FFF3DF', stroke: '#9A4B08', 'stroke-width': 0.5, opacity: 0.9 })));
+      let seg = [], prevCum = 0;
+      const flush = () => { if (seg.length > 1) svg.append(s('polyline', { points: seg.join(' '), fill: 'none', stroke: '#087F8C', 'stroke-width': 2 })); seg = []; };
+      I.intervals.forEach(iv => { if (iv.accepted) { if (!seg.length) seg.push(`${X(iv.from).toFixed(1)},${Y(prevCum).toFixed(1)}`); seg.push(`${X(iv.to).toFixed(1)},${Y(iv.cumulative).toFixed(1)}`); } else flush(); prevCum = iv.cumulative; }); flush();
+      el.replaceChildren(svg);
+    };
+    registerChart(box, draw);
+    return box;
+  }
+  function radTable(ds, I) {
+    const rows = ds.series.map(p => ({ p, iv: I.intervals.find(i => i.from === p.ms) }));
+    const t = h('table', {}, h('thead', {}, h('tr', {}, ...['Source timestamp', 'Rate (µGy/h)', 'Status', 'Interval to next', 'Accumulated (µGy)', 'Source row'].map(x => h('th', { scope: 'col' }, x)))),
+      h('tbody', {}, ...rows.map(({ p, iv }) => h('tr', {}, h('td', {}, p.ts), h('td', {}, p.rate == null ? 'excluded' : num(p.rate, 3)), h('td', {}, p.status === 'OK' ? 'accepted' : p.status.toLowerCase()), h('td', {}, iv ? (iv.accepted ? iv.dtS + ' s accepted' : 'excluded: ' + iv.reason) : ''), h('td', {}, iv && iv.accepted ? num(iv.cumulative, 4) : ''), h('td', {}, p.sourceRow)))));
+    return h('details', { class: 'tbl' }, h('summary', {}, 'Show data table'), h('div', { class: 'table-wrap' }, t));
+  }
+
+  /* ---------- pages ---------- */
+  function importCard(kind) {
+    const isH = kind === 'health';
+    const input = h('input', { type: 'file', accept: '.csv,text/csv', id: 'file-' + kind, 'data-fid': 'file-' + kind, class: 'field', 'aria-label': isH ? 'Choose the OSD-575 CSV' : 'Choose the RadLab CSV', on: { change: e => importFile(kind, e.target.files[0]) } });
+    return h('div', { class: 'empty' },
+      h('h2', {}, isH ? 'Load the OSD-575 blood panel' : 'Load the RadLab radiation file'),
+      h('p', {}, isH ? 'No health data is loaded. Choose LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv from the OSD-575 study. Nothing is shown until a real file is imported.' : 'No radiation data is loaded. Choose a RadLab CSV export (columns timestamp and absorbed_dose_rate; DosTel1 is used when present).'),
+      h('p', { class: 'meta' }, 'Public source: ' + URLS[kind]), h('label', { class: 'lbl', for: 'file-' + kind }, 'CSV file', input),
+      h('p', { class: 'meta' }, 'The file is read in this browser. Nothing is uploaded.'));
+  }
+  function pageShell(title, sentence, chips, ...kids) {
+    return h('div', { class: 'main-inner' },
+      h('div', { class: 'topbar' }, h('div', { class: 'lead' }, h('h1', { id: 'page-title', tabindex: '-1' }, title), h('p', {}, sentence)), h('div', { class: 'chips' }, ...chips)),
+      noticeEl(), ...kids);
+  }
+  function contextBar(withMarkers) {
+    const ds = S.health, p = S.ui.participant, samples = ds.participants[p];
+    const pSel = h('select', { class: 'field', id: 'sel-p', 'data-fid': 'sel-p', on: { change: e => { S.ui.participant = e.target.value; const vs = ds.participants[S.ui.participant]; if (!vs.some(x => x.visit === S.ui.visit)) S.ui.visit = vs[0].visit; render(); } } }, ...ds.participantIds.map(x => h('option', { value: x }, x)));
+    pSel.value = p;
+    const vSel = h('select', { class: 'field', id: 'sel-v', 'data-fid': 'sel-v', on: { change: e => { S.ui.visit = e.target.value; render(); } } }, ...samples.map(x => h('option', { value: x.visit }, visitLabel(x.visit))));
+    vSel.value = S.ui.visit;
+    const i = samples.findIndex(x => x.visit === S.ui.visit);
+    const go = d => { S.ui.visit = samples[i + d].visit; render(); };
+    return h('div', { class: 'card' }, h('div', { class: 'row' },
+      h('label', { class: 'lbl', for: 'sel-p' }, 'Participant', pSel), h('label', { class: 'lbl', for: 'sel-v' }, 'Visit (actual sample)', vSel),
+      h('button', { class: 'btn', type: 'button', 'data-fid': 'prev', disabled: i <= 0, 'aria-label': 'Previous actual sample', on: { click: () => go(-1) } }, '← Previous'),
+      h('button', { class: 'btn', type: 'button', 'data-fid': 'next', disabled: i >= samples.length - 1, 'aria-label': 'Next actual sample', on: { click: () => go(1) } }, 'Next →'),
+      h('span', { class: 'badge outline' }, 'Historical research data')));
+  }
+
+  function pageOverview() {
+    const chips = [h('span', { class: 'badge outline' }, 'OSD-575 · historical blood samples')];
+    if (!S.health) return pageShell('Health overview', 'What should I review? Import the real blood panel to begin.', chips, importCard('health'));
+    const cards = CZ.healthCards(S.health, S.ui.participant, S.ui.visit);
+    const outside = cards.filter(c => c.status === 'ABOVE' || c.status === 'BELOW');
+    const avail = cards.filter(c => c.available);
+    const reviews = store.list().filter(r => r.kind === 'health' && r.participant === S.ui.participant);
+    const awaiting = reviews.filter(r => r.status !== 'REVIEWED').length;
+    const ordered = [...outside, ...cards.filter(c => c.available && !outside.includes(c))];
+    const open = (c) => { S.ui.marker = c.marker; location.hash = '#/health'; };
+    const cardEls = cards.map(c => h('article', { class: 'card marker', 'aria-current': S.ui.marker === c.marker ? 'true' : null },
+      h('div', { class: 'name' }, c.label),
+      h('div', { class: 'val metric-value' }, c.available ? num(c.value, c.dp + 1) : 'n/a', h('small', {}, c.unit)),
+      c.status === 'ABOVE' || c.status === 'BELOW' ? h('span', { class: 'badge review' }, '▲ ' + statusText(c)) : h('span', { class: 'status-neutral' }, statusText(c)),
+      h('p', { class: 'meta' }, c.baseline.mean == null ? `Baseline n/a (n=${c.baseline.n})` : `Preflight mean ${num(c.baseline.mean, 2)} (n=${c.baseline.n}) · ${c.delta == null ? '' : 'diff ' + signed(c.delta, 2) + (c.pct == null ? '' : ' (' + signed(c.pct, 1) + '%)')}`),
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn small', type: 'button', 'data-fid': 'open-' + c.marker, 'aria-label': `Open ${c.label} trend`, on: { click: () => open(c) } }, 'Trend'),
+        c.available ? h('button', { class: 'btn small', type: 'button', 'data-fid': 'exp-' + c.marker, 'aria-label': `Explain ${c.label}`, on: { click: e => openDrawer('Evidence: ' + c.label, () => healthEvidence(c), e.currentTarget) } }, 'Explain') : null)));
+    const list = ordered.length ? h('ul', { class: 'list' }, ...ordered.map(c => {
+      const out = outside.includes(c);
+      const rv = store.byFinding(c.findingKey);
+      return h('li', {}, h('div', {}, h('strong', {}, c.label), ' ', out ? h('span', { class: 'badge review' }, '▲ ' + statusText(c)) : h('span', { class: 'status-neutral' }, statusText(c)),
+        h('p', { class: 'small muted' }, out ? `${num(c.value, c.dp + 1)} ${c.unit} against a supplied ${c.status === 'ABOVE' ? 'upper bound of ' + c.rangeHigh : 'lower bound of ' + c.rangeLow} ${c.unit}. ${c.phase === 'pre' ? 'This is a preflight sample.' : ''}` : `${num(c.value, c.dp + 1)} ${c.unit}`),
+        rv ? h('span', { class: 'badge success' }, '✓ Review saved · ' + rv.status.replace(/_/g, ' ').toLowerCase()) : null),
+        h('button', { class: 'btn', type: 'button', 'data-fid': 'insp-' + c.marker, 'aria-label': `Inspect ${c.label} result`, on: { click: e => openDrawer('Evidence: ' + c.label, () => healthEvidence(c), e.currentTarget) } }, 'Inspect result'));
+    })) : h('p', {}, 'No measurements are available for this sample.');
+    return pageShell('Health overview', 'What should I review? A numerical comparison for one actual blood sample.', chips,
+      contextBar(), h('div', { class: 'markers' }, ...cardEls),
+      h('div', { class: 'grid-2-1' },
+        h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', {}, 'Results to review'), h('span', { class: 'meta' }, `${S.ui.participant} · ${visitLabel(S.ui.visit)}`)),
+          outside.length ? null : h('p', { class: 'notice info', style: 'margin-bottom:12px' }, 'No selected measurements are outside the supplied ranges. This does not assess overall health.'), list),
+        h('aside', { class: 'card' }, h('h2', {}, 'Available data'),
+          h('div', { class: 'summary', style: 'margin-top:12px' },
+            h('div', {}, h('b', { class: 'metric-value' }, outside.length), h('span', { class: 'small muted' }, 'outside supplied range')),
+            h('div', {}, h('b', { class: 'metric-value' }, `${avail.length} of ${cards.length}`), h('span', { class: 'small muted' }, 'measurements available')),
+            h('div', {}, h('b', { class: 'metric-value' }, awaiting), h('span', { class: 'small muted' }, 'reviews awaiting follow-up'))),
+          h('p', { class: 'meta', style: 'margin-top:16px' }, `Source: ${S.meta.health.fileName}${S.meta.health.bundled ? ' (bundled real NASA file; replace it under Sources & quality)' : ''}. ${S.health.quality.rows} samples, ${S.health.quality.participants} participants. Historical research data, not live monitoring.`))));
+  }
+
+  function pageHealth() {
+    const chips = [h('span', { class: 'badge outline' }, 'OSD-575 · historical blood samples')];
+    if (!S.health) return pageShell('Health trends', 'What changed? Import the real blood panel to begin.', chips, importCard('health'));
+    const trend = CZ.healthTrend(S.health, S.ui.participant, S.ui.marker);
+    const cards = CZ.healthCards(S.health, S.ui.participant, S.ui.visit);
+    const card = cards.find(c => c.marker === S.ui.marker);
+    const tabs = h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Blood marker' }, ...CZ.MARKERS.map(m => h('button', { type: 'button', role: 'tab', id: 'tab-' + m.id, 'aria-controls': 'marker-panel', tabindex: S.ui.marker === m.id ? '0' : '-1', 'aria-selected': String(S.ui.marker === m.id), 'data-fid': 'tab-' + m.id, on: { click: () => { S.ui.marker = m.id; render(); }, keydown: e => { const ids = CZ.MARKERS.map(x => x.id); let i = ids.indexOf(S.ui.marker); if (e.key === 'ArrowRight') i = (i + 1) % ids.length; else if (e.key === 'ArrowLeft') i = (i + ids.length - 1) % ids.length; else if (e.key === 'Home') i = 0; else if (e.key === 'End') i = ids.length - 1; else return; e.preventDefault(); S.ui.marker = ids[i]; render(); const nt = document.getElementById('tab-' + ids[i]); if (nt) nt.focus(); } } }, m.label)));
+    const tbl = h('details', { class: 'tbl', open: false }, h('summary', {}, 'Show data table'),
+      h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, ...['Visit', 'Value', 'Supplied range', 'Preflight mean', 'Difference', '%', 'Status', 'Source row'].map(x => h('th', { scope: 'col' }, x)))),
+        h('tbody', {}, ...trend.points.map(p => h('tr', { 'data-selected': String(p.visit === S.ui.visit) },
+          h('td', {}, visitLabel(p.visit)), h('td', {}, p.value == null ? 'n/a' : num(p.value, trend.dp + 1) + ' ' + trend.unit),
+          h('td', {}, p.rangeLow == null && p.rangeHigh == null ? 'none' : `${p.rangeLow == null ? '—' : p.rangeLow} to ${p.rangeHigh == null ? '—' : p.rangeHigh}`),
+          h('td', {}, trend.baseline.mean == null ? 'n/a' : num(trend.baseline.mean, 3)), h('td', {}, signed(p.delta, 3)), h('td', {}, p.pct == null ? 'n/a' : signed(p.pct, 1) + '%'),
+          h('td', {}, statusText({ status: p.status })), h('td', {}, p.obs ? p.obs.sourceRow : '')))))));
+    return pageShell('Health trends', 'What changed? Actual visits for one marker. Dots are real samples; nothing is interpolated.', chips,
+      contextBar(), tabs,
+      h('div', { class: 'grid-2-1' },
+        h('section', { class: 'card', id: 'marker-panel', role: 'tabpanel', 'aria-labelledby': 'tab-' + S.ui.marker }, h('div', { class: 'card-head' }, h('h2', {}, `${trend.label} (${trend.unit}) · ${S.ui.participant}`), h('span', { class: 'meta' }, 'Visits are ordered, not evenly spaced in time')),
+          healthChart(trend, S.ui.visit), tbl),
+        h('aside', { class: 'card' }, h('h2', {}, 'Evidence'), card && card.available ? healthEvidence(card) : h('p', { style: 'margin-top:12px' }, 'No measurement for this marker at the selected visit.'))));
+  }
+
+  function pageEnvironment() {
+    const ds = S.radiation;
+    if (!ds) return pageShell('Radiation review', 'What does this separate environment record show? Import a RadLab file to begin.', [h('span', { class: 'badge outline' }, 'Separate case study')], importCard('radiation'));
+    const I = envIntegration(), Q = ds.quality, day = (Q.first || '').slice(0, 10);
+    const chips = [h('span', { class: 'badge outline' }, 'Separate case study')];
+    /* DosTel location comes from instrument documentation (PRD), not from the file */
+    const where = ds.spacecraft ? ds.spacecraft + (ds.instrument === 'DosTel1' && !/columbus/i.test(ds.spacecraft) ? ' Columbus' : '') : (/^DosTel/.test(ds.instrument) ? 'ISS Columbus' : 'Location not stated in file');
+    const dayText = (() => { const d = new Date(day + 'T00:00:00Z'); return isNaN(d) ? day : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }); })();
+    const banner = h('div', { class: 'banner', role: 'note' }, `Separate case study · ${where} · ${ds.instrument} · ${dayText} · Not linked to any health participant.`);
+    const inst = ds.instruments.length > 1 ? h('label', { class: 'lbl', for: 'sel-i', style: 'max-width:240px' }, 'Instrument in this file',
+      (() => { const el = h('select', { class: 'field', id: 'sel-i', 'data-fid': 'sel-i', on: { change: e => switchInstrument(e.target.value) } }, ...ds.instruments.map(x => h('option', { value: x }, x))); el.value = ds.instrument; return el; })()) : null;
+    const why = () => openDrawer('Why readings were excluded', () => h('div', { class: 'ev' },
+      h('p', {}, `${Q.conflictGroups} timestamp group(s) had different values for the same time. All ${Q.quarantinedRows} rows in them were set aside. No value was averaged, summed or chosen.`),
+      ...ds.conflictGroups.map(g => h('section', {}, h('h3', {}, g.ts), h('p', { class: 'small' }, g.rows.map(r => `source row ${r.sourceRow}: ${r.rate} µGy/h`).join(' · ')))),
+      h('p', {}, `${I.excluded.filter(x => x.reason === 'gap').length} interval(s) were also excluded because the readings were more than ${I.maxGapS} s apart. That is an engineering coverage rule, not a NASA health threshold.`),
+      h('p', { class: 'meta' }, `${I.excluded.length} excluded intervals in total.`)), document.activeElement);
+    const quality = h('section', { class: 'card' }, h('div', { class: 'quality' },
+      h('div', {}, h('b', { class: 'metric-value' }, Q.instrumentRows), h('span', { class: 'small muted' }, `raw rows (${ds.instrument})`)),
+      h('div', {}, h('b', { class: 'metric-value' }, Q.quarantinedRows), h('span', { class: 'small muted' }, 'rows excluded for conflicts')),
+      h('div', {}, h('b', { class: 'metric-value' }, num(I.coveredSeconds / 3600, 2) + ' h'), h('span', { class: 'small muted' }, 'covered duration')),
+      h('div', {}, h('b', { class: 'metric-value' }, I.excluded.length), h('span', { class: 'small muted' }, 'excluded intervals')),
+      h('button', { class: 'btn', type: 'button', 'data-fid': 'why', on: { click: why } }, 'Why excluded?')));
+    const finds = envFindings();
+    return pageShell('Radiation review', 'What does this separate environment record show? Quality first, then the dose-rate history.', chips, banner, inst, quality,
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', {}, 'Absorbed dose rate (µGy/hour)'), h('span', { class: 'meta' }, 'Accepted readings only')), rateChart(ds, I), radTable(ds, I)),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', {}, 'Estimated dose over covered intervals at the sensor'), h('span', { class: 'meta' }, `${num(I.totalDose, 3)} µGy over ${num(I.coveredSeconds / 3600, 2)} h covered · trapezoid method`)),
+        doseChart(ds, I), h('p', { class: 'meta', style: 'margin-top:8px' }, 'Method: ((rate_i + rate_j) / 2) × seconds / 3600 for adjacent unambiguous readings no more than 300 s apart. Not personal dose, not a safety gauge.')),
+      h('section', { class: 'card' }, h('h2', {}, 'Findings you can follow up'),
+        h('ul', { class: 'list' }, ...finds.map(f => { const rv = store.byFinding(f.findingKey); return h('li', {}, h('div', {}, h('strong', {}, f.title), h('p', { class: 'small muted' }, f.summary), rv ? h('span', { class: 'badge success' }, '✓ Review saved · ' + rv.status.replace(/_/g, ' ').toLowerCase()) : null), h('button', { class: 'btn', type: 'button', 'data-fid': 'env-' + f.id, 'aria-label': 'Inspect result: ' + f.title, on: { click: e => openDrawer('Evidence: ' + f.title, () => envEvidence(f), e.currentTarget) } }, 'Inspect result')); }))));
+  }
+
+  function download(name, mime, content) {
+    const url = URL.createObjectURL(new Blob([content], { type: mime }));
+    const a = h('a', { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  function currentPacket() {
+    return CZ.buildPacket({ reviews: store.list(),
+      health: S.meta.health ? { source: { ...S.meta.health, quality: S.health ? `${S.health.quality.rows} samples, ${S.health.quality.nonmissingTotal} marker values` : '' } } : null,
+      radiation: S.meta.radiation ? { source: { ...S.meta.radiation, quality: S.radiation ? `${S.radiation.quality.instrumentRows} rows, ${S.radiation.quality.conflictGroups} conflicting timestamp group(s), ${S.radiation.quality.quarantinedRows} rows excluded` : '' } } : null });
+  }
+  function pageReviews() {
+    const all = store.list();
+    const F = S.filters;
+    const parts = [...new Set(all.filter(r => r.participant).map(r => r.participant))].sort();
+    const list = all.filter(r => (F.kind === 'all' || r.kind === F.kind) && (F.status === 'all' || r.status === F.status) && (F.participant === 'all' || r.participant === F.participant));
+    const sel = (id, label, val, opts, on) => h('label', { class: 'lbl', for: id }, label, (() => { const e = h('select', { class: 'field', id, 'data-fid': id, on: { change: ev => { on(ev.target.value); render(); } } }, ...opts.map(([v, t]) => h('option', { value: v }, t))); e.value = val; return e; })());
+    const filters = h('div', { class: 'card' }, h('div', { class: 'row' },
+      sel('f-kind', 'Case', F.kind, [['all', 'All'], ['health', 'Health'], ['environment', 'Environment']], v => { F.kind = v; if (v === 'environment') F.participant = 'all'; }),
+      sel('f-status', 'Status', F.status, [['all', 'All'], ...CZ.STATUSES.map(x => [x, x.replace(/_/g, ' ').toLowerCase()])], v => { F.status = v; }),
+      F.kind !== 'environment' ? sel('f-part', 'Participant (health only)', F.participant, [['all', 'All'], ...parts.map(p => [p, p])], v => { F.participant = v; }) : null,
+      h('button', { class: 'btn primary', type: 'button', 'data-fid': 'export', on: { click: () => { S.packetOpen = !S.packetOpen; render(); } } }, S.packetOpen ? 'Hide export preview' : 'Export review packet')));
+    const table = list.length ? h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, ...['Finding', 'Case', 'Participant / instrument', 'Status', 'Updated'].map(x => h('th', { scope: 'col' }, x)))),
+      h('tbody', {}, ...list.map(r => h('tr', { class: 'click', 'data-selected': String(S.selectedReview === r.id), 'data-fid': 'row-' + r.id, on: { click: e => { if (e.target.closest('button')) return; S.selectedReview = r.id; render(); } } },
+        h('td', {}, h('button', { class: 'linkbtn', type: 'button', 'data-fid': 'open-' + r.id, 'aria-pressed': String(S.selectedReview === r.id), on: { click: () => { S.selectedReview = r.id; render(); const d = document.getElementById('rv-note'); if (d) d.focus(); } } }, r.title)), h('td', {}, r.kind), h('td', {}, r.participant || r.instrument || ''), h('td', {}, r.status.replace(/_/g, ' ').toLowerCase()), h('td', {}, when(r.updatedAt))))))) :
+      h('div', { class: 'empty' }, h('p', {}, all.length ? 'No reviews match these filters.' : 'No follow-ups saved yet. Open a result from Health overview, Health trends or Radiation review and choose Save follow-up.'));
+    const sr = all.find(r => r.id === S.selectedReview);
+    const detail = sr ? h('aside', { class: 'card' }, h('h2', {}, sr.title), h('p', { class: 'small muted' }, `${sr.subject} · created ${when(sr.createdAt)}`), h('p', { style: 'margin:8px 0' }, sr.summary),
+      reviewForm({ findingKey: sr.findingKey }, () => {}),
+      h('h3', { style: 'margin-top:16px' }, 'History'),
+      h('ul', { class: 'list' }, ...store.events().filter(e => e.reviewId === sr.id).reverse().map(e => h('li', {}, h('span', { class: 'small' }, e.action.toLowerCase() + (e.after && e.after.status ? ' · ' + e.after.status.replace(/_/g, ' ').toLowerCase() : '')), h('span', { class: 'meta' }, when(e.timestamp)))))) : null;
+    const pk = currentPacket();
+    const preview = S.packetOpen ? h('section', { class: 'card' }, h('h2', {}, 'Review packet preview'),
+      h('p', { class: 'small muted', style: 'margin:8px 0 12px' }, `Includes ${pk.health.reviews.length} health and ${pk.environment.reviews.length} environment review(s), source identity, formulas and limits. Download saves a local file. Nothing is sent anywhere.`),
+      h('div', { class: 'row', style: 'margin-bottom:12px' },
+        h('button', { class: 'btn primary', type: 'button', 'data-fid': 'dl-html', on: { click: () => download('cytozoe-review-packet.html', 'text/html', CZ.packetHTML(currentPacket())) } }, 'Download HTML'),
+        h('button', { class: 'btn', type: 'button', 'data-fid': 'dl-json', on: { click: () => download('cytozoe-review-packet.json', 'application/json', JSON.stringify(currentPacket(), null, 2)) } }, 'Download JSON'),
+        h('button', { class: 'btn', type: 'button', 'data-fid': 'dl-csv', on: { click: () => download('cytozoe-reviews.csv', 'text/csv', CZ.reviewsCSV(store.list())) } }, 'Download CSV')),
+      h('iframe', { title: 'Review packet preview', sandbox: '', srcdoc: CZ.packetHTML(pk), style: 'width:100%;height:420px;border:1px solid var(--border);border-radius:10px;background:#fff' })) : null;
+    return pageShell('Review log', 'What did we decide to follow up? Saved on this device.', [h('span', { class: 'badge outline' }, 'Saved in this browser')], filters, preview,
+      h('div', { class: sr ? 'grid-2-1' : '' }, h('section', { class: 'card' }, h('h2', {}, `Reviews (${list.length})`), h('div', { style: 'margin-top:12px' }, table)), detail));
+  }
+
+  function sourceDrawer() {
+    const block = (kind, title) => {
+      const m = S.meta[kind], ds = S[kind];
+      return h('section', { class: 'ev' }, h('h3', {}, title),
+        m ? h('div', { class: 'ev' }, h('p', {}, m.fileName), m.bundled ? h('p', { class: 'small' }, 'Bundled copy embedded in this HTML file. ' + (m.verified === true ? '\u2713 SHA-256 re-checked in this browser.' : m.verified === false ? '! SHA-256 check failed.' : 'SHA-256 check pending.')) : null, h('p', { class: 'meta mono' }, 'SHA-256 ' + m.sha256), m.importedAt ? h('p', { class: 'meta' }, 'Imported ' + when(m.importedAt)) : null, h('p', { class: 'meta' }, m.url),
+          h('p', { class: 'small' }, m.knownSnapshot ? '✓ Byte-identical to the snapshot inspected for the PRD.' : 'Not byte-identical to the snapshot inspected for the PRD. It is kept as imported; numbers may differ from the PRD examples.'),
+          h('p', { class: 'small' }, kind === 'health' ? `${ds.quality.rows} samples · ${ds.quality.participants} participants · ${ds.quality.visits} visits · ${ds.quality.nonmissingTotal} marker values` : `${ds.quality.fileRows} file rows · ${ds.quality.instrumentRows} for ${ds.instrument} · ${ds.quality.conflictGroups} conflicting timestamp groups · ${ds.quality.quarantinedRows} rows excluded · ${ds.quality.unambiguousRows} unambiguous`),
+          h('div', { class: 'row' }, h('label', { class: 'lbl', for: 'rep-' + kind }, 'Replace file', h('input', { type: 'file', accept: '.csv', id: 'rep-' + kind, class: 'field', on: { change: e => importFile(kind, e.target.files[0]) } })),
+            EMB[kind] && m.bundled ? null : h('button', { class: 'btn', type: 'button', on: { click: () => { removeData(kind); closeDrawer(); } } }, EMB[kind] ? 'Return to bundled NASA file' : 'Remove from this browser')))
+          : h('p', {}, 'Not loaded.'));
+    };
+    return h('div', { class: 'ev' }, block('health', 'Blood panel (OSD-575)'), block('radiation', 'Radiation (RadLab)'),
+      h('p', { class: 'meta' }, 'The two records are separate cases. They are not paired.'), aiSettingsBlock());
+  }
+
+  /* ---------- shell and routing ---------- */
+  const ROUTES = [['overview', 'Health overview', pageOverview], ['health', 'Health trends', pageHealth], ['environment', 'Radiation review', pageEnvironment], ['reviews', 'Review log', pageReviews]];
+  function route() { const r = (location.hash || '').replace('#/', ''); return ROUTES.find(x => x[0] === r) || ROUTES[0]; }
+  function shell() {
+    const cur = route();
+    const nav = h('nav', { class: 'nav', 'aria-label': 'Main' }, ...ROUTES.map((r, i) => h('a', { href: '#/' + r[0], 'aria-current': r[0] === cur[0] ? 'page' : null, title: r[1], on: { click: () => document.getElementById('rail').classList.remove('open') } }, h('span', { class: 'num', 'aria-hidden': 'true' }, i + 1), h('span', { class: 'label' }, r[1]))));
+    return h('div', { class: 'app' },
+      h('a', { class: 'skip', href: '#/' + cur[0], on: { click: e => { e.preventDefault(); const tt = document.getElementById('page-title'); if (tt) tt.focus(); } } }, 'Skip to main content'),
+      h('aside', { class: 'rail', id: 'rail' }, h('div', { class: 'wordmark' }, 'CytoZoe', h('small', {}, 'Understand the change. Keep the evidence.')), nav,
+        h('div', { class: 'rail-foot' }, h('p', {}, 'Public research demo. Not clinical software.'), h('p', {}, 'Local workspace · saved in this browser'),
+          h('button', { class: 'btn', type: 'button', 'data-fid': 'sources', 'aria-label': 'Sources and quality', on: { click: e => openDrawer('Sources and data quality', sourceDrawer, e.currentTarget) } }, h('span', { class: 'label' }, 'Sources & quality')))),
+      h('main', { class: 'main', id: 'main' }, h('div', { style: 'margin-bottom:12px' }, h('button', { class: 'btn menu-btn', type: 'button', 'aria-label': 'Open menu', on: { click: () => document.getElementById('rail').classList.toggle('open') } }, 'Menu')), cur[2]()));
+  }
+  let firstRender = true;
+  function render(focusTitle) {
+    const active = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.fid : null;
+    const scrollY = window.scrollY;
+    S.charts = [];
+    const root = document.getElementById('root'); root.replaceChildren(shell());
+    drawAll();
+    document.title = route()[1] + ' · CytoZoe';
+    if (focusTitle) { const t = document.getElementById('page-title'); if (t) t.focus(); window.scrollTo(0, 0); }
+    else {
+      if (active) { const el = document.querySelector(`[data-fid="${CSS.escape(active)}"]`); if (el && !el.disabled) el.focus(); }
+      window.scrollTo(0, scrollY);
+    }
+    if (S.drawer) renderDrawer();
+    firstRender = false;
+  }
+  window.addEventListener('hashchange', () => { S.drawer = null; renderDrawer(); setInert(false); render(true); });
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawAll, 120); });
+  window.addEventListener('beforeunload', () => {});
+  loadSaved();
+  if (!location.hash) location.hash = '#/overview';
+  document.getElementById('drawer-host') || document.body.append(h('div', { id: 'drawer-host' }));
+  render();
+  verifyBundled();
+  window.__CZ_STATE = S; /* exposed for tests */
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+$ bash -c cd frontend && node_modules/.bin/tsc --noEmit -p tsconfig.json && echo 'tsc: 0 errors (strict)'
+tsc: 0 errors (strict)
+exit=0

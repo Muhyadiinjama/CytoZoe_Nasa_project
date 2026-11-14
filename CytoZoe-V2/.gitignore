@@ -1,0 +1,18 @@
+# local records and notes: NEVER commit
+runtime/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+# build output and caches
+frontend/node_modules/
+node_modules/
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+# raw data: OSD-575 is CC0 and may be committed deliberately; RadLab terms are unverified.
+data/raw/*.new
+data/processed/
+# local model weights
+*.gguf

@@ -1,0 +1,9 @@
+$ bash scripts/smoke_test.sh
+2026-11-14 14:46:42,362 INFO cytozoe rid=898b627c2798 GET /api/status -> 200 1.7ms
+2026-11-14 14:46:42,430 INFO cytozoe rid=e248a3f565d3 GET /api/health -> 200 3.1ms
+2026-11-14 14:46:42,438 INFO cytozoe rid=767f0654d7a5 POST /api/reviews -> 201 6.4ms
+2026-11-14 14:46:42,444 INFO cytozoe rid=6697894d6a52 PATCH /api/reviews/1 -> 200 4.2ms
+2026-11-14 14:46:42,456 INFO cytozoe rid=103d6ecbffcc GET /api/environment -> 200 11.2ms
+2026-11-14 14:46:42,465 INFO cytozoe rid=2930b5bb46fb GET /api/export -> 200 1.8ms
+smoke test: PASS
+exit=0

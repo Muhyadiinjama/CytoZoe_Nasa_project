@@ -1,0 +1,38 @@
+- link "Skip to main content":
+  - /url: "#page-title"
+- complementary:
+  - text: CytoZoe Understand the change. Keep the evidence.
+  - navigation "Main":
+    - link "Health overview":
+      - /url: /overview
+    - link "Health trends":
+      - /url: /health
+    - link "Radiation review":
+      - /url: /environment
+    - link "Review log":
+      - /url: /reviews
+  - paragraph: Public research demo. Not clinical software.
+  - status "Local service running": Local workspace · service running
+  - button "Sources and data quality": Sources & quality
+- main:
+  - heading "Review log" [level=1]
+  - paragraph: What did we decide to follow up? Saved locally on this computer, with full history.
+  - text: Saved locally Case
+  - combobox "Case":
+    - option "All" [selected]
+    - option "Health (OSD-575)"
+    - option "Environment (RadLab)"
+  - text: Status
+  - combobox "Status":
+    - option "All" [selected]
+    - option "Open"
+    - option "Follow-up requested"
+    - option "Reviewed"
+  - text: Participant (health only)
+  - combobox "Participant (health only)":
+    - option "All" [selected]
+  - button "Export review packet"
+  - region "Reviews (0)":
+    - heading "Reviews (0)" [level=2]
+    - heading "No follow-ups saved yet" [level=2]
+    - paragraph: Open a result from Health overview, Health trends or Radiation review and choose Record follow-up.

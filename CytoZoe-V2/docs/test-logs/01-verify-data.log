@@ -1,0 +1,15 @@
+$ python3 scripts/verify_data.py --strict
+LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv: sha256 OK
+  rows: OK (found 28)
+  participants: OK (found ['C001', 'C002', 'C003', 'C004'])
+  visits: OK (found ['L-92', 'L-44', 'L-3', 'R+1', 'R+45', 'R+82', 'R+194'])
+  nonmissing: OK (found 140)
+  bom: OK (found True)
+radlab_dostel1_2022_03_01.csv: sha256 OK
+  raw_rows: OK (found 1202)
+  unique_timestamps: OK (found 1198)
+  conflict_groups: OK (found ['09:15:00', '09:20:00', '18:25:00', '18:30:00'])
+  quarantined: OK (found 8)
+  accepted: OK (found 1194)
+verify: all checks passed
+exit=0

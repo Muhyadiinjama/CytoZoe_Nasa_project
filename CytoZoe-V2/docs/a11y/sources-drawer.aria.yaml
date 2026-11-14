@@ -1,0 +1,43 @@
+- dialog "Sources and data quality":
+  - heading "Sources and data quality" [level=2]
+  - button "Close"
+  - heading "Blood panel · NASA OSD-575 (Inspiration4)" [level=3]
+  - term: File
+  - definition: LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv
+  - term: SHA-256
+  - definition: 5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9
+  - term: Imported
+  - definition: 11/14/2026, 2:46:56 PM
+  - term: Source
+  - definition: https://osdr.nasa.gov/bio/repo/data/studies/OSD-575
+  - term: Terms
+  - definition: Study page lists CC0-1.0. Cite NASA OSDR OSD-575.
+  - term: Quality
+  - definition: 28 samples · 4 participants · 7 visits · 140 marker values · 0 invalid values
+  - text: Choose OSD-575 blood panel CSV
+  - button "Choose OSD-575 blood panel CSV"
+  - paragraph: Read on this computer by the local service; nothing is uploaded to the internet. Max 10 MB, documented columns only.
+  - heading "Radiation · NASA RadLab (ISS)" [level=3]
+  - term: File
+  - definition: radlab_dostel1_2022_03_01.csv
+  - term: SHA-256
+  - definition: d3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1
+  - term: Imported
+  - definition: 11/14/2026, 2:46:56 PM
+  - term: Source
+  - definition: https://visualization.osdr.nasa.gov/radlab/gui/data-api/
+  - term: Terms
+  - definition: NASA RadLab public API export. Redistribution terms not separately verified; cite RadLab.
+  - term: Quality
+  - definition: "DosTel1: 1202 rows · 4 conflicting timestamps · 8 rows excluded · 1194 unambiguous"
+  - text: Choose RadLab radiation CSV
+  - button "Choose RadLab radiation CSV"
+  - paragraph: Read on this computer by the local service; nothing is uploaded to the internet. Max 10 MB, documented columns only.
+  - paragraph: The two records are separate historical cases with different people, missions and dates. They are never paired.
+  - heading "Local service" [level=3]
+  - term: App
+  - definition: v2.0.0 · schema 1
+  - term: Database
+  - definition: OK (SQLite, this computer)
+  - term: Assistant
+  - definition: Verified explanations only (no local model configured)
