@@ -61,6 +61,11 @@ Stack: React 19 + TypeScript + Vite + Recharts · FastAPI + Pydantic + pandas ·
 
 Requirements: Python 3.11+ and Node.js 20+. Network access is needed **only once**, for dependencies and the one-time NASA data download.
 
+### One-command dev mode (any OS)
+```sh
+npm run dev              # auto-sets up venv, npm deps & NASA data on first run, then starts API (:8000) + Vite (:5173)
+```
+
 ### Windows (PowerShell)
 ```powershell
 .\scripts\setup.ps1      # venv + backend deps, npm ci + build, fetch → verify → import NASA data
