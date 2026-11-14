@@ -1,0 +1,13 @@
+{
+  "name": "cytozoe",
+  "private": true,
+  "description": "Convenience scripts. The app itself lives in backend/ (FastAPI) and frontend/ (React + Vite).",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "data": "node scripts/run-python.mjs scripts/fetch_data.py --all && node scripts/run-python.mjs scripts/verify_data.py --strict && node scripts/run-python.mjs scripts/import_data.py --all",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --prefix frontend run build",
+    "start": "node scripts/run-python.mjs -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000",
+    "test": "node scripts/run-python.mjs -m pytest backend -q && npm --prefix frontend run typecheck && npm --prefix frontend test"
+  }
+}
