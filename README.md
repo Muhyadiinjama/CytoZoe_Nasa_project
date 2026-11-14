@@ -63,11 +63,10 @@ Requirements: Python 3.11+ and Node.js 20+. Network access is needed **only once
 
 ### Easiest (any OS, from the project folder)
 ```sh
-npm run setup   # one time: Python env, packages, build, fetch → verify → import NASA data
-npm run dev     # development: API + interface together → http://127.0.0.1:5173
+npm run dev     # first run auto-sets up venv, npm deps & NASA data, then starts API (:8000) + interface → http://127.0.0.1:5173
 npm start       # demo / offline: built app on one port → http://127.0.0.1:8000
 ```
-`npm run data` re-downloads and imports the NASA files; `npm test` runs the backend tests, typecheck and component tests.
+`npm run setup` runs the one-time setup only (`npm run dev -- --setup` forces it again). `npm run data` re-downloads and imports the NASA files. `npm test` runs the backend tests, typecheck and component tests; `npm run e2e` runs the browser tests.
 
 ### Windows (PowerShell)
 ```powershell
