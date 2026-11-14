@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useDrawer, useLive, useServiceStatus } from "../app/providers";
 import { REVIEW_LABEL } from "../lib/format";
 import { BrandMark, IconCheck, IconClose, IconLog, IconMenu, IconOverview, IconRadiation, IconTrend } from "./icons";
@@ -8,7 +8,7 @@ const NAV = [
   { to: "/overview", label: "Health Overview", Icon: IconOverview },
   { to: "/health", label: "Health Trends", Icon: IconTrend },
   { to: "/environment", label: "Radiation Review", Icon: IconRadiation },
-  { to: "/reviews", label: "Review Log", Icon: IconLog },
+  { to: "/reviews", label: "Review Log & Export", Icon: IconLog },
 ];
 
 function Brand() {
@@ -17,7 +17,7 @@ function Brand() {
       <BrandMark className="brand-mark" />
       <span className="brand-text">
         <span className="brand-name">CytoZoe</span>
-        <span className="brand-tag">Understand the change. Keep the evidence.</span>
+        <span className="brand-tag">Health evidence workspace</span>
       </span>
     </NavLink>
   );
@@ -28,7 +28,7 @@ function RecentReviews() {
   const { open } = useDrawer();
   return (
     <section aria-labelledby="recent-title">
-      <h2 id="recent-title" className="side-label" style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: "16px" }}>Recent reviews</h2>
+      <h2 id="recent-title" className="side-label" >Recent reviews</h2>
       {recent.length === 0 ? <p className="side-empty">No reviews yet.</p> : (
         <ul className="recent-list">
           {recent.map((r) => (
@@ -78,11 +78,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className={`sidebar${menuOpen ? " open" : ""}`} id="primary-nav">
         <Brand />
         <nav aria-label="Primary">
+          <p className="side-label" aria-hidden="true">Workspace</p>
           <ul className="nav-list">
-            {NAV.map(({ to, label, Icon }) => (
+            {NAV.map(({ to, label, Icon }, i) => (
               <li key={to}>
                 <NavLink to={to} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-                  <Icon /><span className="nav-label">{label}</span>
+                  <Icon /><span className="nav-label">{label}</span><span className="nav-index" aria-hidden="true">0{i + 1}</span>
                 </NavLink>
               </li>
             ))}
@@ -93,8 +94,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className={`live-pill${connected ? "" : " off"}`} role="status">
             <span className="pulse" aria-hidden="true" />{connected ? "Live sync on" : state === "SERVICE_UNAVAILABLE" ? "Local service offline" : "Connecting…"}
           </span>
-          <span>Local workspace · historical NASA research data · not a clinical device</span>
-          {status ? <span>v{status.app_version} · {status.git_version}</span> : null}
+          <span>Runs locally on this computer · historical NASA research data · not a clinical device</span>
+          <Link to="/" className="side-about">About CytoZoe &amp; photo credits</Link>
+          {status ? <span className="ver">v{status.app_version} · {status.git_version}</span> : null}
         </div>
       </aside>
       <main id="main" className="main" tabIndex={-1}>

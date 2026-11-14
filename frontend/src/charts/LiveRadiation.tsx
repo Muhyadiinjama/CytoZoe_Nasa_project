@@ -157,13 +157,13 @@ export function LiveRadiation({ spanSeconds, finalDose }: { spanSeconds: number;
           <div className="chart-box live" role="img" aria-label="Absorbed dose rate as the replay progresses. Exact values are in the static charts and tables below.">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart margin={{ top: 8, right: 12, bottom: 4, left: 0 }} accessibilityLayer={false}>
-                <CartesianGrid stroke="#EEEAE1" vertical={false} />
+                <CartesianGrid stroke="#E6ECF1" vertical={false} />
                 <XAxis type="number" dataKey="t" domain={[0, 86400]} ticks={[0, 21600, 43200, 64800, 86400]} tickFormatter={(v: number) => clock(v)}
-                  tick={{ fill: "#625E57", fontSize: 12 }} tickLine={false} axisLine={{ stroke: "#E7E2D7" }} allowDuplicatedCategory={false} />
+                  tick={{ fill: "#53697D", fontSize: 12 }} tickLine={false} axisLine={{ stroke: "#DDE5EB" }} allowDuplicatedCategory={false} />
                 <YAxis scale="log" domain={[1, 1000]} allowDataOverflow ticks={[1, 10, 100, 1000]} width={48}
-                  tick={{ fill: "#625E57", fontSize: 12 }} tickLine={false} axisLine={false} />
+                  tick={{ fill: "#53697D", fontSize: 12 }} tickLine={false} axisLine={false} />
                 {excluded.map((e) => <ReferenceLine key={e.ts} x={e.t} stroke="#B42318" strokeDasharray="3 3" />)}
-                {segments.map((s) => <Line key={s[0].segment} data={s} dataKey="rate" stroke="#2F5A7A" strokeWidth={1.4} dot={false} isAnimationActive={false} />)}
+                {segments.map((s) => <Line key={s[0].segment} data={s} dataKey="rate" stroke="#1F4E79" strokeWidth={1.4} dot={false} isAnimationActive={false} />)}
               </LineChart>
             </ResponsiveContainer>
           </div>

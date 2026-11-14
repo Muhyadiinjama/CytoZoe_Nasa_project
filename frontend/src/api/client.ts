@@ -1,6 +1,6 @@
 import type {
   ApiErrorBody, DatasetInfo, EnvironmentView, Evidence, ExportPacket, Explanation, HealthOverview, HealthReplay, HealthTrend,
-  Participant, QuestionId, Review, ReviewDetail, ReviewList, ReviewStatus, Status,
+  MissionBrief, Participant, QuestionId, Review, ReviewDetail, ReviewList, ReviewStatus, Status,
 } from "./contracts";
 
 export class ApiError extends Error {
@@ -74,6 +74,8 @@ export const api = {
     request<Explanation>("/api/explain", json("POST", { evidence_id, question_id })),
   ask: (evidence_id: string, message: string) =>
     request<Explanation>("/api/explain", json("POST", { evidence_id, message })),
+  missionBrief: (participant: string, sample: string) =>
+    request<MissionBrief>(`/api/mission/brief${qs({ participant, sample, mode: "historical" })}`),
   healthReplay: (participant: string) => request<HealthReplay>(`/api/replay/health${qs({ participant })}`),
   reviews: (f: { case?: string; status?: string; participant?: string; page?: number }) =>
     request<ReviewList>(`/api/reviews${qs({ ...f, page_size: 200 })}`),

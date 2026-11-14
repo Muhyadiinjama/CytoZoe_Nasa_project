@@ -1,0 +1,17 @@
+[36mvite v8.3.8 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 426 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                              0.65 kB │ gzip:   0.39 kB
+dist/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2     10.25 kB
+dist/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2      11.23 kB
+dist/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2       18.74 kB
+dist/assets/inter-greek-wght-normal-CkhJZR-_.woff2          18.99 kB
+dist/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2   25.96 kB
+dist/assets/inter-latin-wght-normal-Dx4kXJAl.woff2          48.25 kB
+dist/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2      85.06 kB
+dist/assets/index-BXbix05G.css                              49.39 kB │ gzip:  10.88 kB
+dist/assets/index-BKrJzstp.js                              769.51 kB │ gzip: 225.40 kB
+
+[32m✓ built in 487ms[39m
