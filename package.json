@@ -2,14 +2,15 @@
   "name": "cytozoe",
   "private": true,
   "version": "1.0.0",
-  "description": "CytoZoe — local-first astronaut health evidence and review workspace",
+  "description": "CytoZoe — local-first astronaut health evidence and review workspace. Convenience scripts; the app lives in backend/ (FastAPI) and frontend/ (React + Vite).",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "setup": "node scripts/dev.mjs --setup --setup-only",
+    "data": "node scripts/run-python.mjs scripts/fetch_data.py --all && node scripts/run-python.mjs scripts/verify_data.py --strict && node scripts/run-python.mjs scripts/import_data.py --all",
     "build": "npm --prefix frontend run build",
-    "start": "sh scripts/start.sh",
+    "start": "node scripts/start.mjs",
     "typecheck": "npm --prefix frontend run typecheck",
-    "test": "npm --prefix frontend test",
+    "test": "node scripts/run-python.mjs -m pytest backend -q && npm --prefix frontend run typecheck && npm --prefix frontend test",
     "e2e": "npm --prefix frontend run e2e"
   }
 }

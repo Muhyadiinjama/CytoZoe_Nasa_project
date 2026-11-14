@@ -1,5 +1,7 @@
 # Test report
 
+> **Latest (backend v3, 14 Nov 2026):** 56 backend · 4 frontend unit · 12 E2E · 13 launcher checks, all passing. Details, the B01–B24 matrix and fixed defects: [BACKEND_RELEASE_REPORT.md](BACKEND_RELEASE_REPORT.md). The sections below are the earlier v1/v2 record.
+
 **Run date:** 14 Nov 2026 · **Machine:** Windows 11 Home 10.0.26300 · Python 3.12.10 · Node 26.13.0 · Microsoft Edge (Playwright channel `msedge`) · Raw logs: [docs/test-logs/](test-logs/)
 
 Every result below was produced by actually running the command. Nothing is estimated.
