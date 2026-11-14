@@ -1,0 +1,8 @@
+[HASH OK] OSD-575-CMP: 8506 bytes sha256=5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9
+    samples=28 participants=C001,C002,C003,C004 visits=L-92,L-44,L-3,R+1,R+45,R+82,R+194 selected_values=140/140 issues=0
+[HASH OK] RADLAB-DOSTEL1-2022-03-01: 52555 bytes sha256=d3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1
+    raw_rows=1202 unique_timestamps=1198 conflict_groups=4 quarantined_rows=8 accepted_rows=1194 first=2022-03-01T00:00:00 last=2022-03-01T23:58:34
+      conflict 2022-03-01T09:15:00: row 464=10.1122485512821, row 465=9.853933
+      conflict 2022-03-01T09:20:00: row 468=5.61126966666667, row 469=4.474783
+      conflict 2022-03-01T18:25:00: row 946=5.46090767412141, row 947=5.312235
+      conflict 2022-03-01T18:30:00: row 950=6.03754233333333, row 951=5.625719

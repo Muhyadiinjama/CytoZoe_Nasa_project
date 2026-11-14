@@ -1,0 +1,218 @@
+// Typed mirror of the FastAPI contract (backend/app/api/routes.py). Numbers are computed by the backend only.
+
+export type RangeStatus =
+  | "BELOW_SUPPLIED_LOWER_BOUND"
+  | "ABOVE_SUPPLIED_UPPER_BOUND"
+  | "WITHIN_SUPPLIED_RANGE"
+  | "ONE_SIDED_COMPARISON"
+  | "UNKNOWN";
+export type ReviewStatus = "OPEN" | "FOLLOW_UP_REQUESTED" | "REVIEWED";
+export type QuestionId = "EXPLAIN_RESULT" | "HOW_CALCULATED" | "LIMITATIONS" | "DIAGNOSIS_REQUEST" | "CAUSATION_REQUEST";
+export type CaseKind = "health" | "environment";
+
+export interface ApiErrorBody { code: string; message: string; details: Record<string, unknown>; }
+
+export interface Review {
+  id: string;
+  finding_id: string;
+  case: CaseKind;
+  participant_id: string | null;
+  instrument_id: string | null;
+  title: string;
+  status: ReviewStatus;
+  note: string;
+  follow_up_date: string | null;
+  created_at: string;
+  updated_at: string;
+  version: number;
+}
+export interface ReviewEvent {
+  id: number;
+  action: string;
+  before: Partial<Review> | null;
+  after: Partial<Review>;
+  timestamp: string;
+}
+export interface ReviewDetail extends Review {
+  evidence_snapshot: Evidence;
+  dataset_sha256: string;
+  rule_version: string;
+  events: ReviewEvent[];
+}
+
+export interface Status {
+  app: string;
+  app_version: string;
+  git_version: string;
+  schema_version: number;
+  db_status: "OK" | "UNAVAILABLE";
+  assistant_mode: string;
+  assistant_note: string;
+  network: string;
+  datasets: { id: string; kind: string; sha256: string; imported_at: string }[];
+  ready: { health: boolean; environment: boolean };
+}
+
+export interface Sample { sample_id: string; visit: string; phase: string; relative_day: number; visit_order: number; label: string; }
+export interface Participant { participant_id: string; samples: Sample[]; }
+
+export interface SourceBlock {
+  dataset_id: string;
+  title: string;
+  provider: string;
+  file_name: string;
+  sha256: string;
+  source_url: string;
+  download_url: string;
+  fetched_at: string | null;
+  imported_at: string;
+  license_note: string;
+  citation: string;
+  source_row?: number;
+  file_line?: number;
+  sample_name?: string;
+  source_columns?: { value: string; range_min: string; range_max: string };
+  raw_value?: string;
+  source_unit?: string;
+  instrument_id?: string;
+  location?: string;
+}
+
+export interface HealthEvidence {
+  schema_version: string;
+  evidence_id: string;
+  kind: "HEALTH_OBSERVATION";
+  case: "health";
+  title: string;
+  source: SourceBlock;
+  context: {
+    participant_id: string; sample_id: string; phase: "PREFLIGHT" | "POSTFLIGHT"; visit: string; visit_label: string;
+    relative_day: number; relative_day_reference: string;
+  };
+  measurement: {
+    marker: string; marker_name: string; value: number | null; unit: string; range_low: number | null;
+    range_high: number | null; range_status: RangeStatus; needs_review: boolean;
+  };
+  comparison: {
+    method: string; baseline: number | null; n: number; baseline_available: boolean;
+    baseline_values: { visit: string; sample_id: string; value: number | null; source_row: number }[];
+    includes_selected_sample: boolean; delta: number | null; percent_delta: number | null; rule_version: string;
+    formulas: Record<string, string>;
+  };
+  evidence_strength: string;
+  limitations: string[];
+  review?: Review | null;
+}
+
+export interface EnvSummaryMeasurement {
+  label: string; estimated_sensor_dose_uGy: number; unit: string; covered_seconds: number; span_seconds: number;
+  coverage_ratio: number | null; included_intervals: number; excluded_intervals: number; raw_rows: number;
+  accepted_rows: number; quarantined_conflict_rows: number;
+}
+export interface ConflictRow { source_row: number; rate: number | null; rate_raw: string; }
+export interface EnvConflictMeasurement { timestamp: string; rows: ConflictRow[]; unit: string; quality_status: string; }
+
+export interface EnvEvidence {
+  schema_version: string;
+  evidence_id: string;
+  kind: "ENV_OBSERVATION" | "DATA_QUALITY";
+  case: "environment";
+  title: string;
+  source: SourceBlock;
+  context: { instrument_id: string; location: string; date: string; participant_id: null };
+  measurement: EnvSummaryMeasurement | EnvConflictMeasurement;
+  comparison: { method: string; rule_version: string; max_gap_seconds?: number; formulas: Record<string, string> };
+  evidence_strength: string;
+  limitations: string[];
+  review?: Review | null;
+}
+export type Evidence = HealthEvidence | EnvEvidence;
+
+export interface HealthOverview {
+  participant_id: string;
+  visit: string;
+  visit_label: string;
+  cards: HealthEvidence[];
+  to_review: string[];
+  participant_review_counts: Record<ReviewStatus, number>;
+  dataset: { id: string; title: string; sha256: string; samples: number; participants: number; visits: string[]; nonmissing_values: number };
+}
+
+export interface TrendPoint {
+  evidence_id: string; sample_id: string; visit: string; visit_label: string; phase: string; visit_order: number;
+  relative_day: number; value: number | null; range_low: number | null; range_high: number | null;
+  range_status: RangeStatus; needs_review: boolean; source_row: number;
+}
+export interface HealthTrend {
+  participant_id: string; marker: string; marker_name: string; unit: string; points: TrendPoint[];
+  baseline: { value: number | null; n: number; available: boolean; method: string; visits: string[] };
+  bounds_consistent: boolean; range_low: number | null; range_high: number | null; x_axis_note: string; rule_version: string;
+}
+
+export interface EnvPoint { t: number; ts: string; rate: number; cumulative: number; source_row: number; }
+export interface ConflictGroup { timestamp: string; rows: ConflictRow[]; evidence_id: string; t: number; review: Review | null; }
+export interface EnvironmentView {
+  dataset: SourceBlock;
+  case_banner: string;
+  unit: string;
+  quality: {
+    raw_rows: number; accepted_rows: number; excluded_rows: number; quarantined_conflict_rows: number;
+    status_counts: Record<string, number>; unique_timestamps: number; first_timestamp: string; last_timestamp: string;
+    observed_max_interval_seconds: number; observed_median_interval_seconds: number;
+    documented_nominal_cadence_seconds: number; timestamp_semantics: string; conflict_groups: ConflictGroup[];
+  };
+  integration: {
+    method: string; rule_version: string; max_gap_seconds: number; covered_seconds: number; span_seconds: number;
+    coverage_ratio: number | null; estimated_sensor_dose_uGy: number; label: string; included_intervals: number;
+    excluded_intervals: { start: string; end: string; seconds: number; reason: string; start_t: number; end_t: number }[];
+  };
+  segments: { index: number; start: string; end: string; points: EnvPoint[] }[];
+  excluded_events: { t: number; ts: string; status: string; source_row: number }[];
+  rows: { source_row: number; ts: string; rate_raw: string; rate: number | null; status: string; detail: string | null }[];
+  summary_evidence_id: string;
+  summary_review: Review | null;
+  limitations: string[];
+}
+
+export interface ReplayCard {
+  evidence_id: string; marker: string; marker_name: string; value: number | null; unit: string;
+  range_low: number | null; range_high: number | null; range_status: RangeStatus; needs_review: boolean;
+  baseline_so_far: number | null; n_so_far: number; delta: number | null; percent_delta: number | null; source_row: number;
+}
+export interface ReplayFrame {
+  visit: string; visit_label: string; phase: string; visit_order: number; cards: ReplayCard[];
+  events: { kind: "sample" | "flag" | "baseline"; text: string; marker?: string; evidence_id?: string }[];
+}
+export interface HealthReplay { participant_id: string; mode: "REPLAY"; label: string; baseline_method: string; rule_version: string; frames: ReplayFrame[]; }
+
+export interface StreamReading { kind: "reading"; t: number; ts: string; rate: number; cumulative: number; source_row: number; segment: number; segment_start: boolean; covered_seconds: number; }
+export interface StreamExcluded { kind: "excluded"; t: number; ts: string; evidence_id: string; rows: ConflictRow[]; reason: string; }
+export type StreamEvent = StreamReading | StreamExcluded;
+
+export interface Explanation {
+  mode: "VERIFIED_EXPLANATION";
+  label: string;
+  question_id: QuestionId | null;
+  question: string;
+  evidence_id: string;
+  paragraphs: string[];
+  facts: { label: string; value: string }[];
+  source_ids: string[];
+  generated_by: string;
+}
+
+export interface DatasetInfo {
+  id: string; kind: string; title: string; provider: string; source_url: string; download_url: string; file_name: string;
+  fetched_at: string | null; imported_at: string; sha256: string; byte_count: number; license_note: string; citation: string;
+  schema_version: string; parser_version: string; quality: Record<string, unknown>;
+}
+
+export interface ReviewList { items: Review[]; total: number; page: number; page_size: number; }
+
+export interface ExportPacket {
+  generated_at: string;
+  app: { version: string; git_version: string };
+  datasets: { id: string; title: string; sha256: string }[];
+  health: { reviews: ReviewDetail[] };
+  environment: { reviews: ReviewDetail[] };
+}

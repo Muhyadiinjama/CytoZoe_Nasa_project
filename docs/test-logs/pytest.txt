@@ -1,0 +1,44 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\User\OneDrive\Desktop\CytoZoe_Nasa_project\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\User\OneDrive\Desktop\CytoZoe_Nasa_project\backend
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.16.0
+collecting ... collected 33 items
+
+tests/integration/test_api.py::test_t01_osd575_counts PASSED             [  3%]
+tests/integration/test_api.py::test_t02_c001_glucose_r1 PASSED           [  6%]
+tests/integration/test_api.py::test_t03_t17_c001_l3_creatinine_overview_and_evidence PASSED [  9%]
+tests/integration/test_api.py::test_trend_bounds_and_categorical_order PASSED [ 12%]
+tests/integration/test_api.py::test_t04_real_equal_bound_c003_calcium PASSED [ 15%]
+tests/integration/test_api.py::test_t08_radlab_quality PASSED            [ 18%]
+tests/integration/test_api.py::test_t13_t14_t15_import_safety PASSED     [ 21%]
+tests/integration/test_api.py::test_t16_cross_case_linkage_rejected PASSED [ 24%]
+tests/integration/test_api.py::test_t18_verified_explanations PASSED     [ 27%]
+tests/integration/test_api.py::test_t19_t21_t22_review_lifecycle PASSED  [ 30%]
+tests/integration/test_api.py::test_t20_restart_persistence PASSED       [ 33%]
+tests/integration/test_api.py::test_t23_t24_export_consistency_and_escaping PASSED [ 36%]
+tests/integration/test_api.py::test_status_errors_and_security PASSED    [ 39%]
+tests/integration/test_api.py::test_no_data_state PASSED                 [ 42%]
+tests/integration/test_live.py::test_environment_replay_streams_every_accepted_reading_and_matches_static_totals PASSED [ 45%]
+tests/integration/test_live.py::test_health_replay_uses_prospective_baseline PASSED [ 48%]
+tests/integration/test_live.py::test_typed_questions_route_to_fixed_templates_and_never_echo PASSED [ 51%]
+tests/integration/test_live.py::test_broker_fans_out_thread_safe_and_omits_note PASSED [ 54%]
+tests/unit/test_engines.py::test_t04_value_equal_to_bound_is_within PASSED [ 57%]
+tests/unit/test_engines.py::test_t05_missing_value_and_bounds PASSED     [ 60%]
+tests/unit/test_engines.py::test_t06_baseline_requires_two_values_and_zero_denominator PASSED [ 63%]
+tests/unit/test_engines.py::test_t02_glucose_fixture_math PASSED         [ 66%]
+tests/unit/test_engines.py::test_t03_creatinine_fixture_math PASSED      [ 69%]
+tests/unit/test_engines.py::test_t10_six_uGy_per_hour_for_600_seconds_is_one_uGy_only_when_permitted PASSED [ 72%]
+tests/unit/test_engines.py::test_t12_conflict_inside_interval_breaks_segment_and_irregular_intervals PASSED [ 75%]
+tests/unit/test_engines.py::test_event_exactly_at_endpoint_does_not_block_and_no_extrapolation PASSED [ 78%]
+tests/unit/test_engines.py::test_number_formatting_keeps_integer_zeros PASSED [ 81%]
+tests/unit/test_engines.py::test_t09_conflicting_duplicates_quarantined_not_averaged PASSED [ 84%]
+tests/unit/test_engines.py::test_identical_duplicate_policy_is_not_double_counted PASSED [ 87%]
+tests/unit/test_engines.py::test_t11_invalid_rows_rejected_from_derived_and_reported PASSED [ 90%]
+tests/unit/test_engines.py::test_t13_schema_mismatch_is_refused PASSED   [ 93%]
+tests/unit/test_engines.py::test_t07_out_of_order_rows_get_categorical_visit_order_and_na_is_null PASSED [ 96%]
+tests/unit/test_engines.py::test_unknown_visit_label_is_refused PASSED   [100%]
+
+============================= 33 passed in 3.91s ==============================
