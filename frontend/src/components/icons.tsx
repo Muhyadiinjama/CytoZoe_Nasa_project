@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import { useId, type SVGProps } from "react";
 
 const base = (p: SVGProps<SVGSVGElement>) => ({
   viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const,
@@ -47,14 +47,42 @@ export const IconRestart = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><p
 export const IconStep = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M6 6l7 6-7 6M17 6v12" /></svg>);
 export const IconSend = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)} strokeWidth={2.2}><path d="M12 19V5M6 11l6-6 6 6" /></svg>);
 
-/** CytoZoe mark: an orbit around a cell — original artwork. */
-export function BrandMark(p: SVGProps<SVGSVGElement>) {
+export const IconShield = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z" /><path d="m8.8 12.2 2.2 2.2 4.4-4.6" /></svg>
+);
+export const IconLink = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2" /><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2" /></svg>
+);
+export const IconBan = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></svg>);
+export const IconOffline = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /><circle cx="12" cy="10" r="2" /></svg>
+);
+export const IconDoc = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h6" /></svg>
+);
+
+/**
+ * CytoZoe mark: a crescent body inside a tilted orbit with one tracked point — original artwork
+ * (not NASA insignia). Mask ids are per-instance so several marks can coexist on one page.
+ */
+export function BrandMark({ tile = false, ...p }: SVGProps<SVGSVGElement> & { tile?: boolean }) {
+  const id = useId().replace(/:/g, "");
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false" {...p}>
-      <rect width="32" height="32" rx="9" fill="#B4532A" />
-      <ellipse cx="16" cy="16" rx="11" ry="5.2" fill="none" stroke="#FAF9F5" strokeWidth="1.8" transform="rotate(-28 16 16)" />
-      <circle cx="16" cy="16" r="4.2" fill="#FAF9F5" />
-      <circle cx="24.6" cy="11.4" r="1.9" fill="#FAF9F5" />
+      <defs>
+        <mask id={`cz-m-${id}`}>
+          <rect width="32" height="32" fill="#fff" />
+          <circle cx="19.4" cy="13.4" r="6.4" fill="#000" />
+        </mask>
+        <linearGradient id={`cz-g-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#FFFFFF" />
+          <stop offset="1" stopColor="#A9F3EC" />
+        </linearGradient>
+      </defs>
+      {tile ? <rect width="32" height="32" rx="8" fill="#0B1F32" /> : null}
+      <circle cx="15.2" cy="16.8" r="7.6" fill={`url(#cz-g-${id})`} mask={`url(#cz-m-${id})`} />
+      <ellipse cx="16" cy="16" rx="13" ry="5" fill="none" stroke="#35E1D5" strokeWidth="1.3" transform="rotate(-24 16 16)" />
+      <circle cx="25.3" cy="9.1" r="1.9" fill="#35E1D5" />
     </svg>
   );
 }

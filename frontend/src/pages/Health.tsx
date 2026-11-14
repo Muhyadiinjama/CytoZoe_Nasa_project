@@ -8,7 +8,7 @@ import { PageHeader } from "../components/PageHeader";
 import { ReviewForm } from "../components/ReviewForm";
 import { MarkerTabs, ParticipantSelect, SampleSelect } from "../components/Selectors";
 import { Alert, ErrorState, Skeleton } from "../components/StatusViews";
-import { fmt, RANGE_TEXT } from "../lib/format";
+import { fmt, RANGE_TEXT, signed } from "../lib/format";
 import { useAsync } from "../lib/useAsync";
 import { MARKER_NAME, MARKERS, useHealthSelection } from "../lib/useHealthSelection";
 
@@ -21,7 +21,10 @@ export default function Health() {
   const enabled = Boolean(pid && visit && marker);
   const trend = useAsync(() => api.trend(pid!, marker!), [pid, marker, dataVersion], enabled);
   const overview = useAsync(() => api.health(pid!, visit!), [pid, visit, dataVersion], enabled);
+  const replay = useAsync(() => api.healthReplay(pid!), [pid, dataVersion], Boolean(pid));
   const ev: HealthEvidence | undefined = overview.data?.cards.find((c) => c.measurement.marker === marker);
+  const frame = replay.data?.frames.find((f) => f.visit === visit);
+  const replayCard = frame?.cards.find((c) => c.marker === marker);
   const flagged = new Set(overview.data?.cards.filter((c) => c.measurement.needs_review).map((c) => c.measurement.marker) ?? []);
   const [writing, setWriting] = useState(false);
   useEffect(() => setWriting(false), [pid, visit, marker]);
@@ -29,7 +32,7 @@ export default function Health() {
   return (
     <>
       <PageHeader eyebrow="02 · Health Trends" title="Health Trends" study="health"
-        purpose="What changed? Every actual sample visit for one marker, against the supplied range and a retrospective preflight mean. No values are interpolated between visits." />
+        purpose="What changed? Every actual sample visit for one marker, against the supplied range and the participant's preflight baseline. No values are interpolated between visits." />
 
       {participants.error ? <ErrorState error={participants.error} onRetry={participants.reload} /> : null}
       {resolved && participants.data ? (
@@ -47,6 +50,7 @@ export default function Health() {
       ) : null}
 
       <div id="marker-panel" role="tabpanel" aria-labelledby={marker ? `tab-${marker}` : undefined} className="split">
+        <div className="stack" style={{ gap: 24, minWidth: 0 }}>
         <section className="card" aria-labelledby="chart-title" aria-busy={trend.loading}>
           <div className="card-head">
             <div>
@@ -94,6 +98,44 @@ export default function Health() {
             </>
           ) : null}
         </section>
+
+        {trend.data && visit ? (
+          <section className="card" aria-labelledby="baselines-title" aria-busy={replay.loading}>
+            <div className="card-head">
+              <div>
+                <p className="card-kicker">Two baselines · labelled separately</p>
+                <h2 id="baselines-title">Baseline comparison · {trend.data.marker_name} · {frame?.visit_label ?? visit}</h2>
+                <p>The retrospective mean uses every preflight sample. The replay baseline uses only preflight visits recorded before this visit, so it never sees the current or a later value.</p>
+              </div>
+            </div>
+            {replay.error ? <ErrorState error={replay.error} onRetry={replay.reload} /> : null}
+            <div className="baselines">
+              <div className="baseline-tile">
+                <span className="k">Retrospective preflight mean</span>
+                <span className="v">{trend.data.baseline.available ? <>{fmt(trend.data.baseline.value)} <small>{trend.data.unit}</small></> : "Not computed"}</span>
+                <span className="small muted">n = {trend.data.baseline.n} · {trend.data.baseline.visits.join(", ") || "no preflight values"}</span>
+                <span className="small muted">Difference at this visit: {ev?.comparison.delta === null || ev?.comparison.delta === undefined ? "—" : `${signed(ev.comparison.delta)} ${trend.data.unit}`}</span>
+              </div>
+              <div className="baseline-tile replay">
+                <span className="k">Known before this visit (replay)</span>
+                {replayCard ? (
+                  <>
+                    <span className="v">{replayCard.baseline_so_far === null ? "Not available" : <>{fmt(replayCard.baseline_so_far)} <small>{replayCard.unit}</small></>}</span>
+                    <span className="small muted">
+                      n = {replayCard.n_so_far} · {frame?.baseline_visits?.length ? frame.baseline_visits.join(", ") : "no earlier preflight visit"}
+                      {replayCard.baseline_so_far === null ? " · needs at least 2 earlier preflight values" : ""}
+                    </span>
+                    <span className="small muted">Difference at this visit: {replayCard.delta === null ? "—" : `${signed(replayCard.delta)} ${replayCard.unit}`}</span>
+                  </>
+                ) : replay.loading ? <span className="small muted">Loading replay baseline…</span> : <span className="small muted">Not available for this visit.</span>}
+              </div>
+            </div>
+            {ev?.comparison.includes_selected_sample ? (
+              <p className="chart-note">At this preflight visit, the retrospective mean includes the visit's own value. The replay baseline never does.</p>
+            ) : null}
+          </section>
+        ) : null}
+        </div>
 
         <section className="card" aria-labelledby="evidence-title">
           <div className="card-head">

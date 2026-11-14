@@ -1,7 +1,25 @@
 import type { HealthEvidence } from "../api/contracts";
 import { useDrawer } from "../app/providers";
-import { fmt, REVIEW_LABEL, signed } from "../lib/format";
+import { fmt, rangeText, REVIEW_LABEL, signed } from "../lib/format";
 import { RangeStatusLine } from "./EvidencePanel";
+
+/**
+ * Presentation-only position of the reported value against the two supplied bounds.
+ * Nothing is classified here: the range status text above it comes from the backend.
+ */
+function RangeTrack({ value, low, high, flagged }: { value: number; low: number; high: number; flagged: boolean }) {
+  const span = high - low || Math.abs(high) || 1;
+  const d0 = Math.min(low, value) - span * 0.3;
+  const d1 = Math.max(high, value) + span * 0.3;
+  const pct = (x: number) => ((x - d0) / (d1 - d0)) * 100;
+  return (
+    <div className="range-track" aria-hidden="true">
+      <span className="rail" />
+      <span className="band" style={{ left: `${pct(low)}%`, width: `${pct(high) - pct(low)}%` }} />
+      <span className={`pin${flagged ? " flag" : ""}`} style={{ left: `${pct(value)}%` }} />
+    </div>
+  );
+}
 
 export function MetricCard({ ev }: { ev: HealthEvidence }) {
   const { open } = useDrawer();
@@ -15,6 +33,9 @@ export function MetricCard({ ev }: { ev: HealthEvidence }) {
           <><span className="metric-value">{fmt(m.value)}</span><span className="metric-unit">{m.unit}</span></>
         )}
       </div>
+      {m.value !== null && m.range_low !== null && m.range_high !== null
+        ? <RangeTrack value={m.value} low={m.range_low} high={m.range_high} flagged={m.needs_review} /> : null}
+      <span className="meta">Supplied range {rangeText(m.range_low, m.range_high, m.unit)}</span>
       <RangeStatusLine status={m.range_status} />
       <p className="metric-delta">
         {c.delta === null

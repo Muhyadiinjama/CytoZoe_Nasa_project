@@ -32,6 +32,7 @@ function SourceStep({ ev, children }: { ev: Evidence; children?: ReactNode }) {
       <dl className="kv small">
         <dt>Dataset</dt><dd>{s.title}</dd>
         <dt>File</dt><dd><code>{s.file_name}</code></dd>
+        <dt>Provenance</dt><dd>{s.provenance === "NASA_PINNED_VERIFIED" ? "Verified NASA snapshot (SHA-256 matches the registered manifest)" : s.provenance ?? "Not reported"}</dd>
         {children}
       </dl>
       <details className="disclosure" style={{ marginTop: 8 }}>
@@ -57,12 +58,12 @@ export function HealthEvidencePanel({ ev, followUp }: { ev: HealthEvidence; foll
   const ctx = ev.context;
   return (
     <div className="evidence">
-      <Step n={1} label="Observed">
+      <Step n={1} label="Observation">
         <div className="ev-big">{m.value === null ? "No value recorded" : <>{fmt(m.value)} <span className="metric-unit">{m.unit}</span></>}</div>
         <p className="small muted">{m.marker_name} · {ctx.participant_id} · {ctx.visit_label} ({Math.abs(ctx.relative_day)} {ctx.relative_day_reference}) · actual sample</p>
         <div style={{ marginTop: 6 }}><RangeStatusLine status={m.range_status} /></div>
       </Step>
-      <Step n={2} label="Compared with">
+      <Step n={2} label="Calculation">
         <dl className="kv small">
           <dt>Supplied laboratory range</dt><dd>{rangeText(m.range_low, m.range_high, m.unit)}</dd>
           <dt>Retrospective preflight mean</dt>
@@ -77,7 +78,7 @@ export function HealthEvidencePanel({ ev, followUp }: { ev: HealthEvidence; foll
         ) : null}
         <p className="small muted" style={{ marginTop: 6 }}>A difference from the personal mean is descriptive; it is not an abnormality threshold.</p>
       </Step>
-      <Step n={3} label="Source">
+      <Step n={3} label="Source & quality">
         <SourceStep ev={ev}>
           <dt>Row</dt><dd>Data row {ev.source.source_row} (file line {ev.source.file_line}) · “{ev.source.sample_name}”</dd>
           <dt>Column</dt><dd><code>{ev.source.source_columns?.value}</code></dd>
@@ -85,7 +86,7 @@ export function HealthEvidencePanel({ ev, followUp }: { ev: HealthEvidence; foll
           <dt>Rule</dt><dd>{c.rule_version}</dd>
         </SourceStep>
       </Step>
-      <Step n={4} label="Limits">
+      <Step n={4} label="Limitations">
         <ul className="ev-list">{ev.limitations.map((l) => <li key={l}>{l}</li>)}</ul>
       </Step>
       <Step n={5} label="Follow-up">
@@ -106,7 +107,7 @@ export function EnvEvidencePanel({ ev, followUp }: { ev: EnvEvidence; followUp?:
   const cm = ev.measurement as EnvConflictMeasurement;
   return (
     <div className="evidence">
-      <Step n={1} label="Observed">
+      <Step n={1} label="Observation">
         {isConflict ? (
           <>
             <p className="small muted">Source timestamp {cm.timestamp} (source clock, no timezone)</p>
@@ -127,7 +128,7 @@ export function EnvEvidencePanel({ ev, followUp }: { ev: EnvEvidence; followUp?:
           </>
         )}
       </Step>
-      <Step n={2} label={isConflict ? "Decision" : "Coverage and method"}>
+      <Step n={2} label={isConflict ? "Calculation · quality decision" : "Calculation · coverage and method"}>
         {isConflict ? (
           <ul className="ev-list">{Object.values(ev.comparison.formulas).map((f) => <li key={f}>{f}</li>)}</ul>
         ) : (
@@ -141,13 +142,13 @@ export function EnvEvidencePanel({ ev, followUp }: { ev: EnvEvidence; followUp?:
           </>
         )}
       </Step>
-      <Step n={3} label="Source">
+      <Step n={3} label="Source & quality">
         <SourceStep ev={ev}>
           <dt>Instrument</dt><dd>DosTel1 · ISS Columbus module</dd>
           <dt>Rule</dt><dd>{ev.comparison.rule_version}</dd>
         </SourceStep>
       </Step>
-      <Step n={4} label="Limits">
+      <Step n={4} label="Limitations">
         <ul className="ev-list">{ev.limitations.map((l) => <li key={l}>{l}</li>)}</ul>
       </Step>
       <Step n={5} label="Follow-up">

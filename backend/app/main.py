@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import mimetypes
 import sqlite3
 import time
 import uuid
@@ -19,6 +20,10 @@ from .errors import AppError
 from .services import importer, runtime
 
 log = logging.getLogger("cytozoe")
+# Bundled media must be served with an image type: the Windows registry often lacks .webp/.avif, and with
+# "X-Content-Type-Options: nosniff" a text/plain image would be refused by the browser.
+for _ext, _type in ((".webp", "image/webp"), (".avif", "image/avif"), (".woff2", "font/woff2"), (".svg", "image/svg+xml")):
+    mimetypes.add_type(_type, _ext)
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
        "font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
 

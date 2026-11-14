@@ -6,6 +6,7 @@ import type { HealthEvidence, ReviewStatus } from "../api/contracts";
 import { useDrawer } from "../app/providers";
 import { IconFlag } from "../components/icons";
 import { MetricCard } from "../components/MetricCard";
+import { MissionBriefPanel } from "../components/MissionBrief";
 import { PageHeader } from "../components/PageHeader";
 import { ParticipantSelect, SampleSelect } from "../components/Selectors";
 import { Alert, Empty, ErrorState, Skeleton } from "../components/StatusViews";
@@ -34,7 +35,7 @@ export default function Overview() {
   return (
     <>
       <PageHeader eyebrow="01 · Health Overview" title="Health Overview" study="health"
-        purpose="What should I review? Five blood markers from a real historical Inspiration4 sample, compared with the supplied laboratory range and the participant's own preflight samples." />
+        purpose="What should I review? Five blood markers from one real historical Inspiration4 sample, compared with the laboratory range supplied in the source file and with the participant's own preflight samples." />
 
       {participants.error ? <ErrorState error={participants.error} onRetry={participants.reload} /> : null}
       {resolved && participants.data ? (
@@ -42,11 +43,12 @@ export default function Overview() {
           <ParticipantSelect participants={participants.data} value={resolved.participant.participant_id} onChange={(v) => update({ participant: v })} />
           <SampleSelect samples={resolved.participant.samples} value={resolved.sample.visit} onChange={(v) => update({ sample: v })} />
           <p className="toolbar-note">Historical research sample · not a live reading. L = days before launch, R = days after return.</p>
+          <div className="context-chips">
+            <span className={`badge ${resolved.sample.phase === "PREFLIGHT" ? "badge-history" : "badge-replay"}`}>{resolved.sample.phase === "PREFLIGHT" ? "Preflight sample" : "Postflight sample"}</span>
+          </div>
         </div>
       ) : participants.loading ? <Skeleton height={86} label="Loading participants…" /> : null}
       {notice ? <Alert tone="info">{notice}</Alert> : null}
-
-      {pid && visit ? <HealthReplayPanel participant={pid} visit={visit} onVisit={onVisit} /> : null}
 
       {overview.error ? <ErrorState error={overview.error} onRetry={overview.reload} /> : null}
       {!data && overview.loading ? <Skeleton height={190} label="Loading marker cards…" /> : null}
@@ -60,46 +62,60 @@ export default function Overview() {
             </div>
           </section>
 
-          <div className="split">
-            <section className="card" aria-labelledby="review-title">
-              <div className="card-head">
-                <div>
-                  <h2 id="review-title">Results to review</h2>
-                  <p>{data.participant_id} · {data.visit_label} · values outside the range supplied in the source file</p>
-                </div>
-                <span className={`badge ${flagged.length ? "badge-review" : "badge-history"}`}>
-                  {flagged.length ? <IconFlag /> : null}{flagged.length} of {data.cards.length} outside supplied range
-                </span>
-              </div>
-              {flagged.length === 0 ? (
-                <Empty>No selected measurements are outside the supplied ranges. This does not assess overall health.</Empty>
-              ) : flagged.map((ev) => (
-                <div className="finding" key={ev.evidence_id}>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="finding-title">{ev.measurement.marker_name} · <span className="status-review">Needs review</span></div>
-                    <p className="finding-body">{findingSentence(ev)}</p>
-                    <p className="small muted" style={{ marginTop: 4 }}>
-                      {ev.comparison.baseline_available
-                        ? `Compared with ${ev.context.participant_id}'s retrospective preflight mean of ${fmt(ev.comparison.baseline)} ${ev.measurement.unit} (n = ${ev.comparison.n}).`
-                        : "No personal baseline (fewer than two preflight values)."}
-                      {ev.context.phase === "PREFLIGHT" ? " Collected before launch — not a spaceflight effect." : " Descriptive only; no cause is inferred."}
-                      {" "}Not a diagnosis.
-                    </p>
-                    {ev.review ? <p style={{ marginTop: 6 }}><span className="badge badge-teal">{REVIEW_LABEL[ev.review.status]}</span></p> : null}
+          <div className="split-brief">
+            <div className="stack" style={{ gap: 24, minWidth: 0 }}>
+              <section className="card" aria-labelledby="review-title">
+                <div className="card-head">
+                  <div>
+                    <p className="card-kicker">Action list</p>
+                    <h2 id="review-title">Results to review</h2>
+                    <p>{data.participant_id} · {data.visit_label} · values outside the range supplied in the source file</p>
                   </div>
-                  <div className="btn-row">
-                    <button type="button" className="btn btn-primary" onClick={() => open({ kind: "evidence", id: ev.evidence_id })}
-                      aria-label={`Inspect result: ${ev.measurement.marker_name}`}>Inspect result</button>
-                    <button type="button" className="btn btn-secondary" onClick={() => open({ kind: "evidence", id: ev.evidence_id, section: "review" })}
-                      aria-label={`${ev.review ? "Update follow-up" : "Record follow-up"} for ${ev.measurement.marker_name}`}>{ev.review ? "Update follow-up" : "Record follow-up"}</button>
-                  </div>
+                  <span className={`badge ${flagged.length ? "badge-review" : "badge-history"}`}>
+                    {flagged.length ? <IconFlag /> : null}{flagged.length} of {data.cards.length} outside supplied range
+                  </span>
                 </div>
-              ))}
-            </section>
+                {flagged.length === 0 ? (
+                  <Empty>No selected measurements are outside the supplied ranges. This does not assess overall health.</Empty>
+                ) : flagged.map((ev) => (
+                  <div className="finding" key={ev.evidence_id}>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="finding-title">{ev.measurement.marker_name} · <span className="status-review">Needs review</span></div>
+                      <p className="finding-body">{findingSentence(ev)}</p>
+                      <p className="small muted" style={{ marginTop: 4 }}>
+                        {ev.comparison.baseline_available
+                          ? `Compared with ${ev.context.participant_id}'s retrospective preflight mean of ${fmt(ev.comparison.baseline)} ${ev.measurement.unit} (n = ${ev.comparison.n}).`
+                          : "No personal baseline (fewer than two preflight values)."}
+                        {ev.context.phase === "PREFLIGHT" ? " Collected before launch — not a spaceflight effect." : " Descriptive only; no cause is inferred."}
+                        {" "}Not a diagnosis.
+                      </p>
+                      {ev.review ? <p style={{ marginTop: 6 }}><span className="badge badge-teal">{REVIEW_LABEL[ev.review.status]}</span></p> : null}
+                    </div>
+                    <div className="btn-row">
+                      <button type="button" className="btn btn-primary" onClick={() => open({ kind: "evidence", id: ev.evidence_id })}
+                        aria-label={`Inspect result: ${ev.measurement.marker_name}`}>Inspect result</button>
+                      <button type="button" className="btn btn-secondary" onClick={() => open({ kind: "evidence", id: ev.evidence_id, section: "review" })}
+                        aria-label={`${ev.review ? "Update follow-up" : "Record follow-up"} for ${ev.measurement.marker_name}`}>{ev.review ? "Update follow-up" : "Record follow-up"}</button>
+                    </div>
+                  </div>
+                ))}
+              </section>
 
-            <aside className="stack">
+              {pid && visit ? <HealthReplayPanel participant={pid} visit={visit} onVisit={onVisit} /> : null}
+
               <section className="card" aria-labelledby="data-title">
-                <h2 id="data-title" style={{ marginBottom: 12 }}>Available data</h2>
+                <div className="card-head" style={{ marginBottom: 12 }}>
+                  <div>
+                    <p className="card-kicker">Dataset · OSD-575</p>
+                    <h2 id="data-title">Available data &amp; saved reviews</h2>
+                  </div>
+                  <Link to={`/reviews?case=health&participant=${data.participant_id}`}>Open in Review Log</Link>
+                </div>
+                <div className="mini-stats" style={{ marginBottom: 14 }}>
+                  {(Object.keys(REVIEW_LABEL) as ReviewStatus[]).map((s) => (
+                    <div className="mini-stat" key={s}><b>{data.participant_review_counts[s] ?? 0}</b><span>{REVIEW_LABEL[s]} · {data.participant_id}</span></div>
+                  ))}
+                </div>
                 <dl className="kv small">
                   <dt>Dataset</dt><dd>NASA OSD-575 · Comprehensive Metabolic Panel</dd>
                   <dt>Samples</dt><dd>{data.dataset.samples} ({data.dataset.participants} participants × {data.dataset.visits.length} visits)</dd>
@@ -108,23 +124,12 @@ export default function Overview() {
                 </dl>
                 <p className="small muted" style={{ marginTop: 12 }}>Sparse blood draws, not continuous monitoring. The ISS radiation record is a separate case and is not linked to any participant.</p>
               </section>
-              <section className="card" aria-labelledby="saved-title">
-                <h2 id="saved-title" style={{ marginBottom: 12 }}>Saved reviews · {data.participant_id}</h2>
-                <dl className="kv small">
-                  {(Object.keys(REVIEW_LABEL) as ReviewStatus[]).map((s) => (
-                    <FactPair key={s} k={REVIEW_LABEL[s]} v={String(data.participant_review_counts[s] ?? 0)} />
-                  ))}
-                </dl>
-                <p style={{ marginTop: 12 }}><Link to={`/reviews?case=health&participant=${data.participant_id}`}>Open in Review Log</Link></p>
-              </section>
-            </aside>
+            </div>
+
+            <MissionBriefPanel participant={data.participant_id} sample={data.visit} />
           </div>
         </>
       ) : null}
     </>
   );
-}
-
-function FactPair({ k, v }: { k: string; v: string }) {
-  return (<><dt>{k}</dt><dd>{v}</dd></>);
 }

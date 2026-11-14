@@ -68,6 +68,7 @@ export interface SourceBlock {
   imported_at: string;
   license_note: string;
   citation: string;
+  provenance?: string;
   source_row?: number;
   file_line?: number;
   sample_name?: string;
@@ -216,4 +217,38 @@ export interface ExportPacket {
   datasets: { id: string; title: string; sha256: string }[];
   health: { reviews: ReviewDetail[] };
   environment: { reviews: ReviewDetail[] };
+}
+
+/* ---------- Mission Health Intelligence Brief (GET /api/mission/brief, schema mission-brief-v1) ---------- */
+export interface BriefBaseline {
+  context: string; value: number | null; n: number; available: boolean; includes_selected_sample: boolean;
+  samples_used: { visit: string; sample_id: string; value: number | null; source_row: number }[];
+}
+export interface BriefItem {
+  evidence_id: string; marker: string; marker_name: string; value: number | null; unit: string;
+  range_low: number | null; range_high: number | null; status: RangeStatus; needs_review: boolean;
+  baseline: BriefBaseline; delta: number | null; percent_delta: number | null;
+  source: { dataset_id: string; file_name: string; sha256: string; provenance: string; source_row: number; file_line: number; source_column: string; raw_value: string | null };
+  explanation: { observed: string; compared_with: string; why_flagged: string | null; limitations: string[]; next_review_action: string };
+  review: { id: string | null; status: ReviewStatus | null; version: number | null; note_present: boolean; updated_at: string | null };
+  actions: {
+    inspect_evidence: string;
+    create_or_open_review: { finding_id: string; review_id: string | null; method: string; endpoint: string };
+    export_packet: { html: string; json: string };
+  };
+}
+export interface MissionBrief {
+  schema_version: string; brief_id: string; mode: "HISTORICAL_RESEARCH"; title: string; generated_at: string;
+  rule_versions: Record<string, string>;
+  dataset: { dataset_id: string; title: string; provider: string; file_name: string; sha256: string; provenance: string; source_url: string; imported_at: string; research_case: string };
+  context: { participant_id: string; sample_id: string; visit: string; visit_label: string; phase: string; relative_day: number; relative_day_reference: string };
+  coverage: { markers_considered: string[]; considered_count: number; measured_count: number; missing_markers: string[]; with_both_bounds: number; one_sided_bounds: number; without_bounds: number; note: string };
+  summary: { measured_marker_count: number; outside_supplied_range_count: number; text: string };
+  findings: BriefItem[];
+  other_measurements: BriefItem[];
+  missing_measurements: BriefItem[];
+  quality: { provenance: string; validation_status: string; parser_version: string; parse_issues: number; warnings: string[] };
+  dataset_limitations: string[];
+  case_separation: string;
+  available_questions: { id: QuestionId; label: string }[];
 }
