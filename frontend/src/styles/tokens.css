@@ -1,0 +1,53 @@
+/* CytoZoe design tokens — v2 "calm workspace": warm neutral canvas, serif headings, one clay action colour.
+   Colour roles are kept distinct: clay = actions, slate-blue = data, amber = needs review, green = saved. */
+:root {
+  --canvas: #FAF9F5;
+  --surface: #FFFFFF;
+  --surface-2: #F6F4EE;
+  --sidebar: #F3F1EA;
+  --sidebar-hover: #EAE6DB;
+  --sidebar-active: #E4DED0;
+
+  --ink: #1F1E1C;
+  --muted: #625E57;
+  --border: #E7E2D7;
+  --border-strong: #D5CEC0;
+  --control-border: #8A8478;
+
+  --accent: #B4532A;
+  --accent-hover: #97441F;
+  --accent-tint: #F8ECE4;
+
+  --data: #2F5A7A;
+  --data-tint: #E7EEF4;
+  --baseline: #6B6760;
+  --range-band: #EFEBE2;
+
+  --review: #8F4A07;
+  --review-bg: #FCF0DC;
+  --review-border: #EED3A6;
+  --success: #2D6A4C;
+  --success-bg: #E9F3EC;
+  --error: #B42318;
+  --error-bg: #FDEEEC;
+  --focus: #2458D3;
+
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 22px;
+  --shadow: 0 1px 2px rgb(31 30 28 / 4%), 0 4px 14px rgb(31 30 28 / 4%);
+  --shadow-pop: 0 10px 40px rgb(31 30 28 / 14%);
+
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --sidebar-w: 268px;
+  --content-max: 1200px;
+  --control-h: 44px;
+  --motion: 160ms;
+
+  --sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif: "Source Serif 4 Variable", "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--canvas);
+}

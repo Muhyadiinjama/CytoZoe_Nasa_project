@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cytozoe-backend"
+version = "1.0.0"
+description = "CytoZoe local-first astronaut health evidence and review workspace (research demo)"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.162.7",
+  "starlette==1.10.0",
+  "uvicorn[standard]==0.54.0",
+  "pydantic==2.14.3",
+  "pandas==3.1.1",
+  "python-multipart==0.0.20",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.2.0", "httpx==0.28.1"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
