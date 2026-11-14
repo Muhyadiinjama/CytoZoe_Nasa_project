@@ -1,0 +1,15 @@
+PASS  ports 8000/5173 free before test
+PASS  interface answers on :5173
+PASS  API reachable through the dev proxy and READY
+PASS  launcher reported real readiness
+PASS  launcher exits on 'q'  (exit 0)
+PASS  no orphan on :8000 after teardown
+PASS  no orphan on :5173 after teardown
+PASS  refuses a foreign program on :8000 with exit 1  (exit 1)
+PASS  explains the port conflict
+PASS  foreign program was not killed
+PASS  npm start serves the built interface on :8000
+PASS  npm start reports READY
+PASS  npm start stops on 'q' and frees :8000  (exit 0)
+
+All launcher checks passed

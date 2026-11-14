@@ -30,10 +30,20 @@ def visit_label(visit: str) -> str:
 
 
 def dataset_row(conn: sqlite3.Connection) -> sqlite3.Row:
-    row = conn.execute("SELECT * FROM datasets WHERE kind = 'HEALTH_CMP'").fetchone()
+    return verified_dataset(conn, "HEALTH_CMP", "OSD-575 health")
+
+
+def verified_dataset(conn: sqlite3.Connection, kind: str, label: str) -> sqlite3.Row:
+    """NASA-only endpoints serve a dataset only when its provenance is NASA_PINNED_VERIFIED."""
+    row = conn.execute("SELECT * FROM datasets WHERE kind = ?", (kind,)).fetchone()
     if row is None:
-        raise AppError(404, "NO_DATA", "The OSD-575 health dataset has not been imported yet. "
+        raise AppError(404, "NO_DATA", f"The {label} dataset has not been imported yet. "
                        "Run the documented setup (scripts/fetch_data.py then scripts/import_data.py).")
+    if "provenance" in row.keys() and row["provenance"] != "NASA_PINNED_VERIFIED":
+        raise AppError(409, "SOURCE_HASH_MISMATCH",
+                       f"The loaded {label} data is not a registered verified NASA snapshot, so it is not shown. "
+                       "Re-import the pinned file (scripts/import_data.py --allow-new-version).",
+                       {"dataset_id": row["id"], "provenance": row["provenance"]})
     return row
 
 
@@ -78,7 +88,8 @@ def _source_block(ds: sqlite3.Row, obs: sqlite3.Row) -> dict[str, Any]:
     value_col, low_col, high_col = cmp_columns(obs["marker"], unit)
     return {
         "dataset_id": ds["id"], "title": ds["title"], "provider": ds["provider"], "file_name": ds["file_name"],
-        "sha256": ds["sha256"], "source_row": obs["source_row"], "file_line": obs["source_row"] + 1,
+        "sha256": ds["sha256"], "provenance": ds["provenance"] if "provenance" in ds.keys() else None,
+        "source_row": obs["source_row"], "file_line": obs["source_row"] + 1,
         "sample_name": obs["sample_id"],
         "source_columns": {"value": value_col, "range_min": low_col, "range_max": high_col},
         "raw_value": obs["value_raw"], "source_unit": unit,
@@ -188,7 +199,10 @@ def overview(conn: sqlite3.Connection, participant: str, visit: str) -> dict[str
 def replay(conn: sqlite3.Connection, participant: str) -> dict[str, Any]:
     """Visit-by-visit replay using only information available at each visit (prospective baseline).
 
-    Unlike the retrospective baseline used elsewhere, frame k's baseline uses only preflight visits ≤ k.
+    Unlike the retrospective baseline used elsewhere, frame k's baseline uses only preflight visits strictly
+    BEFORE visit k (no temporal leakage: the value being compared never contributes to its own baseline).
+    State transition: after frame k is revealed, its preflight value becomes available to frames > k.
+    Replay is read-only: it never writes to the database.
     """
     dataset_row(conn)
     _validate(conn, participant)
@@ -197,9 +211,9 @@ def replay(conn: sqlite3.Connection, participant: str) -> dict[str, Any]:
     ).fetchall()
     visits = sorted({r["visit"] for r in rows}, key=lambda v: VISITS[v]["order"])
     frames = []
-    baseline_announced: set[str] = set()
+    baseline_announced = False
     for k, visit in enumerate(visits):
-        seen_pre = [v for v in visits[: k + 1] if v in PREFLIGHT_VISITS]
+        seen_pre = [v for v in visits[:k] if v in PREFLIGHT_VISITS]  # strictly earlier visits only
         cards, events = [], []
         phase = VISITS[visit]["phase"]
         events.append({"kind": "sample", "text": f"New historical sample: {visit_label(visit)} ({abs(VISITS[visit]['relative_day'])} {'days before launch' if phase == 'PREFLIGHT' else 'days after return'})."})
@@ -223,16 +237,16 @@ def replay(conn: sqlite3.Connection, participant: str) -> dict[str, Any]:
                 side = "above the supplied upper" if status == health.ABOVE else "below the supplied lower"
                 events.append({"kind": "flag", "marker": marker, "evidence_id": cards[-1]["evidence_id"],
                                "text": f"{MARKER_NAMES[marker]} {obs['value']:g} {obs['unit']} is {side} bound {bound:g} {obs['unit']}. Needs review — not a diagnosis."})
-            if base and marker not in baseline_announced:
-                baseline_announced.add(marker)
-        if len(seen_pre) == 2 and visit in PREFLIGHT_VISITS:
-            events.append({"kind": "baseline", "text": "Personal baseline now available (n = 2 preflight samples)."})
+        if not baseline_announced and len(seen_pre) >= 2:
+            baseline_announced = True
+            events.append({"kind": "baseline", "text": f"Personal baseline available from {len(seen_pre)} earlier preflight samples ({', '.join(seen_pre)})."})
         frames.append({"visit": visit, "visit_label": visit_label(visit), "phase": phase, "visit_order": VISITS[visit]["order"],
+                       "baseline_context": "PROSPECTIVE_PRIOR_PREFLIGHT", "baseline_visits": seen_pre,
                        "cards": cards, "events": events})
-    return {"participant_id": participant, "mode": "REPLAY",
-            "label": "Historical replay · each step shows only what was known at that visit · not live",
-            "baseline_method": "prospective_preflight_mean_so_far (requires n ≥ 2)", "rule_version": health.RULE_VERSION,
-            "frames": frames}
+    return {"participant_id": participant, "mode": "HISTORICAL_REPLAY",
+            "label": "Historical replay · each step shows only what was known before that visit · not live",
+            "baseline_method": "prospective mean of preflight visits strictly before the replayed visit (requires n ≥ 2)",
+            "rule_version": health.RULE_VERSION, "frames": frames}
 
 
 def trend(conn: sqlite3.Connection, participant: str, marker: str) -> dict[str, Any]:

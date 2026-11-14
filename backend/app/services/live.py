@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import json
 import threading
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Awaitable, Callable
 
 
 class Broker:
@@ -64,10 +64,12 @@ def review_event(kind: str, review: dict[str, Any]) -> dict[str, Any]:
             ("id", "finding_id", "case", "participant_id", "title", "status", "version", "updated_at")}}
 
 
-async def environment_replay(view: dict[str, Any], speed: float, start: float, tick: float = 0.1) -> AsyncIterator[str]:
+async def environment_replay(view: dict[str, Any], speed: float, start: float, tick: float = 0.1,
+                             is_disconnected: Callable[[], Awaitable[bool]] | None = None) -> AsyncIterator[str]:
     """Stream the day's accepted readings plus quality events in source-time order.
 
     `speed` = source seconds per real second. Events are flushed in small batches every `tick` seconds.
+    Read-only: replays stored values; never writes. Stops promptly when the client disconnects.
     """
     integ = view["integration"]
     items: list[tuple[float, int, dict[str, Any]]] = []
@@ -88,7 +90,8 @@ async def environment_replay(view: dict[str, Any], speed: float, start: float, t
             item["covered_seconds"] = covered
             prev = item
     items = [x for x in items if x[0] >= start]
-    yield sse("meta", {"mode": "REPLAY", "label": "Replay of recorded data · 1 March 2022 · not live",
+    yield sse("meta", {"mode": "HISTORICAL_REPLAY", "label": "Replay of recorded data · 1 March 2022 · not live",
+                       "timestamp_semantics": "Source clock as exported; no timezone suffix.",
                        "speed": speed, "start": start, "total_points": sum(len(s["points"]) for s in view["segments"]),
                        "final_estimated_sensor_dose_uGy": integ["estimated_sensor_dose_uGy"],
                        "span_seconds": integ["span_seconds"], "day_start": view["segments"][0]["points"][0]["t"] if view["segments"] else 0})
@@ -108,6 +111,8 @@ async def environment_replay(view: dict[str, Any], speed: float, start: float, t
                 yield sse("frame", {"events": batch})
                 batch = []
                 last_flush = loop.time()
+                if is_disconnected is not None and await is_disconnected():
+                    return  # client went away: stop work, emit nothing further
             await asyncio.sleep(due - loop.time() if due > loop.time() else 0)
         batch.append(item)
         if loop.time() - last_flush >= tick and batch:

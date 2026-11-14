@@ -1,0 +1,501 @@
+{
+  "schema_version": "mission-brief-v1",
+  "brief_id": "mission-brief-v1:5eb1e7f025dd:C001_serum_L-3",
+  "mode": "HISTORICAL_RESEARCH",
+  "title": "Health brief · C001 · L-3 · Preflight",
+  "generated_at": "2026-11-14T09:24:27Z",
+  "rule_versions": {
+    "quality": "e1-quality-v1",
+    "health": "health-compare-v1",
+    "environment": "env-integration-v1",
+    "brief": "mission-brief-v1"
+  },
+  "dataset": {
+    "dataset_id": "OSD-575-CMP",
+    "title": "Inspiration4 (SpaceX) crew serum Comprehensive Metabolic Panel",
+    "provider": "NASA Open Science Data Repository (OSDR)",
+    "file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+    "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9",
+    "provenance": "NASA_PINNED_VERIFIED",
+    "source_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-575",
+    "imported_at": "2026-11-14T05:58:26Z",
+    "research_case": "HEALTH_OSD575"
+  },
+  "context": {
+    "participant_id": "C001",
+    "sample_id": "C001_serum_L-3",
+    "visit": "L-3",
+    "visit_label": "L-3 · Preflight",
+    "phase": "PREFLIGHT",
+    "relative_day": -3,
+    "relative_day_reference": "days before launch"
+  },
+  "coverage": {
+    "markers_considered": [
+      "glucose",
+      "sodium",
+      "potassium",
+      "creatinine",
+      "calcium"
+    ],
+    "considered_count": 5,
+    "measured_count": 5,
+    "missing_markers": [],
+    "with_both_bounds": 5,
+    "one_sided_bounds": 0,
+    "without_bounds": 0,
+    "note": "5 selected markers of the comprehensive metabolic panel; the other CMP analytes are not shown. More markers would not add participants: 4 people are not a validation cohort."
+  },
+  "summary": {
+    "measured_marker_count": 5,
+    "outside_supplied_range_count": 1,
+    "text": "One displayed measurement is outside its supplied laboratory range."
+  },
+  "findings": [
+    {
+      "evidence_id": "osd575-cmp:C001_serum_L-3:creatinine",
+      "marker": "creatinine",
+      "marker_name": "Creatinine",
+      "value": 1.37,
+      "unit": "mg/dL",
+      "range_low": 0.6,
+      "range_high": 1.35,
+      "status": "ABOVE_SUPPLIED_UPPER_BOUND",
+      "needs_review": true,
+      "baseline": {
+        "context": "RETROSPECTIVE_PREFLIGHT",
+        "value": 1.2366666666666666,
+        "n": 3,
+        "available": true,
+        "includes_selected_sample": true,
+        "samples_used": [
+          {
+            "visit": "L-92",
+            "sample_id": "C001_serum_L-92",
+            "value": 1.24,
+            "source_row": 3
+          },
+          {
+            "visit": "L-44",
+            "sample_id": "C001_serum_L-44",
+            "value": 1.1,
+            "source_row": 2
+          },
+          {
+            "visit": "L-3",
+            "sample_id": "C001_serum_L-3",
+            "value": 1.37,
+            "source_row": 1
+          }
+        ]
+      },
+      "delta": 0.13333333333333353,
+      "percent_delta": 10.781671159029667,
+      "source": {
+        "dataset_id": "OSD-575-CMP",
+        "file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+        "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9",
+        "provenance": "NASA_PINNED_VERIFIED",
+        "source_row": 1,
+        "file_line": 2,
+        "source_column": "creatinine_value_milligram_per_deciliter",
+        "raw_value": "1.37"
+      },
+      "explanation": {
+        "observed": "Creatinine 1.37 mg/dL at L-3 · Preflight (3 days before launch); historical research sample, data row 1.",
+        "compared_with": "Supplied laboratory range 0.6–1.35 mg/dL. Retrospective preflight mean 1.2367 mg/dL (n = 3: L-92 1.24, L-44 1.1, L-3 1.37). Different from that mean by +0.1333 mg/dL (+10.78%); descriptive, not an abnormality threshold.",
+        "why_flagged": "The measured value is above the supplied upper bound (1.35 mg/dL).",
+        "limitations": [
+          "This individual measurement does not establish a diagnosis.",
+          "Collected before launch, so it cannot reflect a spaceflight effect.",
+          "The preflight mean includes this sample, so the comparison is retrospective."
+        ],
+        "next_review_action": "Record a reviewer follow-up note and status. CytoZoe does not recommend clinical action."
+      },
+      "review": {
+        "id": null,
+        "status": null,
+        "version": null,
+        "note_present": false,
+        "updated_at": null
+      },
+      "actions": {
+        "inspect_evidence": "/api/evidence/osd575-cmp:C001_serum_L-3:creatinine",
+        "create_or_open_review": {
+          "finding_id": "osd575-cmp:C001_serum_L-3:creatinine",
+          "review_id": null,
+          "method": "POST",
+          "endpoint": "/api/reviews"
+        },
+        "export_packet": {
+          "html": "/api/export?format=html",
+          "json": "/api/export?format=json"
+        }
+      }
+    }
+  ],
+  "other_measurements": [
+    {
+      "evidence_id": "osd575-cmp:C001_serum_L-3:glucose",
+      "marker": "glucose",
+      "marker_name": "Glucose",
+      "value": 69.0,
+      "unit": "mg/dL",
+      "range_low": 65.0,
+      "range_high": 99.0,
+      "status": "WITHIN_SUPPLIED_RANGE",
+      "needs_review": false,
+      "baseline": {
+        "context": "RETROSPECTIVE_PREFLIGHT",
+        "value": 77.33333333333333,
+        "n": 3,
+        "available": true,
+        "includes_selected_sample": true,
+        "samples_used": [
+          {
+            "visit": "L-92",
+            "sample_id": "C001_serum_L-92",
+            "value": 83.0,
+            "source_row": 3
+          },
+          {
+            "visit": "L-44",
+            "sample_id": "C001_serum_L-44",
+            "value": 80.0,
+            "source_row": 2
+          },
+          {
+            "visit": "L-3",
+            "sample_id": "C001_serum_L-3",
+            "value": 69.0,
+            "source_row": 1
+          }
+        ]
+      },
+      "delta": -8.333333333333329,
+      "percent_delta": -10.77586206896551,
+      "source": {
+        "dataset_id": "OSD-575-CMP",
+        "file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+        "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9",
+        "provenance": "NASA_PINNED_VERIFIED",
+        "source_row": 1,
+        "file_line": 2,
+        "source_column": "glucose_value_milligram_per_deciliter",
+        "raw_value": "69"
+      },
+      "explanation": {
+        "observed": "Glucose 69 mg/dL at L-3 · Preflight (3 days before launch); historical research sample, data row 1.",
+        "compared_with": "Supplied laboratory range 65–99 mg/dL. Retrospective preflight mean 77.3333 mg/dL (n = 3: L-92 83, L-44 80, L-3 69). Different from that mean by -8.3333 mg/dL (-10.78%); descriptive, not an abnormality threshold.",
+        "why_flagged": null,
+        "limitations": [
+          "This individual measurement does not establish a diagnosis.",
+          "Collected before launch, so it cannot reflect a spaceflight effect.",
+          "The preflight mean includes this sample, so the comparison is retrospective."
+        ],
+        "next_review_action": "Not flagged by the supplied range. A reviewer may still record a note."
+      },
+      "review": {
+        "id": null,
+        "status": null,
+        "version": null,
+        "note_present": false,
+        "updated_at": null
+      },
+      "actions": {
+        "inspect_evidence": "/api/evidence/osd575-cmp:C001_serum_L-3:glucose",
+        "create_or_open_review": {
+          "finding_id": "osd575-cmp:C001_serum_L-3:glucose",
+          "review_id": null,
+          "method": "POST",
+          "endpoint": "/api/reviews"
+        },
+        "export_packet": {
+          "html": "/api/export?format=html",
+          "json": "/api/export?format=json"
+        }
+      }
+    },
+    {
+      "evidence_id": "osd575-cmp:C001_serum_L-3:sodium",
+      "marker": "sodium",
+      "marker_name": "Sodium",
+      "value": 142.0,
+      "unit": "mmol/L",
+      "range_low": 135.0,
+      "range_high": 146.0,
+      "status": "WITHIN_SUPPLIED_RANGE",
+      "needs_review": false,
+      "baseline": {
+        "context": "RETROSPECTIVE_PREFLIGHT",
+        "value": 140.66666666666666,
+        "n": 3,
+        "available": true,
+        "includes_selected_sample": true,
+        "samples_used": [
+          {
+            "visit": "L-92",
+            "sample_id": "C001_serum_L-92",
+            "value": 141.0,
+            "source_row": 3
+          },
+          {
+            "visit": "L-44",
+            "sample_id": "C001_serum_L-44",
+            "value": 139.0,
+            "source_row": 2
+          },
+          {
+            "visit": "L-3",
+            "sample_id": "C001_serum_L-3",
+            "value": 142.0,
+            "source_row": 1
+          }
+        ]
+      },
+      "delta": 1.3333333333333428,
+      "percent_delta": 0.9478672985782058,
+      "source": {
+        "dataset_id": "OSD-575-CMP",
+        "file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+        "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9",
+        "provenance": "NASA_PINNED_VERIFIED",
+        "source_row": 1,
+        "file_line": 2,
+        "source_column": "sodium_value_millimol_per_liter",
+        "raw_value": "142"
+      },
+      "explanation": {
+        "observed": "Sodium 142 mmol/L at L-3 · Preflight (3 days before launch); historical research sample, data row 1.",
+        "compared_with": "Supplied laboratory range 135–146 mmol/L. Retrospective preflight mean 140.6667 mmol/L (n = 3: L-92 141, L-44 139, L-3 142). Different from that mean by +1.3333 mmol/L (+0.95%); descriptive, not an abnormality threshold.",
+        "why_flagged": null,
+        "limitations": [
+          "This individual measurement does not establish a diagnosis.",
+          "Collected before launch, so it cannot reflect a spaceflight effect.",
+          "The preflight mean includes this sample, so the comparison is retrospective."
+        ],
+        "next_review_action": "Not flagged by the supplied range. A reviewer may still record a note."
+      },
+      "review": {
+        "id": null,
+        "status": null,
+        "version": null,
+        "note_present": false,
+        "updated_at": null
+      },
+      "actions": {
+        "inspect_evidence": "/api/evidence/osd575-cmp:C001_serum_L-3:sodium",
+        "create_or_open_review": {
+          "finding_id": "osd575-cmp:C001_serum_L-3:sodium",
+          "review_id": null,
+          "method": "POST",
+          "endpoint": "/api/reviews"
+        },
+        "export_packet": {
+          "html": "/api/export?format=html",
+          "json": "/api/export?format=json"
+        }
+      }
+    },
+    {
+      "evidence_id": "osd575-cmp:C001_serum_L-3:potassium",
+      "marker": "potassium",
+      "marker_name": "Potassium",
+      "value": 3.9,
+      "unit": "mmol/L",
+      "range_low": 3.5,
+      "range_high": 5.3,
+      "status": "WITHIN_SUPPLIED_RANGE",
+      "needs_review": false,
+      "baseline": {
+        "context": "RETROSPECTIVE_PREFLIGHT",
+        "value": 4.233333333333333,
+        "n": 3,
+        "available": true,
+        "includes_selected_sample": true,
+        "samples_used": [
+          {
+            "visit": "L-92",
+            "sample_id": "C001_serum_L-92",
+            "value": 4.6,
+            "source_row": 3
+          },
+          {
+            "visit": "L-44",
+            "sample_id": "C001_serum_L-44",
+            "value": 4.2,
+            "source_row": 2
+          },
+          {
+            "visit": "L-3",
+            "sample_id": "C001_serum_L-3",
+            "value": 3.9,
+            "source_row": 1
+          }
+        ]
+      },
+      "delta": -0.3333333333333335,
+      "percent_delta": -7.8740157480315,
+      "source": {
+        "dataset_id": "OSD-575-CMP",
+        "file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+        "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9",
+        "provenance": "NASA_PINNED_VERIFIED",
+        "source_row": 1,
+        "file_line": 2,
+        "source_column": "potassium_value_millimol_per_liter",
+        "raw_value": "3.9"
+      },
+      "explanation": {
+        "observed": "Potassium 3.9 mmol/L at L-3 · Preflight (3 days before launch); historical research sample, data row 1.",
+        "compared_with": "Supplied laboratory range 3.5–5.3 mmol/L. Retrospective preflight mean 4.2333 mmol/L (n = 3: L-92 4.6, L-44 4.2, L-3 3.9). Different from that mean by -0.3333 mmol/L (-7.87%); descriptive, not an abnormality threshold.",
+        "why_flagged": null,
+        "limitations": [
+          "This individual measurement does not establish a diagnosis.",
+          "Collected before launch, so it cannot reflect a spaceflight effect.",
+          "The preflight mean includes this sample, so the comparison is retrospective."
+        ],
+        "next_review_action": "Not flagged by the supplied range. A reviewer may still record a note."
+      },
+      "review": {
+        "id": null,
+        "status": null,
+        "version": null,
+        "note_present": false,
+        "updated_at": null
+      },
+      "actions": {
+        "inspect_evidence": "/api/evidence/osd575-cmp:C001_serum_L-3:potassium",
+        "create_or_open_review": {
+          "finding_id": "osd575-cmp:C001_serum_L-3:potassium",
+          "review_id": null,
+          "method": "POST",
+          "endpoint": "/api/reviews"
+        },
+        "export_packet": {
+          "html": "/api/export?format=html",
+          "json": "/api/export?format=json"
+        }
+      }
+    },
+    {
+      "evidence_id": "osd575-cmp:C001_serum_L-3:calcium",
+      "marker": "calcium",
+      "marker_name": "Calcium",
+      "value": 9.6,
+      "unit": "mg/dL",
+      "range_low": 8.6,
+      "range_high": 10.3,
+      "status": "WITHIN_SUPPLIED_RANGE",
+      "needs_review": false,
+      "baseline": {
+        "context": "RETROSPECTIVE_PREFLIGHT",
+        "value": 9.766666666666666,
+        "n": 3,
+        "available": true,
+        "includes_selected_sample": true,
+        "samples_used": [
+          {
+            "visit": "L-92",
+            "sample_id": "C001_serum_L-92",
+            "value": 9.7,
+            "source_row": 3
+          },
+          {
+            "visit": "L-44",
+            "sample_id": "C001_serum_L-44",
+            "value": 10.0,
+            "source_row": 2
+          },
+          {
+            "visit": "L-3",
+            "sample_id": "C001_serum_L-3",
+            "value": 9.6,
+            "source_row": 1
+          }
+        ]
+      },
+      "delta": -0.16666666666666607,
+      "percent_delta": -1.7064846416382193,
+      "source": {
+        "dataset_id": "OSD-575-CMP",
+        "file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv",
+        "sha256": "5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9",
+        "provenance": "NASA_PINNED_VERIFIED",
+        "source_row": 1,
+        "file_line": 2,
+        "source_column": "calcium_value_milligram_per_deciliter",
+        "raw_value": "9.6"
+      },
+      "explanation": {
+        "observed": "Calcium 9.6 mg/dL at L-3 · Preflight (3 days before launch); historical research sample, data row 1.",
+        "compared_with": "Supplied laboratory range 8.6–10.3 mg/dL. Retrospective preflight mean 9.7667 mg/dL (n = 3: L-92 9.7, L-44 10, L-3 9.6). Different from that mean by -0.1667 mg/dL (-1.71%); descriptive, not an abnormality threshold.",
+        "why_flagged": null,
+        "limitations": [
+          "This individual measurement does not establish a diagnosis.",
+          "Collected before launch, so it cannot reflect a spaceflight effect.",
+          "The preflight mean includes this sample, so the comparison is retrospective."
+        ],
+        "next_review_action": "Not flagged by the supplied range. A reviewer may still record a note."
+      },
+      "review": {
+        "id": null,
+        "status": null,
+        "version": null,
+        "note_present": false,
+        "updated_at": null
+      },
+      "actions": {
+        "inspect_evidence": "/api/evidence/osd575-cmp:C001_serum_L-3:calcium",
+        "create_or_open_review": {
+          "finding_id": "osd575-cmp:C001_serum_L-3:calcium",
+          "review_id": null,
+          "method": "POST",
+          "endpoint": "/api/reviews"
+        },
+        "export_packet": {
+          "html": "/api/export?format=html",
+          "json": "/api/export?format=json"
+        }
+      }
+    }
+  ],
+  "missing_measurements": [],
+  "quality": {
+    "provenance": "NASA_PINNED_VERIFIED",
+    "validation_status": "SHA256_MATCHES_REGISTERED_SNAPSHOT",
+    "parser_version": "e1-quality-v1",
+    "parse_issues": 0,
+    "warnings": []
+  },
+  "dataset_limitations": [
+    "Historical Inspiration4 research sample — not live astronaut monitoring.",
+    "Seven sparse blood draws per participant; not continuous vital-sign monitoring.",
+    "Not a diagnosis. Supplied ranges are the laboratory reference bounds recorded in the source file.",
+    "Four anonymised participants: not a clinical validation cohort.",
+    "Not matched to the ISS DosTel1 radiation record; the two case studies cannot be paired."
+  ],
+  "case_separation": "The ISS DosTel1 radiation record is a separate environmental case (different mission, date and people). It is never combined with this participant's results.",
+  "available_questions": [
+    {
+      "id": "EXPLAIN_RESULT",
+      "label": "What changed?"
+    },
+    {
+      "id": "HOW_CALCULATED",
+      "label": "How was the comparison calculated?"
+    },
+    {
+      "id": "SOURCE_LOCATION",
+      "label": "Where did this number come from?"
+    },
+    {
+      "id": "LIMITATIONS",
+      "label": "What are the limitations?"
+    },
+    {
+      "id": "FOLLOW_UP_OPTIONS",
+      "label": "What follow-up can be recorded?"
+    }
+  ]
+}

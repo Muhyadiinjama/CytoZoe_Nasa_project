@@ -13,12 +13,15 @@ from pydantic import BaseModel, Field, field_validator
 
 from .. import config, db
 from ..errors import AppError, bad_request
-from ..services import environment_service, evidence, explain, export, health_service, importer, live, reviews
+from ..schemas import MissionBriefV1
+from ..services import environment_service, evidence, explain, export, health_service, importer, live, reviews, runtime
+from ..services import mission_brief as mission_brief_service
 
 router = APIRouter(prefix="/api")
 
 Status = Literal["OPEN", "FOLLOW_UP_REQUESTED", "REVIEWED"]
-QuestionId = Literal["EXPLAIN_RESULT", "HOW_CALCULATED", "LIMITATIONS", "DIAGNOSIS_REQUEST", "CAUSATION_REQUEST"]
+QuestionId = Literal["EXPLAIN_RESULT", "HOW_CALCULATED", "LIMITATIONS", "DIAGNOSIS_REQUEST", "CAUSATION_REQUEST",
+                     "SOURCE_LOCATION", "FOLLOW_UP_OPTIONS"]
 ID_RE = re.compile(r"^[A-Za-z0-9_\-:+.T]{1,200}$")
 
 
@@ -57,9 +60,27 @@ class ExplainRequest(BaseModel):
     message: str | None = Field(default=None, min_length=1, max_length=500)
 
 
+@router.get("/healthz")
+def healthz() -> dict[str, Any]:
+    """Liveness: answers while the process is up, without touching the database."""
+    return {"status": "alive", "app": "CytoZoe", "app_version": config.APP_VERSION}
+
+
+@router.get("/readyz")
+def readyz(response: Response) -> dict[str, Any]:
+    """Readiness: 200 only when the DB, migrations and verified NASA datasets are all usable; 503 + code otherwise."""
+    result = runtime.readiness()
+    if not result["ready"]:
+        response.status_code = 503
+    return result
+
+
 @router.get("/status")
 def status() -> dict[str, Any]:
+    readiness = runtime.readiness()
     out: dict[str, Any] = {
+        "state": readiness["state"],
+        "checks": readiness["checks"],
         "app": "CytoZoe", "app_version": config.APP_VERSION, "git_version": config.git_version(),
         "schema_version": db.schema_version(), "assistant_mode": "VERIFIED_TEMPLATES",
         "assistant_note": "Deterministic verified explanations. No language model is configured.",
@@ -117,6 +138,15 @@ def participants() -> list[dict[str, Any]]:
 def health_overview(participant: str = Query(max_length=20), sample: str = Query(max_length=20)) -> dict[str, Any]:
     with db.session() as conn:
         return health_service.overview(conn, participant, sample)
+
+
+@router.get("/mission/brief", response_model=MissionBriefV1)
+def mission_brief(participant: str = Query(min_length=1, max_length=20),
+                  sample: str = Query(min_length=1, max_length=20),
+                  mode: str = Query(default="historical", max_length=20)) -> dict[str, Any]:
+    """Mission Health Intelligence Brief for one historical sample, built only from canonical evidence."""
+    with db.session() as conn:
+        return mission_brief_service.build(conn, participant, sample, mode)
 
 
 @router.get("/health/trend")
@@ -179,12 +209,13 @@ async def events(request: Request) -> StreamingResponse:
 
 
 @router.get("/replay/environment")
-async def replay_environment(speed: float = Query(default=1200, ge=1, le=200_000),
+async def replay_environment(request: Request, speed: float = Query(default=1200, ge=1, le=200_000),
                              start: float = Query(default=0, ge=0, le=86_400)) -> StreamingResponse:
-    """Stream the recorded DosTel1 day in source order at `speed`× real time. Always labelled REPLAY."""
+    """Stream the recorded DosTel1 day in source order at `speed`× real time. Always labelled HISTORICAL_REPLAY."""
     with db.session() as conn:
         view = environment_service.environment_view(conn)
-    return StreamingResponse(live.environment_replay(view, speed, start), media_type="text/event-stream",
+    return StreamingResponse(live.environment_replay(view, speed, start, is_disconnected=request.is_disconnected),
+                             media_type="text/event-stream",
                              headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
