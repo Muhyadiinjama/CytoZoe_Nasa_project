@@ -53,6 +53,12 @@ The IDs come from source-row identity. Each saved finding also stores the datase
 | GET (SSE) | `/api/replay/environment?speed=&start=` | paced stream of the recorded DosTel1 readings + quality events; `meta` / `frame` / `end` events; labelled REPLAY |
 | GET | `/api/replay/health?participant=` | visit-by-visit frames with range flags and a prospective baseline (only visits ≤ k) |
 
+| GET | `/api/mission/brief?participant=&sample=&mode=historical` | MissionBriefV1, assembled only from canonical evidence (`services/mission_brief.py`, `app/schemas.py`) |
+| GET | `/api/healthz` · `/api/readyz` | liveness (no DB) · readiness (DB, migrations, verified datasets; `services/runtime.py`) |
+
+## Trust & provenance (backend v3)
+`importer.import_bytes` refuses any bytes whose SHA-256 is not registered in `data/manifests/sources.json`. `datasets.provenance` (migration 0002) is reconciled against the manifest at startup. `health_service.verified_dataset` makes the NASA endpoints serve only `NASA_PINNED_VERIFIED` rows. Full contract: [API_CONTRACT.md](API_CONTRACT.md).
+
 ## Real-time design
 - `services/live.py` holds a thread-safe in-process broker (asyncio queues; `call_soon_threadsafe` from sync handlers) plus the replay generator.
 - Replays never generate values. They emit stored source readings and E3 cumulative values in source-time order, at `speed`× wall time.

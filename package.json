@@ -8,7 +8,7 @@
     "setup": "node scripts/dev.mjs --setup --setup-only",
     "data": "node scripts/run-python.mjs scripts/fetch_data.py --all && node scripts/run-python.mjs scripts/verify_data.py --strict && node scripts/run-python.mjs scripts/import_data.py --all",
     "build": "npm --prefix frontend run build",
-    "start": "node scripts/run-python.mjs -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000",
+    "start": "node scripts/start.mjs",
     "typecheck": "npm --prefix frontend run typecheck",
     "test": "node scripts/run-python.mjs -m pytest backend -q && npm --prefix frontend run typecheck && npm --prefix frontend test",
     "e2e": "npm --prefix frontend run e2e"

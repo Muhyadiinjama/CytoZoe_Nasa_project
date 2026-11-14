@@ -13,7 +13,33 @@ QUESTIONS = {
     "LIMITATIONS": "What can this dataset not tell us?",
     "DIAGNOSIS_REQUEST": "Does this mean something is medically wrong?",
     "CAUSATION_REQUEST": "Did radiation cause this?",
+    "SOURCE_LOCATION": "Where did this number come from?",
+    "FOLLOW_UP_OPTIONS": "What follow-up can be recorded?",
 }
+
+
+def _source_paragraphs(ev: dict[str, Any]) -> list[str]:
+    s = ev["source"]
+    prov = "a verified NASA snapshot (its SHA-256 is registered in the reviewed manifest)" \
+        if s.get("provenance") == "NASA_PINNED_VERIFIED" else "NOT a verified NASA snapshot"
+    out = [f"Dataset: {s['title']} ({s['provider']}). File {s['file_name']}, SHA-256 {s['sha256']}, which is {prov}."]
+    if ev["case"] == "health":
+        out.append(f"Exact location: data row {s['source_row']} (file line {s['file_line']}), sample \"{s['sample_name']}\", "
+                   f"column {s['source_columns']['value']}, raw text \"{s['raw_value']}\" ({s['source_unit']}). "
+                   f"Bounds come from {s['source_columns']['range_min']} and {s['source_columns']['range_max']} in the same row.")
+    else:
+        out.append("Instrument DosTel1, ISS Columbus module; values are the exported absorbed dose rates in µGy/hour.")
+    out.append(f"Study page: {s['source_url']}. Fetched once during setup; the running app makes no network requests.")
+    return out
+
+
+FOLLOW_UP_TEXT = [
+    "You can save one review per finding with a status — Open, Follow-up requested or Reviewed — a note in your own "
+    "words and an optional follow-up date. Every change is versioned and kept in a local history.",
+    "Saved reviews can be exported as a self-contained HTML or JSON packet that freezes this evidence, its source hash "
+    "and rule version. Export is a local file; nothing is sent anywhere.",
+    "CytoZoe does not choose or recommend a clinical action. Status is an administrative workflow state, not a medical status.",
+]
 
 STATUS_TEXT = {
     "ABOVE_SUPPLIED_UPPER_BOUND": "above the supplied upper bound",
@@ -161,6 +187,8 @@ import re
 _ROUTES: list[tuple[str, re.Pattern[str]]] = [
     ("CAUSATION_REQUEST", re.compile(r"\b(cause[ds]?|causing|because|radiation|exposure|due to|effect of)\b", re.I)),
     ("DIAGNOSIS_REQUEST", re.compile(r"\b(diagnos\w*|sick|ill|illness|disease|wrong|danger\w*|serious|healthy|safe|normal|worry|worried|treat\w*|medic\w*)\b", re.I)),
+    ("SOURCE_LOCATION", re.compile(r"\b(where|source|come[s]? from|provenance|origin|file|row|hash)\b", re.I)),
+    ("FOLLOW_UP_OPTIONS", re.compile(r"\b(follow[- ]?up|next step|what (can|should) (i|we) (do|record)|record|save)\b", re.I)),
     ("HOW_CALCULATED", re.compile(r"\b(calculat\w*|comput\w*|formula|baseline|mean|average|how)\b", re.I)),
     ("LIMITATIONS", re.compile(r"\b(limit\w*|cannot|can't|trust|reliab\w*|uncertain\w*|accura\w*|missing|not tell)\b", re.I)),
     ("EXPLAIN_RESULT", re.compile(r"\b(explain|what|mean[s]?|why|tell|summar\w*|result|value|flag\w*)\b", re.I)),
@@ -188,6 +216,15 @@ def unsupported(evidence_id: str) -> dict[str, Any]:
 
 
 def explain(evidence: dict[str, Any], question_id: str) -> dict[str, Any]:
+    if question_id in ("SOURCE_LOCATION", "FOLLOW_UP_OPTIONS"):
+        base = _health(evidence, "LIMITATIONS")[1] if evidence["case"] == "health" else _environment(evidence, "LIMITATIONS")[1]
+        paragraphs = _source_paragraphs(evidence) if question_id == "SOURCE_LOCATION" else list(FOLLOW_UP_TEXT)
+        return {
+            "mode": "VERIFIED_EXPLANATION", "label": "Verified explanation", "question_id": question_id,
+            "question": QUESTIONS[question_id], "evidence_id": evidence["evidence_id"], "paragraphs": paragraphs,
+            "facts": base, "source_ids": [evidence["evidence_id"], evidence["source"]["dataset_id"]],
+            "generated_by": "deterministic template (no language model)",
+        }
     if evidence["case"] == "health":
         paragraphs, facts = _health(evidence, question_id)
     else:
