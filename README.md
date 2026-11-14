@@ -61,6 +61,14 @@ Stack: React 19 + TypeScript + Vite + Recharts · FastAPI + Pydantic + pandas ·
 
 Requirements: Python 3.11+ and Node.js 20+. Network access is needed **only once**, for dependencies and the one-time NASA data download.
 
+### Easiest (any OS, from the project folder)
+```sh
+npm run setup   # one time: Python env, packages, build, fetch → verify → import NASA data
+npm run dev     # development: API + interface together → http://127.0.0.1:5173
+npm start       # demo / offline: built app on one port → http://127.0.0.1:8000
+```
+`npm run data` re-downloads and imports the NASA files; `npm test` runs the backend tests, typecheck and component tests.
+
 ### Windows (PowerShell)
 ```powershell
 .\scripts\setup.ps1      # venv + backend deps, npm ci + build, fetch → verify → import NASA data
