@@ -55,7 +55,7 @@ describe("HealthEvidencePanel", () => {
   it("shows observed → compared → source → limits → follow-up with status in text, not only colour", () => {
     render(<DrawerProvider><HealthEvidencePanel ev={ev} followUp={<button>Record follow-up</button>} /></DrawerProvider>);
     const labels = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
-    expect(labels).toEqual(["Observed", "Compared with", "Source", "Limits", "Follow-up"]);
+    expect(labels).toEqual(["Observation", "Calculation", "Source & quality", "Limitations", "Follow-up"]);
     expect(screen.getByText("Outside supplied range · above upper bound")).toBeInTheDocument();
     expect(screen.getByText("1.2367 mg/dL (n = 3)")).toBeInTheDocument();
     expect(screen.getByText(/Data row 1 \(file line 2\)/)).toBeInTheDocument();

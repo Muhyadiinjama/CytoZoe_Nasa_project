@@ -1,53 +1,71 @@
-/* CytoZoe design tokens — v2 "calm workspace": warm neutral canvas, serif headings, one clay action colour.
-   Colour roles are kept distinct: clay = actions, slate-blue = data, amber = needs review, green = saved. */
+/* CytoZoe design tokens — "Aerospace Precision 2.0".
+   Midnight-navy shell, bright operational surfaces, restrained teal/cyan detail.
+   Colour roles: teal = actions, slate-blue = plotted data, amber = outside supplied range (not danger),
+   red = real UI/service errors only, cyan = highlights on dark surfaces only. */
 :root {
-  --canvas: #FAF9F5;
+  /* Space (dark) */
+  --space-950: #061525;
+  --space-900: #0B1F32;
+  --space-800: #102B42;
+  --space-700: #183A55;
+  --space-line: rgb(148 178 204 / 16%);
+  --space-text: #E8F0F7;
+  --space-muted: #9FB3C6;
+  --cyan: #35E1D5;
+  --cyan-soft: rgb(53 225 213 / 14%);
+
+  /* Operational (light) */
+  --canvas: #F3F6F9;
   --surface: #FFFFFF;
-  --surface-2: #F6F4EE;
-  --sidebar: #F3F1EA;
-  --sidebar-hover: #EAE6DB;
-  --sidebar-active: #E4DED0;
+  --surface-2: #F7F9FB;
+  --surface-3: #EDF2F6;
+  --ink: #10283D;
+  --muted: #53697D;
+  --border: #DDE5EB;
+  --border-strong: #C5D2DC;
+  --control-border: #8396A8;
 
-  --ink: #1F1E1C;
-  --muted: #625E57;
-  --border: #E7E2D7;
-  --border-strong: #D5CEC0;
-  --control-border: #8A8478;
+  --accent: #087F8C;          /* teal: accessible primary on light */
+  --accent-hover: #066873;
+  --accent-tint: #E3F3F4;
+  --accent-border: #A9D9DD;
 
-  --accent: #B4532A;
-  --accent-hover: #97441F;
-  --accent-tint: #F8ECE4;
+  --data: #1F4E79;
+  --data-tint: #E6EEF6;
+  --baseline: #53697D;
+  --range-band: #E3EFF1;
+  --range-line: #9CC5CB;
 
-  --data: #2F5A7A;
-  --data-tint: #E7EEF4;
-  --baseline: #6B6760;
-  --range-band: #EFEBE2;
-
-  --review: #8F4A07;
-  --review-bg: #FCF0DC;
-  --review-border: #EED3A6;
-  --success: #2D6A4C;
-  --success-bg: #E9F3EC;
+  --review: #9A4B08;
+  --review-bg: #FFF3DF;
+  --review-border: #F0D3A4;
+  --success: #216E4E;
+  --success-bg: #E6F4EC;
+  --success-border: #BFE0CC;
   --error: #B42318;
   --error-bg: #FDEEEC;
+  --error-border: #F5C9C3;
   --focus: #2458D3;
 
   --radius-sm: 10px;
-  --radius: 16px;
-  --radius-lg: 22px;
-  --shadow: 0 1px 2px rgb(31 30 28 / 4%), 0 4px 14px rgb(31 30 28 / 4%);
-  --shadow-pop: 0 10px 40px rgb(31 30 28 / 14%);
+  --radius: 14px;
+  --radius-lg: 18px;
+  --shadow: 0 1px 2px rgb(16 40 61 / 5%), 0 6px 18px -10px rgb(16 40 61 / 14%);
+  --shadow-lift: 0 1px 2px rgb(16 40 61 / 6%), 0 14px 32px -14px rgb(16 40 61 / 24%);
+  --shadow-pop: 0 18px 48px -12px rgb(6 21 37 / 38%);
 
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
-  --sidebar-w: 268px;
-  --content-max: 1200px;
+  --sidebar-w: 216px;
+  --content-max: 1440px;
   --control-h: 44px;
   --motion: 160ms;
+  --ease: cubic-bezier(.2, .7, .2, 1);
 
   --sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --serif: "Source Serif 4 Variable", "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
 
   font-family: var(--sans);
   color: var(--ink);
   background: var(--canvas);
+  color-scheme: light;
 }

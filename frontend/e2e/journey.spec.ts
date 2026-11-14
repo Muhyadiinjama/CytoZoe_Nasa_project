@@ -9,6 +9,7 @@ test("T17–T19, T23, T26–T27: C001 L-3 creatinine → evidence → explain �
   const external = await isolate(page);
   const t0 = Date.now();
   await page.goto("/");
+  await page.getByRole("link", { name: "Launch Workspace" }).first().click();
   await expect(page).toHaveURL(/\/overview\?participant=C001&sample=L-3/);
   await expect(page.getByRole("heading", { name: "Health Overview", level: 1 })).toBeVisible();
 

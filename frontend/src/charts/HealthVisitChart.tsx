@@ -4,9 +4,9 @@ import {
 import type { HealthTrend, TrendPoint } from "../api/contracts";
 import { fmt, RANGE_TEXT, rangeText } from "../lib/format";
 
-const DATA = "#2F5A7A";
+const DATA = "#1F4E79";
 const REVIEW = "#9A4B08";
-const BASELINE = "#6B6760";
+const BASELINE = "#53697D";
 
 interface DotProps { cx?: number; cy?: number; payload?: TrendPoint }
 
@@ -41,32 +41,32 @@ export function HealthVisitChart({ trend, selectedVisit, onSelect }: { trend: He
     const flagged = payload.needs_review;
     return (
       <g style={{ cursor: "pointer" }} onClick={() => onSelect(payload.visit)}>
-        {selected ? <circle cx={cx} cy={cy} r={12} fill="#E7EEF4" stroke={DATA} strokeWidth={1.5} /> : null}
+        {selected ? <circle cx={cx} cy={cy} r={12} fill="#E6EEF6" stroke={DATA} strokeWidth={1.5} /> : null}
         <circle cx={cx} cy={cy} r={flagged ? 7 : 6} fill={flagged ? "#FFFFFF" : DATA} stroke={flagged ? REVIEW : DATA} strokeWidth={flagged ? 3 : 1} />
       </g>
     );
   };
-  const BoundTick = ({ cx, cy }: DotProps) => (cx === undefined || cy === undefined ? <g /> : <line x1={cx - 14} x2={cx + 14} y1={cy} y2={cy} stroke="#8A8478" strokeWidth={2} />);
+  const BoundTick = ({ cx, cy }: DotProps) => (cx === undefined || cy === undefined ? <g /> : <line x1={cx - 14} x2={cx + 14} y1={cy} y2={cy} stroke="#8396A8" strokeWidth={2} />);
 
   return (
     <div className="chart-box" role="img"
       aria-label={`${trend.marker_name} for ${trend.participant_id} across ${pts.length} historical visits in ${trend.unit}. Full values are in the data table below the chart.`}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 16, right: 16, bottom: 28, left: 8 }} accessibilityLayer={false}>
-          <CartesianGrid stroke="#EEEAE1" vertical={false} />
+          <CartesianGrid stroke="#E6ECF1" vertical={false} />
           {trend.bounds_consistent && trend.range_low !== null && trend.range_high !== null ? (
-            <ReferenceArea y1={trend.range_low} y2={trend.range_high} fill="#EFEBE2" fillOpacity={1} stroke="#D5CEC0" ifOverflow="extendDomain" />
+            <ReferenceArea y1={trend.range_low} y2={trend.range_high} fill="#E3EFF1" fillOpacity={1} stroke="#9CC5CB" ifOverflow="extendDomain" />
           ) : null}
-          <XAxis dataKey="x" type="category" tick={{ fill: "#625E57", fontSize: 13 }} tickLine={false} axisLine={{ stroke: "#E7E2D7" }}
-            label={{ value: "Visit (L = days before launch · R = days after return)", position: "insideBottom", offset: -18, fill: "#625E57", fontSize: 12 }} />
-          <YAxis domain={domain} ticks={ticks} interval={0} tick={{ fill: "#625E57", fontSize: 13 }} tickLine={false} axisLine={false} width={64}
+          <XAxis dataKey="x" type="category" tick={{ fill: "#53697D", fontSize: 13 }} tickLine={false} axisLine={{ stroke: "#DDE5EB" }}
+            label={{ value: "Visit (L = days before launch · R = days after return)", position: "insideBottom", offset: -18, fill: "#53697D", fontSize: 12 }} />
+          <YAxis domain={domain} ticks={ticks} interval={0} tick={{ fill: "#53697D", fontSize: 13 }} tickLine={false} axisLine={false} width={64}
             tickFormatter={(v: number) => fmt(v, 2)}
-            label={{ value: `${trend.marker_name} (${trend.unit})`, angle: -90, position: "insideLeft", offset: 4, fill: "#625E57", fontSize: 12, style: { textAnchor: "middle" } }} />
+            label={{ value: `${trend.marker_name} (${trend.unit})`, angle: -90, position: "insideLeft", offset: 4, fill: "#53697D", fontSize: 12, style: { textAnchor: "middle" } }} />
           {trend.baseline.value !== null ? (
             <ReferenceLine y={trend.baseline.value} stroke={BASELINE} strokeDasharray="6 5" strokeWidth={1.8}
-              label={{ value: `Preflight mean (n = ${trend.baseline.n})`, position: "insideTopRight", fill: "#625E57", fontSize: 12 }} />
+              label={{ value: `Preflight mean (n = ${trend.baseline.n})`, position: "insideTopRight", fill: "#53697D", fontSize: 12 }} />
           ) : null}
-          <ReferenceLine x="R+1" stroke="#D5CEC0" strokeDasharray="2 4" />
+          <ReferenceLine x="R+1" stroke="#9FB3C6" strokeDasharray="2 4" />
           {!trend.bounds_consistent ? (
             <>
               <Scatter dataKey="range_low" shape={BoundTick} isAnimationActive={false} legendType="none" name="Supplied lower bound" />
@@ -74,7 +74,7 @@ export function HealthVisitChart({ trend, selectedVisit, onSelect }: { trend: He
             </>
           ) : null}
           <Scatter dataKey="value" shape={Dot} isAnimationActive={false} name={trend.marker_name} />
-          <Tooltip cursor={{ fill: "rgba(47,90,122,0.06)" }} content={({ active, payload }) => {
+          <Tooltip cursor={{ fill: "rgba(31,78,121,0.06)" }} content={({ active, payload }) => {
             const p = active && payload?.length ? (payload[0].payload as TrendPoint) : null;
             if (!p) return null;
             return (
@@ -99,7 +99,7 @@ export function HealthChartLegend({ trend }: { trend: HealthTrend }) {
       <span className="legend-item"><span className="legend-swatch dashed" />Retrospective preflight mean</span>
       {trend.bounds_consistent
         ? <span className="legend-item"><span className="legend-swatch band" />Supplied range (same for every visit)</span>
-        : <span className="legend-item"><span className="legend-swatch" style={{ borderTop: "2px solid #8A8478" }} />Supplied bounds per visit (they differ between visits)</span>}
+        : <span className="legend-item"><span className="legend-swatch" style={{ borderTop: "2px solid #8396A8" }} />Supplied bounds per visit (they differ between visits)</span>}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { DrawerHost } from "../components/DrawerHost";
 import { SetupScreen, Skeleton } from "../components/StatusViews";
 import Environment from "../pages/Environment";
 import Health from "../pages/Health";
+import Landing from "../pages/Landing";
 import Overview from "../pages/Overview";
 import Reviews from "../pages/Reviews";
 import { DrawerProvider, LiveProvider, StatusProvider, useServiceStatus } from "./providers";
@@ -35,30 +36,40 @@ function Gate({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+/** The four operational routes. Direct links work without passing through the introduction. */
+function Workspace() {
+  return (
+    <StatusProvider>
+      <DrawerProvider>
+        <LiveProvider>
+          <AppShell>
+            <ErrorBoundary>
+              <Gate>
+                <Routes>
+                  <Route path="/overview" element={<Overview />} />
+                  <Route path="/health" element={<Health />} />
+                  <Route path="/environment" element={<Environment />} />
+                  <Route path="/reviews" element={<Reviews />} />
+                  <Route path="*" element={<Navigate to="/overview" replace />} />
+                </Routes>
+                <DrawerHost />
+              </Gate>
+            </ErrorBoundary>
+          </AppShell>
+        </LiveProvider>
+      </DrawerProvider>
+    </StatusProvider>
+  );
+}
+
 export function App() {
   return (
     <BrowserRouter>
-      <StatusProvider>
-        <DrawerProvider>
-          <LiveProvider>
-            <AppShell>
-              <ErrorBoundary>
-                <Gate>
-                  <Routes>
-                    <Route path="/" element={<Navigate to="/overview?participant=C001&sample=L-3" replace />} />
-                    <Route path="/overview" element={<Overview />} />
-                    <Route path="/health" element={<Health />} />
-                    <Route path="/environment" element={<Environment />} />
-                    <Route path="/reviews" element={<Reviews />} />
-                    <Route path="*" element={<Navigate to="/overview" replace />} />
-                  </Routes>
-                  <DrawerHost />
-                </Gate>
-              </ErrorBoundary>
-            </AppShell>
-          </LiveProvider>
-        </DrawerProvider>
-      </StatusProvider>
+      <Routes>
+        {/* Public introduction for judges / first run: static, no API calls, no runtime network. */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/*" element={<Workspace />} />
+      </Routes>
     </BrowserRouter>
   );
 }

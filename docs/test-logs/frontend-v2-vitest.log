@@ -1,0 +1,9 @@
+
+ RUN  v5.1.0 C:/Users/User/OneDrive/Desktop/CytoZoe_Nasa_project/frontend
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  18:36:46
+   Duration  1.75s (environment 60%, setup 13%, import 12%, tests 12%, transform 2%, worker 1%)
+
