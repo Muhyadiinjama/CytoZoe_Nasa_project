@@ -61,7 +61,7 @@ export function HealthReplayPanel({ participant, visit, onVisit }: { participant
       <div className="card-head" style={{ marginBottom: 0 }}>
         <div>
           <h2 id="replay-title">Replay {participant}'s mission timeline</h2>
-          <p>Watch the seven real blood draws arrive in order. Each step updates the cards below as if the sample had just been reviewed.</p>
+          <p>Step through the seven real blood draws in order. Each step moves the chart selection and the evidence to that visit.</p>
         </div>
         <span className="badge badge-replay">Historical replay · not live</span>
       </div>

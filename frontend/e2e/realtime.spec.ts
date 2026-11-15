@@ -28,16 +28,16 @@ test("Radiation replay streams real readings in real time, surfaces conflicts, a
   expect((await clock.textContent())! >= paused!).toBe(true);
 });
 
-test("Health timeline replay drives the overview visit by visit", async ({ page }) => {
+test("Health timeline replay (on Health Trends) steps through the visits without leakage", async ({ page }) => {
   await isolate(page);
-  await page.goto("/overview?participant=C001&sample=R%2B194");
+  await page.goto("/health?participant=C001&sample=R%2B194&marker=creatinine");
   const panel = page.getByRole("region", { name: "Replay C001's mission timeline" });
   await panel.getByLabel("Replay pace").selectOption("900");
   await panel.getByRole("button", { name: "Play timeline replay" }).click();
   await expect(page).toHaveURL(/sample=L-92/);
   await expect(page).toHaveURL(/sample=L-3/, { timeout: 10_000 });
   await expect(panel.getByText(/Creatinine 1.37 mg\/dL is above the supplied upper bound 1.35/)).toBeVisible();
-  await expect(page.getByRole("article", { name: "Creatinine" })).toContainText("1.37");
+  await expect(page.getByRole("region", { name: "Evidence", exact: true })).toContainText("1.37");
   await expect(page).toHaveURL(/sample=R%2B194/, { timeout: 15_000 });
   await expect(panel.getByText("7 / 7 visits")).toBeVisible();
 });

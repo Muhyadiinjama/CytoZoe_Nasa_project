@@ -115,3 +115,68 @@ During this work I hit one bug, in my own new test: a regex for visit labels wit
 - [ ] Wi-Fi-off run on the demo laptop (RELEASE_CHECKLIST.md).
 - [ ] Confirm the photo credits in the footer.
 - [ ] Merge `Mustafa` → `main` via PR once satisfied.
+
+---
+
+## 7. v2.1: Health Overview simplification (15 Nov 2026)
+Review feedback: the overview was too crowded. The fix is progressive disclosure. No calculation, API, quality check, evidence or limitation was removed.
+
+| Before | After |
+|---|---|
+| A large Mission Health Intelligence Brief panel always open on the right | Removed from the page. Its content now opens on demand in the shared drawer, **"Evidence & Result Details"**, which is closed by default and opened with *Inspect*. The drawer shows observation, exact value, supplied range, preflight comparison, source file and row and column, calculation, limitations, *why flagged*, the backend's follow-up guidance, the review form, the **other markers at this visit** table (moved from the panel), and verified Q&A |
+| Long "Results to review" cards with repeated baseline sentences | A compact **Needs review** list: flagged results only, one line each, plus Inspect / Record follow-up |
+| Mission timeline replay on the Overview | Moved to **Health Trends**, where it drives the chart and evidence |
+| Dataset, saved-review stats and limitations always visible | A collapsed **Data & sources** section. Dataset limitations load only when it is opened. Review history stays in the Review Log |
+| Sidebar footer with version and long disclaimer | Live status, one line ("Local research tool · not a clinical device") and an About & credits link. The version is in the status tooltip. Recent reviews are limited to 5 |
+| — | New compact **7-visit stepper** (L-92 … FLIGHT … R+194) next to the selectors |
+
+At 1440×900 the first screen now shows the header, selectors, stepper, the 5 marker cards, Needs review and the Data & sources bar (`docs/screenshots/frontend-v2.1-*.png`).
+
+Also fixed: the drawer opened scrolled to the bottom, because the Q&A auto-scrolled on mount. It now scrolls only after a question is asked.
+
+**Tests (one full run):**
+- backend 61 passed;
+- TypeScript 0 errors;
+- unit 4 passed;
+- build OK;
+- **E2E 16 passed, 0 failed** (`docs/test-logs/simplify-*.log`).
+
+Specs updated to follow the moved content:
+- the 28-sample check now verifies the Needs review list and the drawer (value, source row and column, why flagged, follow-up, other-markers row count) against `/api/mission/brief` and `/api/evidence`;
+- a new progressive-disclosure spec;
+- the replay spec now runs on Health Trends.
+
+---
+
+## 8. v2.2: design-skill pass (15 Nov 2026)
+Three public skills were used as review checklists. They were read as guidance; none of their scripts or binaries were run.
+- **impeccable** (pbakaus/impeccable): "Operate" mode for the workspace and its craft-floor bans.
+- **taste-skill** (Leonxlnx/taste-skill): house rules and copy tells, for the landing page only. It is written for marketing pages.
+- **playwright-cli** (microsoft/playwright-cli): its look-then-verify loop, done with the project's existing Playwright.
+
+| Rule (source) | Fix |
+|---|---|
+| No eyebrow or kicker above a heading (impeccable, ban) | Removed "01 · HEALTH OVERVIEW" and similar labels from all 4 pages, card kickers, and all landing kickers |
+| No section numbers unless the sequence matters (impeccable; taste "step numbers") | Removed 01–04 from the nav and the landing propositions and steps |
+| No gradient text (impeccable) | The landing headline's second line is now solid pale cyan |
+| No coloured side border thicker than 1px (impeccable) | Review rows, the old finding cards and conflict cards use a full 1px tinted border. The nav's active bar is replaced by a tinted surface |
+| Monospace only for data, not as decoration (impeccable) | Labels (evidence steps, quality strip, baseline tiles, sidebar, drawer, landing tags, footer) are now sans-serif. Mono stays only for hashes, formulas, timestamps and visit codes |
+| Theme the browser surfaces (impeccable) | Caret, accent colour, thin themed scrollbars, selection text colour, tabular numerals in all tables, and balanced heading wrap |
+| No captions under images; credits in one footer line (taste) | Removed the hero photo caption and the case-card figcaption. The footer credit line now also says "decorative context, not study data" |
+| Same-size icon cards are not page structure (impeccable, taste) | "How it works" became **"What each screen answers"**: a 4-row list (screen, the question it answers, what it shows) |
+| Copy tells (taste): two-fragment and number-pair headings, "not X but Y" | "Four screens. One question each." → "What each screen answers". "Two real NASA research records. Kept apart." → "Two NASA research records, kept apart". "Built to be trusted, not to impress." → "What CytoZoe does, and what it never does" |
+| Quiet hover layer (taste) | Case cards lift 2px, the photo zooms 1.025 inside its frame, the list arrow nudges, and buttons press 1px on click. All of it is off under reduced motion |
+| Decoration (impeccable) | Removed the hero grid overlay, and the grey top bar on unflagged marker cards (the amber bar stays on flagged cards) |
+
+Kept on purpose:
+- The "Evidence & Result Details" label in the drawer header, because the review asked for that name.
+- The brand line "Understand the change. Keep the evidence.", which comes from the brief.
+
+At 1440×900 the whole Health Overview now fits in the first screen, including the Data & sources bar (`docs/screenshots/frontend-v2.2-*.png`).
+
+**Tests (one full run):**
+- backend 61 passed;
+- TypeScript 0 errors;
+- unit 4 passed;
+- build OK;
+- **E2E 16 passed, 0 failed**, including axe on the landing page, all 4 routes and the drawer (`docs/test-logs/skills-*.log`).

@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { HealthEvidence } from "../api/contracts";
 import { useDrawer } from "../app/providers";
 import { HealthChartLegend, HealthVisitChart } from "../charts/HealthVisitChart";
 import { HealthEvidencePanel } from "../components/EvidencePanel";
+import { HealthReplayPanel } from "../components/HealthReplayPanel";
 import { PageHeader } from "../components/PageHeader";
 import { ReviewForm } from "../components/ReviewForm";
 import { MarkerTabs, ParticipantSelect, SampleSelect } from "../components/Selectors";
@@ -26,6 +27,7 @@ export default function Health() {
   const frame = replay.data?.frames.find((f) => f.visit === visit);
   const replayCard = frame?.cards.find((c) => c.marker === marker);
   const flagged = new Set(overview.data?.cards.filter((c) => c.measurement.needs_review).map((c) => c.measurement.marker) ?? []);
+  const onVisit = useCallback((v: string) => update({ sample: v }, { replace: true }), [update]);
   const [writing, setWriting] = useState(false);
   useEffect(() => setWriting(false), [pid, visit, marker]);
 
@@ -43,6 +45,8 @@ export default function Health() {
         </div>
       ) : participants.loading ? <Skeleton height={86} label="Loading participants…" /> : null}
       {notice ? <Alert tone="info">{notice}</Alert> : null}
+
+      {pid && visit ? <HealthReplayPanel participant={pid} visit={visit} onVisit={onVisit} /> : null}
 
       {marker ? (
         <MarkerTabs markers={MARKERS.map((m) => ({ id: m, label: MARKER_NAME[m] }))} value={marker} flagged={flagged}
@@ -103,7 +107,6 @@ export default function Health() {
           <section className="card" aria-labelledby="baselines-title" aria-busy={replay.loading}>
             <div className="card-head">
               <div>
-                <p className="card-kicker">Two baselines · labelled separately</p>
                 <h2 id="baselines-title">Baseline comparison · {trend.data.marker_name} · {frame?.visit_label ?? visit}</h2>
                 <p>The retrospective mean uses every preflight sample. The replay baseline uses only preflight visits recorded before this visit, so it never sees the current or a later value.</p>
               </div>

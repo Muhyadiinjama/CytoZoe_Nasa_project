@@ -31,7 +31,8 @@ export function Assistant({ evidenceId }: { evidenceId: string }) {
     setMsgs([]);
   }, [evidenceId]);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "nearest" });
+    // Only follow the conversation once a question has been asked; never scroll the drawer on open.
+    if (msgs.length || pending) endRef.current?.scrollIntoView({ block: "nearest" });
   }, [msgs, pending]);
 
   async function send(text: string, questionId?: QuestionId) {

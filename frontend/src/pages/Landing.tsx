@@ -7,13 +7,13 @@ import {
 const WORKSPACE = "/overview?participant=C001&sample=L-3";
 
 const STEPS = [
-  { to: WORKSPACE, n: "01", title: "Health Overview", Icon: IconOverview,
+  { to: WORKSPACE, n: "01", title: "Health Overview", question: "What should I review?", Icon: IconOverview,
     text: "Five blood markers for one historical sample, compared with the supplied laboratory range and the participant's own preflight values." },
-  { to: "/health?participant=C001&sample=L-3&marker=creatinine", n: "02", title: "Health Trends", Icon: IconTrend,
+  { to: "/health?participant=C001&sample=L-3&marker=creatinine", n: "02", title: "Health Trends", question: "What changed across visits?", Icon: IconTrend,
     text: "Every real visit for one marker, in order. The retrospective preflight mean is kept apart from what was known before each visit." },
-  { to: "/environment", n: "03", title: "Radiation Review", Icon: IconRadiation,
+  { to: "/environment", n: "03", title: "Radiation Review", question: "What does the ISS sensor record show?", Icon: IconRadiation,
     text: "A separate ISS sensor record. Dose rate, estimated accumulated sensor dose, and every excluded reading you can inspect." },
-  { to: "/reviews", n: "04", title: "Review Log & Export", Icon: IconLog,
+  { to: "/reviews", n: "04", title: "Review Log & Export", question: "What did we decide to follow up?", Icon: IconLog,
     text: "Saved follow-ups with history, exported as a local JSON or HTML packet that carries hashes, source rows and limitations." },
 ];
 
@@ -50,12 +50,9 @@ export default function Landing() {
             </picture>
           </div>
           <div className="l-hero-shade" aria-hidden="true" />
-          <div className="l-hero-grid" aria-hidden="true" />
-          <p className="l-photo-cap">Sunrise over Earth's limb, seen from the ISS<br />ISS067-E-245176 · 6 Aug 2022 · NASA JSC</p>
 
           <div className="l-wrap">
             <div className="l-hero-body">
-              <p className="l-kicker">NASA Space Apps Challenge 2026</p>
               <h1 id="hero-title" className="l-title">Understand the change. <span>Keep the evidence.</span></h1>
               <p className="l-sub">
                 An offline-first research workspace for reviewing historical astronaut health measurements and recording
@@ -67,14 +64,15 @@ export default function Landing() {
               </div>
               <p className="l-disclosure">
                 <span>Independent research prototype</span>
-                <span>Historical NASA research data, not live telemetry</span>
+                <span>NASA Space Apps Challenge 2026</span>
+                <span>Historical research data, not live telemetry</span>
                 <span>Runs offline after setup</span>
               </p>
             </div>
             <div className="l-props">
-              <div className="l-prop"><b aria-hidden="true">01</b><div><h2>Compare real measurements</h2><p>Each value comes straight from a verified NASA research file.</p></div></div>
-              <div className="l-prop"><b aria-hidden="true">02</b><div><h2>Verify the evidence</h2><p>See the exact file, row, column, rule and limitations behind every number.</p></div></div>
-              <div className="l-prop"><b aria-hidden="true">03</b><div><h2>Record the follow-up</h2><p>Save a note and status locally, then export a source-linked review packet.</p></div></div>
+              <div className="l-prop"><div><h2>Compare real measurements</h2><p>Each value comes straight from a verified NASA research file.</p></div></div>
+              <div className="l-prop"><div><h2>Verify the evidence</h2><p>See the exact file, row, column, rule and limitations behind every number.</p></div></div>
+              <div className="l-prop"><div><h2>Record the follow-up</h2><p>Save a note and status locally, then export a source-linked review packet.</p></div></div>
             </div>
           </div>
         </section>
@@ -82,30 +80,29 @@ export default function Landing() {
         <section id="how" className="l-section" aria-labelledby="how-title" tabIndex={-1}>
           <div className="l-wrap">
             <div className="l-head">
-              <p className="l-kicker">How it works</p>
-              <h2 id="how-title">Four screens. One question each.</h2>
+              <h2 id="how-title">What each screen answers</h2>
               <p>Every number is calculated by the local service from the verified source file. The interface only displays it, with a path back to the row it came from.</p>
             </div>
-            <ol className="l-steps">
-              {STEPS.map(({ to, n, title, text, Icon }) => (
+            <ul className="l-rows">
+              {STEPS.map(({ to, n, title, question, text, Icon }) => (
                 <li key={n}>
-                  <Link to={to} className="l-step" style={{ textDecoration: "none" }}>
+                  <Link to={to} className="l-row">
                     <Icon />
-                    <span className="n">{n}</span>
-                    <h3>{title}</h3>
-                    <p>{text}</p>
+                    <span className="l-row-title">{title}</span>
+                    <span className="l-row-q">{question}</span>
+                    <span className="l-row-text">{text}</span>
+                    <IconArrow className="l-row-go" />
                   </Link>
                 </li>
               ))}
-            </ol>
+            </ul>
           </div>
         </section>
 
         <section className="l-section alt" aria-labelledby="cases-title">
           <div className="l-wrap">
             <div className="l-head">
-              <p className="l-kicker">Case studies</p>
-              <h2 id="cases-title">Two real NASA research records. Kept apart.</h2>
+              <h2 id="cases-title">Two NASA research records, kept apart</h2>
               <p>Both files are pinned by SHA-256. If a file has been changed by even one byte, the local service refuses it and keeps the last verified data.</p>
             </div>
             <div className="l-cases">
@@ -129,7 +126,7 @@ export default function Landing() {
                   </svg>
                 </figure>
                 <div className="l-case-body">
-                  <span className="tag">Health case · OSD-575</span>
+                  <p className="l-case-src">Health case · OSD-575</p>
                   <h3 id="case-health">Inspiration4 crew blood chemistry</h3>
                   <p>Serum comprehensive metabolic panel from the 2021 Inspiration4 mission, published in the NASA Open Science Data Repository. These are sparse blood draws, not continuous monitoring.</p>
                   <ul className="l-facts">
@@ -145,10 +142,9 @@ export default function Landing() {
                     <img src="/media/earth-night-iss-800.webp" width={800} height={533} loading="lazy" decoding="async"
                       alt="City lights of Southeast Asia and lightning streak below the International Space Station at night" />
                   </picture>
-                  <figcaption>NASA JSC · iss073e0257211 · decorative context, not study data</figcaption>
                 </figure>
                 <div className="l-case-body">
-                  <span className="tag">Environment case · RadLab</span>
+                  <p className="l-case-src">Environment case · RadLab</p>
                   <h3 id="case-env">ISS Columbus DosTel1 radiation record</h3>
                   <p>One day of absorbed dose-rate readings from the DosTel1 instrument in the ISS Columbus module, from the NASA OSDR RadLab archive. Conflicting duplicate readings are quarantined, never averaged.</p>
                   <ul className="l-facts">
@@ -164,12 +160,11 @@ export default function Landing() {
         <section className="l-section" aria-labelledby="trust-title">
           <div className="l-wrap">
             <div className="l-head">
-              <p className="l-kicker">Scientific integrity</p>
-              <h2 id="trust-title">Built to be trusted, not to impress.</h2>
+              <h2 id="trust-title">What CytoZoe does, and what it never does</h2>
             </div>
             <div className="l-trust">
               <div className="l-trust-card yes">
-                <h3>What CytoZoe does</h3>
+                <h3>Does</h3>
                 <ul>
                   <li><IconCheck />Shows NASA data only when its SHA-256 matches a registered snapshot</li>
                   <li><IconCheck />Traces every value to its file, data row and column</li>
@@ -179,7 +174,7 @@ export default function Landing() {
                 </ul>
               </div>
               <div className="l-trust-card no">
-                <h3>What it never does</h3>
+                <h3>Never does</h3>
                 <ul>
                   <li><IconBan />Diagnose, score risk or recommend treatment</li>
                   <li><IconBan />Claim live NASA telemetry or real-time astronaut monitoring</li>
@@ -220,7 +215,7 @@ export default function Landing() {
           </div>
           <div className="l-legal">
             <span>Independent research prototype · NASA Space Apps Challenge 2026. Not affiliated with or endorsed by NASA. Not a medical device.</span>
-            <span>Photos are decorative context, bundled locally. External links need internet.</span>
+            <span>Photos are decorative context, not study data, and are bundled locally. External links need internet.</span>
           </div>
         </div>
       </footer>

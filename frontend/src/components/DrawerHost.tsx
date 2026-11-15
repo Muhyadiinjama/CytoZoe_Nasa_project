@@ -9,6 +9,7 @@ import { Assistant } from "./Assistant";
 import { Drawer } from "./Drawer";
 import { EnvEvidencePanel, HealthEvidencePanel } from "./EvidencePanel";
 import { IconArrow } from "./icons";
+import { OtherMarkers, ResultGuidance, useResultDetails } from "./ResultDetails";
 import { ReviewForm } from "./ReviewForm";
 import { Alert, ErrorState, Skeleton } from "./StatusViews";
 
@@ -22,33 +23,50 @@ export function DrawerHost() {
 
 function EvidenceDrawer({ id, focusReview, onClose }: { id: string; focusReview: boolean; onClose: () => void }) {
   const { dataVersion } = useDrawer();
-  const navigate = useNavigate();
   const { data: ev, error, loading, reload } = useAsync(() => api.evidence(id), [id, dataVersion]);
-  const title = ev?.title ?? "Evidence";
-  const subtitle = ev ? (ev.case === "health" ? "Health case · OSD-575 · historical research sample" : "Environment case · ISS DosTel1 · separate case study") : undefined;
-  const form = ev ? <ReviewForm key={ev.evidence_id} findingId={ev.evidence_id} review={ev.review} autoFocus={focusReview} /> : null;
+  const title = ev?.title ?? "Evidence & Result Details";
+  const subtitle = (
+    <>
+      <span className="drawer-kicker">Evidence &amp; Result Details</span>
+      {ev ? <span>{ev.case === "health" ? "Health case · OSD-575 · historical research sample" : "Environment case · ISS DosTel1 · separate case study"}</span> : null}
+    </>
+  );
   return (
     <Drawer title={title} subtitle={subtitle} onClose={onClose}>
       {error ? <ErrorState error={error} onRetry={reload} /> : null}
       {!ev && loading ? <Skeleton height={420} label="Loading evidence…" /> : null}
       {ev ? (
-        <>
-          <Assistant evidenceId={ev.evidence_id} />
-          {ev.case === "health" ? (
+        ev.case === "health"
+          ? <HealthDetails key={ev.evidence_id} ev={ev as HealthEvidence} focusReview={focusReview} onClose={onClose} />
+          : (
             <>
-              <HealthEvidencePanel ev={ev as HealthEvidence} followUp={form} />
-              <button type="button" className="btn btn-ghost" onClick={() => {
-                const h = ev as HealthEvidence;
-                onClose();
-                navigate(`/health?participant=${h.context.participant_id}&sample=${encodeURIComponent(h.context.visit)}&marker=${h.measurement.marker}`);
-              }}>Compare with other visits in Health Trends<IconArrow /></button>
+              <EnvEvidencePanel ev={ev as EnvEvidence} followUp={<ReviewForm key={ev.evidence_id} findingId={ev.evidence_id} review={ev.review} autoFocus={focusReview} />} />
+              <Assistant evidenceId={ev.evidence_id} />
             </>
-          ) : (
-            <EnvEvidencePanel ev={ev as EnvEvidence} followUp={form} />
-          )}
-        </>
+          )
       ) : null}
     </Drawer>
+  );
+}
+
+function HealthDetails({ ev, focusReview, onClose }: { ev: HealthEvidence; focusReview: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
+  const details = useResultDetails(ev.context.participant_id, ev.context.visit);
+  return (
+    <>
+      <HealthEvidencePanel ev={ev} followUp={
+        <>
+          <ResultGuidance brief={details.data} evidenceId={ev.evidence_id} />
+          <ReviewForm key={ev.evidence_id} findingId={ev.evidence_id} review={ev.review} autoFocus={focusReview} />
+        </>
+      } />
+      {details.data ? <OtherMarkers brief={details.data} evidenceId={ev.evidence_id} /> : null}
+      <Assistant evidenceId={ev.evidence_id} />
+      <button type="button" className="btn btn-ghost" onClick={() => {
+        onClose();
+        navigate(`/health?participant=${ev.context.participant_id}&sample=${encodeURIComponent(ev.context.visit)}&marker=${ev.measurement.marker}`);
+      }}>Compare with other visits in Health Trends<IconArrow /></button>
+    </>
   );
 }
 

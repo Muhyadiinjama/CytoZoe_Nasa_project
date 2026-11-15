@@ -21,7 +21,7 @@ export function ServiceStatus() {
   );
 }
 
-export function PageHeader({ eyebrow, title, purpose, study, children }: {
+export function PageHeader({ title, purpose, study, children }: {
   eyebrow: string; title: string; purpose: string; study?: "health" | "environment"; children?: ReactNode;
 }) {
   const { open } = useDrawer();
@@ -31,7 +31,6 @@ export function PageHeader({ eyebrow, title, purpose, study, children }: {
   return (
     <header className="page-head">
       <div className="page-head-text">
-        <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         <p className="purpose">{purpose}</p>
       </div>

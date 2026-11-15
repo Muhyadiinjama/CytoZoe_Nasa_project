@@ -96,7 +96,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   // Recent reviews for the sidebar; refreshed whenever data changes anywhere.
   useEffect(() => {
     if (state !== "READY") return;
-    api.reviews({}).then((r) => setRecent(r.items.slice(0, 8))).catch(() => {});
+    api.reviews({}).then((r) => setRecent(r.items.slice(0, 5))).catch(() => {});
   }, [dataVersion, state]);
 
   useEffect(() => {

@@ -78,12 +78,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className={`sidebar${menuOpen ? " open" : ""}`} id="primary-nav">
         <Brand />
         <nav aria-label="Primary">
-          <p className="side-label" aria-hidden="true">Workspace</p>
           <ul className="nav-list">
-            {NAV.map(({ to, label, Icon }, i) => (
+            {NAV.map(({ to, label, Icon }) => (
               <li key={to}>
                 <NavLink to={to} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-                  <Icon /><span className="nav-label">{label}</span><span className="nav-index" aria-hidden="true">0{i + 1}</span>
+                  <Icon /><span className="nav-label">{label}</span>
                 </NavLink>
               </li>
             ))}
@@ -91,12 +90,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
         {state === "READY" ? <RecentReviews /> : null}
         <div className="side-foot">
-          <span className={`live-pill${connected ? "" : " off"}`} role="status">
+          <span className={`live-pill${connected ? "" : " off"}`} role="status" title={status ? `v${status.app_version} · ${status.git_version}` : undefined}>
             <span className="pulse" aria-hidden="true" />{connected ? "Live sync on" : state === "SERVICE_UNAVAILABLE" ? "Local service offline" : "Connecting…"}
           </span>
-          <span>Runs locally on this computer · historical NASA research data · not a clinical device</span>
-          <Link to="/" className="side-about">About CytoZoe &amp; photo credits</Link>
-          {status ? <span className="ver">v{status.app_version} · {status.git_version}</span> : null}
+          <span>Local research tool · not a clinical device</span>
+          <Link to="/" className="side-about">About &amp; credits</Link>
         </div>
       </aside>
       <main id="main" className="main" tabIndex={-1}>
