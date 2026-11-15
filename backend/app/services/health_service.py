@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 from typing import Any
 
@@ -73,6 +74,84 @@ def _marker_rows(conn, participant: str, marker: str) -> list[sqlite3.Row]:
     ).fetchall()
 
 
+def _dataset_block(ds: sqlite3.Row) -> dict[str, Any]:
+    quality = json.loads(ds["quality_json"])
+    return {
+        "id": ds["id"], "title": ds["title"], "sha256": ds["sha256"], "samples": quality.get("samples"),
+        "participants": len(quality.get("participants", [])), "visits": quality.get("visits"),
+        "nonmissing_values": quality.get("nonmissing_values"),
+    }
+
+
+def _short(value: float) -> str:
+    return f"{value:.10g}"
+
+
+def _calculation_steps(obs: sqlite3.Row, pre: list[sqlite3.Row], base: dict | None,
+                       cmp: dict[str, Any], status: str) -> list[dict[str, Any]]:
+    unit = obs["unit"]
+    usable = [r["value"] for r in pre if r["value"] is not None and math.isfinite(r["value"])]
+    steps: list[dict[str, Any]] = []
+    if base:
+        steps.append({
+            "label": "Baseline mean (B)", "available": True, "n": base["n"], "unit": unit,
+            "expression": f"mean({', '.join(_short(v) for v in usable)})",
+            "result": base["value"],
+            "note": "Personal retrospective mean of the available preflight values; at least two are required.",
+        })
+    else:
+        steps.append({
+            "label": "Baseline mean (B)", "available": False, "n": len(usable), "unit": unit,
+            "expression": "not computed", "result": None,
+            "note": "Fewer than two finite preflight values are available.",
+        })
+    if cmp["delta"] is not None and base:
+        steps.append({
+            "label": "Difference from baseline (Δ)", "available": True, "unit": unit,
+            "expression": f"x − B = {_short(obs['value'])} − {_short(base['value'])}",
+            "result": cmp["delta"],
+        })
+    else:
+        steps.append({
+            "label": "Difference from baseline (Δ)", "available": False, "unit": unit,
+            "expression": "not computed", "result": None,
+        })
+    if cmp["percent_delta"] is not None and base:
+        steps.append({
+            "label": "Percent difference (%Δ)", "available": True, "unit": "%",
+            "expression": f"100 × Δ / B = 100 × {_short(cmp['delta'])} / {_short(base['value'])}",
+            "result": cmp["percent_delta"],
+        })
+    elif base and base["value"] == 0:
+        steps.append({
+            "label": "Percent difference (%Δ)", "available": False, "unit": "%",
+            "expression": "not computed because B = 0", "result": None,
+        })
+    else:
+        steps.append({
+            "label": "Percent difference (%Δ)", "available": False, "unit": "%",
+            "expression": "not computed", "result": None,
+        })
+    if obs["value"] is None:
+        expression = "not assessed because the value is missing"
+    elif status == health.ABOVE:
+        expression = f"x > upper bound: {_short(obs['value'])} > {_short(obs['range_high'])}"
+    elif status == health.BELOW:
+        expression = f"x < lower bound: {_short(obs['value'])} < {_short(obs['range_low'])}"
+    elif obs["range_low"] is None and obs["range_high"] is None:
+        expression = "no supplied bounds"
+    else:
+        low = _short(obs["range_low"]) if obs["range_low"] is not None else "—"
+        high = _short(obs["range_high"]) if obs["range_high"] is not None else "—"
+        expression = f"range check against {low} to {high}; equal to a bound counts as within"
+    steps.append({
+        "label": "Supplied-range check", "available": obs["value"] is not None,
+        "unit": unit, "expression": expression, "result": status,
+        "note": "This is the source file's laboratory range, not a CytoZoe clinical threshold.",
+    })
+    return steps
+
+
 def _source_block(ds: sqlite3.Row, obs: sqlite3.Row) -> dict[str, Any]:
     unit = obs["source_unit"]
     value_col, low_col, high_col = cmp_columns(obs["marker"], unit)
@@ -137,6 +216,7 @@ def build_evidence(conn: sqlite3.Connection, participant: str, visit: str, marke
                 "percent_delta": "%Δ = 100 × (x − B) / B, only when B ≠ 0",
                 "range_status": "outside only if x < supplied lower bound or x > supplied upper bound; equal to a bound is within",
             },
+            "calculation_steps": _calculation_steps(obs, pre, base, cmp, status),
         },
         "evidence_strength": STRENGTH,
         "limitations": HEALTH_LIMITATIONS,
@@ -169,7 +249,6 @@ def overview(conn: sqlite3.Connection, participant: str, visit: str) -> dict[str
         (participant,),
     ):
         counts[r["status"]] = r["n"]
-    quality = json.loads(ds["quality_json"])
     return {
         "participant_id": participant,
         "visit": visit,
@@ -177,11 +256,66 @@ def overview(conn: sqlite3.Connection, participant: str, visit: str) -> dict[str
         "cards": cards,
         "to_review": [c["evidence_id"] for c in to_review],
         "participant_review_counts": counts,
-        "dataset": {
-            "id": ds["id"], "title": ds["title"], "sha256": ds["sha256"], "samples": quality.get("samples"),
-            "participants": len(quality.get("participants", [])), "visits": quality.get("visits"),
-            "nonmissing_values": quality.get("nonmissing_values"),
-        },
+        "dataset": _dataset_block(ds),
+    }
+
+
+def _participant_review_counts(conn: sqlite3.Connection, participant: str) -> dict[str, int]:
+    counts = {s: 0 for s in reviews.STATUSES}
+    for r in conn.execute(
+        "SELECT status, COUNT(*) AS n FROM reviews WHERE case_kind = 'health' AND participant_id = ? GROUP BY status",
+        (participant,),
+    ):
+        counts[r["status"]] = r["n"]
+    return counts
+
+
+def crew(conn: sqlite3.Connection, visit: str) -> dict[str, Any]:
+    """Crew-level summaries for one categorical visit, plus the seven-visit timeline."""
+    ds = dataset_row(conn)
+    if visit not in VISITS:
+        raise not_found("Visit", visit=visit[:20])
+    rows = conn.execute(
+        "SELECT * FROM health_observations ORDER BY participant_id, visit_order"
+    ).fetchall()
+    participant_ids = sorted({r["participant_id"] for r in rows})
+    participants = []
+    for participant in participant_ids:
+        obs = next((r for r in rows if r["participant_id"] == participant and r["visit"] == visit), None)
+        if obs is None:
+            continue
+        cards = [build_evidence(conn, participant, visit, marker, include_review=False)
+                 for marker in MARKER_ORDER]
+        markers = [{
+            "marker": c["measurement"]["marker"], "marker_name": c["measurement"]["marker_name"],
+            "value": c["measurement"]["value"], "unit": c["measurement"]["unit"],
+            "range_status": c["measurement"]["range_status"], "needs_review": c["measurement"]["needs_review"],
+            "delta": c["comparison"]["delta"], "percent_delta": c["comparison"]["percent_delta"],
+            "evidence_id": c["evidence_id"],
+        } for c in cards]
+        needs_review = [m for m in markers if m["needs_review"]]
+        participants.append({
+            "participant_id": participant, "sample_id": obs["sample_id"], "phase": obs["phase"],
+            "relative_day": obs["relative_day"], "visit": visit, "visit_label": visit_label(visit),
+            "measurement_count": len(markers), "needs_review_count": len(needs_review),
+            "needs_review_markers": [m["marker"] for m in needs_review],
+            "markers": markers, "participant_review_counts": _participant_review_counts(conn, participant),
+        })
+    timeline = []
+    for v in sorted(VISITS, key=lambda key: VISITS[key]["order"]):
+        vrows = [r for r in rows if r["visit"] == v]
+        needs = sum(1 for r in vrows if health.needs_review(
+            health.range_status(r["value"], r["range_low"], r["range_high"])))
+        timeline.append({
+            "visit": v, "label": visit_label(v), "phase": VISITS[v]["phase"],
+            "relative_day": VISITS[v]["relative_day"], "order": VISITS[v]["order"],
+            "participant_count": len({r["participant_id"] for r in vrows}),
+            "measurement_count": len(vrows), "needs_review_count": needs,
+        })
+    return {
+        "visit": visit, "visit_label": visit_label(visit), "participant_count": len(participants),
+        "participants": participants, "visit_timeline": timeline, "dataset": _dataset_block(ds),
+        "method": "retrospective_preflight_arithmetic_mean", "rule_version": health.RULE_VERSION,
     }
 
 
@@ -243,14 +377,19 @@ def trend(conn: sqlite3.Connection, participant: str, marker: str) -> dict[str, 
     base = health.baseline(r["value"] for r in pre)
     bounds = {(r["range_low"], r["range_high"]) for r in rows}
     points = []
+    base_value = base["value"] if base else None
     for r in rows:
         status = health.range_status(r["value"], r["range_low"], r["range_high"])
+        cmp = health.compare(r["value"], base_value)
         points.append({
             "evidence_id": f"{EVIDENCE_PREFIX}:{r['sample_id']}:{marker}",
             "sample_id": r["sample_id"], "visit": r["visit"], "visit_label": visit_label(r["visit"]),
             "phase": r["phase"], "visit_order": r["visit_order"], "relative_day": r["relative_day"],
             "value": r["value"], "range_low": r["range_low"], "range_high": r["range_high"],
             "range_status": status, "needs_review": health.needs_review(status), "source_row": r["source_row"],
+            "delta": cmp["delta"], "percent_delta": cmp["percent_delta"],
+            "range_low_delta": r["range_low"] - base_value if r["range_low"] is not None and base_value is not None else None,
+            "range_high_delta": r["range_high"] - base_value if r["range_high"] is not None and base_value is not None else None,
         })
     consistent = len(bounds) == 1
     only = next(iter(bounds)) if consistent else (None, None)
@@ -264,5 +403,6 @@ def trend(conn: sqlite3.Connection, participant: str, marker: str) -> dict[str, 
         "bounds_consistent": consistent,
         "range_low": only[0], "range_high": only[1],
         "x_axis_note": "Categorical visit order. Visits are not equally spaced in time; L = days before launch, R = days after return.",
+        "delta_note": "delta = x − B; range_*_delta shift the supplied bounds by the same retrospective preflight mean B.",
         "rule_version": health.RULE_VERSION,
     }

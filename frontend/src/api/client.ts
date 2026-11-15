@@ -1,6 +1,6 @@
 import type {
-  ApiErrorBody, DatasetInfo, EnvironmentView, Evidence, ExportPacket, Explanation, HealthOverview, HealthReplay, HealthTrend,
-  Participant, QuestionId, Review, ReviewDetail, ReviewList, ReviewStatus, Status,
+  ApiErrorBody, CrewSummary, DatasetInfo, EnvironmentView, Evidence, ExportPacket, Explanation, HealthOverview, HealthReplay,
+  HealthTrend, Participant, QuestionId, Review, ReviewDetail, ReviewList, ReviewStatus, Status,
 } from "./contracts";
 
 export class ApiError extends Error {
@@ -67,6 +67,7 @@ export const api = {
   datasets: () => request<DatasetInfo[]>("/api/datasets"),
   participants: () => request<Participant[]>("/api/participants"),
   health: (participant: string, sample: string) => request<HealthOverview>(`/api/health${qs({ participant, sample })}`),
+  crew: (visit: string) => request<CrewSummary>(`/api/health/crew${qs({ visit })}`),
   trend: (participant: string, marker: string) => request<HealthTrend>(`/api/health/trend${qs({ participant, marker })}`),
   environment: () => request<EnvironmentView>("/api/environment"),
   evidence: (id: string) => request<Evidence>(`/api/evidence/${encodeURIComponent(id)}`),

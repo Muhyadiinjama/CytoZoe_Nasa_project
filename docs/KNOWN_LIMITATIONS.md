@@ -1,10 +1,10 @@
 # Known limitations
 
 ## Scientific
-- The data are historical: Inspiration4 (2021) serum samples and one ISS day (1 March 2022). Nothing is live.
+- The data are historical: Inspiration4 (2021) serum samples and one ISS day (1 April 2022). Nothing is live.
 - There are 4 participants with 7 sparse visits each. The data cannot support validation, prediction or a disease label.
 - The supplied ranges are the laboratory bounds recorded in the source. They are not CytoZoe's clinical thresholds.
-- The sensor-dose estimate covers accepted intervals at the instrument only (99.04% of the recorded span). It is not personal, organ or effective dose, and it is not mission-certified.
+- The sensor-dose estimate covers accepted intervals at the instrument only (98.05% of the recorded span). It is not personal, organ or effective dose, and it is not mission-certified.
 - The source timestamp timezone is not verified, so times are shown as exported.
 - The health and radiation cases cannot be paired, and no causal claim is possible.
 

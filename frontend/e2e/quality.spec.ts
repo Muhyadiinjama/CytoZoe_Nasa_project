@@ -31,6 +31,7 @@ test("T28/UX-01: automated axe checks on all four routes and the drawer (WCAG 2.
 test("T28: keyboard-only core journey with focus trap and focus restore", async ({ page }) => {
   await isolate(page);
   await page.goto("/overview?participant=C002&sample=R%2B45");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   // Skip link is the first tab stop.
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();

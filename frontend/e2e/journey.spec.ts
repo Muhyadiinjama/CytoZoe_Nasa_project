@@ -80,7 +80,7 @@ test("T17–T19, T23, T26–T27: C001 L-3 creatinine → evidence → explain �
   for (const path of ["/overview", "/health", "/environment", "/reviews"]) {
     await page.goto(path);
     await expect(page.locator("h1")).toBeVisible();
-    await expect(page.getByText("Local service connected")).toBeVisible();
+    await expect(page.getByText("Local data loaded")).toBeVisible();
   }
   expect(external, `external requests attempted: ${external.join(", ")}`).toEqual([]);
 });
@@ -91,8 +91,8 @@ test("Health Trends: categorical visits, URL state, inline follow-up keeps the m
   await expect(page.getByRole("tab", { name: "Glucose" })).toHaveAttribute("aria-selected", "true");
   const panel = page.getByRole("region", { name: "Evidence" });
   await expect(panel).toContainText("90");
-  await expect(panel).toContainText("77.3333 mg/dL (n = 3)");
-  await expect(panel).toContainText("+12.6667 mg/dL (+16.38%)");
+  await expect(panel).toContainText("77.33 mg/dL (n = 3)");
+  await expect(panel).toContainText("+12.67 mg/dL (+16.4%)");
   await expect(panel).toContainText("Within supplied range");
 
   await page.getByText(/Data table · 7 source values/).click();

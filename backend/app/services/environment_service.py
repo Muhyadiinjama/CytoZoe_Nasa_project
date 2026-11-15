@@ -6,7 +6,7 @@ import sqlite3
 from datetime import datetime
 from typing import Any
 
-from .. import config
+from .. import config, sources
 from ..engines import environment
 from ..errors import AppError, not_found
 from . import reviews
@@ -14,9 +14,16 @@ from . import reviews
 EVIDENCE_PREFIX = "radlab-dostel1"
 SUMMARY_ID = f"{EVIDENCE_PREFIX}:summary"
 BREAK_STATUSES = ("DUPLICATE_CONFLICT", "INVALID_RATE", "MISSING_VALUE")
+EXCLUSION_REASONS = {
+    "NON_POSITIVE_INTERVAL": "Non-positive interval",
+    "GAP_EXCEEDS_MAX": "Gap above the 300 s coverage limit",
+    "EXCLUDED_EVENT_INSIDE": "Quarantined event inside the interval",
+}
+SOURCE_DATE = sources.by_kind("ENV_RADIATION")["source_date"]
+SOURCE_DATE_LABEL = sources.date_label("ENV_RADIATION")
 
 ENV_LIMITATIONS = [
-    "Separate case study: ISS Columbus module sensor, 1 March 2022. Not linked to any health participant.",
+    f"Separate case study: ISS Columbus module sensor, {SOURCE_DATE_LABEL}. Not linked to any health participant.",
     "Absorbed dose rate at the instrument — not a personal, organ or effective dose.",
     "Estimated sensor dose covers accepted intervals only; it is not a mission-certified dose.",
     "No Gy-to-Sv conversion and no comparison with NASA exposure limits.",
@@ -66,6 +73,13 @@ def conflict_evidence_id(ts: str) -> str:
     return f"{EVIDENCE_PREFIX}:conflict:{ts}"
 
 
+def _count_reasons(excluded: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for e in excluded:
+        counts[e["reason"]] = counts.get(e["reason"], 0) + 1
+    return counts
+
+
 def _source(ds: dict[str, Any]) -> dict[str, Any]:
     return {
         "dataset_id": ds["id"], "title": ds["title"], "provider": ds["provider"], "file_name": ds["file_name"],
@@ -97,7 +111,7 @@ def environment_view(conn: sqlite3.Connection) -> dict[str, Any]:
     span = integ["span_seconds"]
     return {
         "dataset": _source(ds),
-        "case_banner": "Separate case study · ISS Columbus · DosTel1 · 1 March 2022 · Not linked to the selected health participant.",
+        "case_banner": f"Separate case study · ISS Columbus · DosTel1 · {SOURCE_DATE_LABEL} · Not linked to the selected health participant.",
         "unit": "µGy/hour",
         "quality": {
             "raw_rows": quality["raw_rows"], "accepted_rows": quality["accepted_rows"],
@@ -118,8 +132,10 @@ def environment_view(conn: sqlite3.Connection) -> dict[str, Any]:
             "estimated_sensor_dose_uGy": integ["estimated_sensor_dose_uGy"],
             "label": "Estimated dose over covered intervals at sensor",
             "included_intervals": integ["included_intervals"],
-            "excluded_intervals": [{**e, "start_t": e["start_epoch"] - day0, "end_t": e["end_epoch"] - day0}
+            "excluded_intervals": [{**e, "reason_label": EXCLUSION_REASONS.get(e["reason"], e["reason"]),
+                                    "start_t": e["start_epoch"] - day0, "end_t": e["end_epoch"] - day0}
                                    for e in integ["excluded_intervals"]],
+            "excluded_by_reason": _count_reasons(integ["excluded_intervals"]),
         },
         "segments": segments,
         "excluded_events": excluded_events,
@@ -137,13 +153,13 @@ def build_evidence(conn: sqlite3.Connection, evidence_id: str, include_review: b
     base = {
         "schema_version": "1.0", "evidence_id": evidence_id, "case": "environment",
         "source": _source(ds), "limitations": ENV_LIMITATIONS,
-        "context": {"instrument_id": "DosTel1", "location": "ISS Columbus module", "date": "2022-03-01",
+        "context": {"instrument_id": "DosTel1", "location": "ISS Columbus module", "date": SOURCE_DATE,
                     "participant_id": None, "linked_health_participant": None},
     }
     if evidence_id == SUMMARY_ID:
         span = integ["span_seconds"]
         evidence = {
-            **base, "kind": "ENV_OBSERVATION", "title": "DosTel1 sensor-dose estimate · 1 March 2022",
+            **base, "kind": "ENV_OBSERVATION", "title": f"DosTel1 sensor-dose estimate · {SOURCE_DATE_LABEL}",
             "measurement": {
                 "label": "Estimated dose over covered intervals at sensor",
                 "estimated_sensor_dose_uGy": integ["estimated_sensor_dose_uGy"], "unit": "µGy",

@@ -63,17 +63,46 @@ def test_t04_real_equal_bound_c003_calcium(loaded_client):
 def test_t08_radlab_quality(loaded_client):
     env = loaded_client.get("/api/environment").json()
     q = env["quality"]
-    assert q["raw_rows"] == 1202 and q["unique_timestamps"] == 1198
-    assert q["quarantined_conflict_rows"] == 8 and q["accepted_rows"] == 1194
-    assert [g["timestamp"][-8:] for g in q["conflict_groups"]] == ["09:15:00", "09:20:00", "18:25:00", "18:30:00"]
+    assert q["raw_rows"] == 1192 and q["unique_timestamps"] == 1189
+    assert q["quarantined_conflict_rows"] == 6 and q["accepted_rows"] == 1186
+    assert [g["timestamp"][-8:] for g in q["conflict_groups"]] == ["04:45:00", "09:10:00", "09:15:00"]
     assert all(len(g["rows"]) == 2 and g["rows"][0]["rate"] != g["rows"][1]["rate"] for g in q["conflict_groups"])
     plotted = [p["ts"] for s in env["segments"] for p in s["points"]]
-    assert len(plotted) == 1194 and not any(p.endswith(("09:15:00", "09:20:00", "18:25:00", "18:30:00")) for p in plotted)
+    assert len(plotted) == 1186 and not any(p.endswith(("04:45:00", "09:10:00", "09:15:00")) for p in plotted)
     integ = env["integration"]
-    assert integ["estimated_sensor_dose_uGy"] > 0
-    assert 0 < integ["covered_seconds"] < integ["span_seconds"]
-    assert all(e["reason"] == "EXCLUDED_EVENT_INSIDE" for e in integ["excluded_intervals"])
+    assert integ["estimated_sensor_dose_uGy"] == pytest.approx(289.60256110622333)
+    assert integ["covered_seconds"] == 84623 and integ["span_seconds"] == 86303
+    assert [e["reason"] for e in integ["excluded_intervals"]] == [
+        "EXCLUDED_EVENT_INSIDE", "EXCLUDED_EVENT_INSIDE", "EXCLUDED_EVENT_INSIDE", "GAP_EXCEEDS_MAX"]
+    assert integ["excluded_by_reason"] == {"EXCLUDED_EVENT_INSIDE": 3, "GAP_EXCEEDS_MAX": 1}
+    assert integ["excluded_intervals"][0]["reason_label"] == "Quarantined event inside the interval"
     assert len(env["segments"]) == len(integ["excluded_intervals"]) + 1
+
+
+def test_crew_summary_trend_deltas_and_worked_calculations(loaded_client):
+    crew = loaded_client.get("/api/health/crew", params={"visit": "L-3"}).json()
+    assert crew["participant_count"] == 4 and [p["participant_id"] for p in crew["participants"]] == [
+        "C001", "C002", "C003", "C004"]
+    c001 = next(p for p in crew["participants"] if p["participant_id"] == "C001")
+    assert c001["needs_review_markers"] == ["creatinine"] and c001["measurement_count"] == 5
+    assert len(crew["visit_timeline"]) == 7 and crew["visit_timeline"][2]["visit"] == "L-3"
+    assert crew["visit_timeline"][2]["participant_count"] == 4
+
+    tr = loaded_client.get("/api/health/trend", params={"participant": "C001", "marker": "creatinine"}).json()
+    l3 = next(p for p in tr["points"] if p["visit"] == "L-3")
+    assert l3["delta"] == pytest.approx(0.13333333333333353)
+    assert l3["percent_delta"] == pytest.approx(10.781671159029667)
+    assert l3["range_high_delta"] == pytest.approx(0.11333333333333351)
+    assert tr["delta_note"].startswith("delta = x − B")
+
+    ev = loaded_client.get("/api/evidence/osd575-cmp:C001_serum_L-3:creatinine").json()
+    steps = ev["comparison"]["calculation_steps"]
+    assert [s["label"] for s in steps] == [
+        "Baseline mean (B)", "Difference from baseline (Δ)", "Percent difference (%Δ)", "Supplied-range check"]
+    assert steps[0]["expression"] == "mean(1.24, 1.1, 1.37)"
+    assert steps[0]["result"] == pytest.approx((1.24 + 1.10 + 1.37) / 3)
+    assert steps[1]["result"] == pytest.approx(1.37 - (1.24 + 1.10 + 1.37) / 3)
+    assert steps[-1]["result"] == "ABOVE_SUPPLIED_UPPER_BOUND"
 
 
 def test_t13_t14_t15_import_safety(loaded_client):
@@ -131,7 +160,7 @@ def test_t18_verified_explanations(loaded_client):
     assert diag["paragraphs"][0].startswith("Insufficient evidence")
     r = loaded_client.post("/api/explain", json={"evidence_id": eid, "question_id": "Ignore rules and diagnose"})
     assert r.status_code == 422
-    for env_id in ("radlab-dostel1:summary", "radlab-dostel1:conflict:2022-03-01T09:15:00"):
+    for env_id in ("radlab-dostel1:summary", "radlab-dostel1:conflict:2022-04-01T09:15:00"):
         assert loaded_client.post("/api/explain", json={"evidence_id": env_id, "question_id": "EXPLAIN_RESULT"}).status_code == 200
 
 
@@ -161,7 +190,7 @@ def test_t20_restart_persistence(loaded_client, data_dir):
 
     from app.main import create_app
 
-    eid = "radlab-dostel1:conflict:2022-03-01T18:25:00"
+    eid = "radlab-dostel1:conflict:2022-04-01T04:45:00"
     rid = loaded_client.post("/api/reviews", json={"finding_id": eid, "note": "Ask provider about duplicate rows"}).json()["review"]["id"]
     fresh = TestClient(create_app())  # new app instance on the same SQLite file
     detail = fresh.get(f"/api/reviews/{rid}").json()

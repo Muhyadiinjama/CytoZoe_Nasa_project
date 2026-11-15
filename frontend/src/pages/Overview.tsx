@@ -27,26 +27,91 @@ export default function Overview() {
   const pid = resolved?.participant.participant_id;
   const visit = resolved?.sample.visit;
   const overview = useAsync(() => api.health(pid!, visit!), [pid, visit, dataVersion], Boolean(pid && visit));
+  const crew = useAsync(() => api.crew(visit!), [visit, dataVersion], Boolean(visit));
   const data = overview.data;
   const onVisit = useCallback((v: string) => update({ sample: v }, { replace: true }), [update]);
   const flagged = data ? data.cards.filter((c) => c.measurement.needs_review) : [];
+  const totalFlagged = crew.data?.participants.reduce((n, p) => n + p.needs_review_count, 0) ?? 0;
+  const totalMeasurements = crew.data?.participants.reduce((n, p) => n + p.measurement_count, 0) ?? 0;
+  const crewVisit = crew.data?.visit_timeline.find((t) => t.visit === crew.data?.visit);
 
   return (
     <>
       <PageHeader eyebrow="01 · Health Overview" title="Health Overview" study="health"
-        purpose="What should I review? Five blood markers from a real historical Inspiration4 sample, compared with the supplied laboratory range and the participant's own preflight samples." />
+        purpose="Five blood markers from one historical sample, compared with supplied ranges." />
 
       {participants.error ? <ErrorState error={participants.error} onRetry={participants.reload} /> : null}
       {resolved && participants.data ? (
-        <div className="toolbar" role="group" aria-label="Sample selection">
-          <ParticipantSelect participants={participants.data} value={resolved.participant.participant_id} onChange={(v) => update({ participant: v })} />
-          <SampleSelect samples={resolved.participant.samples} value={resolved.sample.visit} onChange={(v) => update({ sample: v })} />
-          <p className="toolbar-note">Historical research sample · not a live reading. L = days before launch, R = days after return.</p>
+        <div className="toolbar toolbar-compact" role="group" aria-label="Sample selection">
+          <ParticipantSelect participants={participants.data} value={resolved.participant.participant_id} onChange={(v) => update({ participant: v })} compact />
+          <SampleSelect samples={resolved.participant.samples} value={resolved.sample.visit} onChange={(v) => update({ sample: v })} compact />
+          <p className="toolbar-note">L = days before launch · R = days after return.</p>
         </div>
-      ) : participants.loading ? <Skeleton height={86} label="Loading participants…" /> : null}
+      ) : participants.loading ? <Skeleton height={70} label="Loading participants…" /> : null}
       {notice ? <Alert tone="info">{notice}</Alert> : null}
 
       {pid && visit ? <HealthReplayPanel participant={pid} visit={visit} onVisit={onVisit} /> : null}
+
+      {crew.error ? <ErrorState error={crew.error} onRetry={crew.reload} /> : null}
+      {!crew.data && crew.loading ? <Skeleton height={240} label="Loading crew visit summary…" /> : null}
+      {crew.data ? (
+        <section className="crew-card" aria-labelledby="crew-title" aria-busy={crew.loading}>
+          <div className="card-head">
+            <div>
+              <h2 id="crew-title">Crew snapshot · {crew.data.visit_label}</h2>
+              <p>{crewVisit ? `${Math.abs(crewVisit.relative_day)} ${crewVisit.phase === "PREFLIGHT" ? "days before launch" : "days after return"} · ` : ""}
+                {crew.data.participant_count} participants</p>
+            </div>
+            <span className={`crew-summary${totalFlagged ? " is-flagged" : ""}`}>{totalFlagged} of {totalMeasurements} outside supplied range</span>
+          </div>
+          <div className="crew-grid">
+            {crew.data.participants.map((p) => (
+              <article key={p.participant_id} className={`crew-member${p.participant_id === pid ? " is-current" : ""}`} aria-labelledby={`crew-${p.participant_id}`}>
+                <div className="crew-head">
+                  <h3 id={`crew-${p.participant_id}`}>{p.participant_id}</h3>
+                  <span className={`crew-count${p.needs_review_count ? " is-flagged" : ""}`}>{p.needs_review_count} of {p.measurement_count}</span>
+                </div>
+                <div className="crew-flags">
+                  {p.markers.filter((m) => m.needs_review).map((m) => (
+                    <button key={m.marker} type="button" className="crew-marker"
+                      onClick={() => open({ kind: "evidence", id: m.evidence_id })}
+                      aria-label={`Inspect ${m.marker_name} for ${p.participant_id} at ${p.visit_label}: ${fmt(m.value)} ${m.unit}`}>
+                      <IconFlag width={16} height={16} aria-hidden="true" />
+                      <span>{m.marker_name}</span>{" "}
+                      <strong>{fmt(m.value)} <span className="crew-marker-unit">{m.unit}</span></strong>
+                    </button>
+                  ))}
+                  {p.needs_review_count === 0 ? <span className="crew-ok">All within range</span> : null}
+                </div>
+                <div className="crew-foot">
+                  {p.participant_review_counts.OPEN ? (
+                    <span className="meta">{p.participant_review_counts.OPEN} open review{p.participant_review_counts.OPEN === 1 ? "" : "s"}</span>
+                  ) : <span />}
+                  <Link className="btn btn-ghost btn-sm"
+                    to={`/health?participant=${p.participant_id}&sample=${encodeURIComponent(p.visit)}&marker=${p.needs_review_markers[0] ?? "creatinine"}`}>
+                    Open trends
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="visit-track-meta">{crew.data.participant_count} participants · values outside the supplied range</p>
+          <div className="visit-track" role="group" aria-label="Seven-visit timeline">
+            {crew.data.visit_timeline.map((t) => (
+              <button key={t.visit} type="button" className={`visit-step${t.visit === visit ? " is-current" : ""}`}
+                aria-pressed={t.visit === visit} aria-label={`Show ${t.label}: ${t.needs_review_count} of ${t.measurement_count} values outside the supplied range`}
+                onClick={() => update({ sample: t.visit })}>
+                <span className="visit-step-code">{t.visit}</span>
+                <span className="visit-step-phase">{t.phase === "PREFLIGHT" ? "Preflight" : "Postflight"}</span>
+                <span className={`visit-step-value${t.needs_review_count ? " is-flagged" : ""}`}>{t.needs_review_count}/{t.measurement_count}</span>
+              </button>
+            ))}
+          </div>
+          <p className="chart-note" title={`Counts are recorded values outside the source file's laboratory range. Rule ${crew.data.rule_version}; no participant is compared with another.`}>
+            Counts = values outside the supplied range · rule {crew.data.rule_version}.
+          </p>
+        </section>
+      ) : null}
 
       {overview.error ? <ErrorState error={overview.error} onRetry={overview.reload} /> : null}
       {!data && overview.loading ? <Skeleton height={190} label="Loading marker cards…" /> : null}

@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {state === "READY" ? <RecentReviews /> : null}
         <div className="side-foot">
           <span className={`live-pill${connected ? "" : " off"}`} role="status">
-            <span className="pulse" aria-hidden="true" />{connected ? "Live sync on" : state === "SERVICE_UNAVAILABLE" ? "Local service offline" : "Connecting…"}
+            <span className="pulse" aria-hidden="true" />{connected ? "Local workspace ready" : state === "SERVICE_UNAVAILABLE" ? "Local service offline" : "Connecting…"}
           </span>
           <span>Local workspace · historical NASA research data · not a clinical device</span>
           {status ? <span>v{status.app_version} · {status.git_version}</span> : null}

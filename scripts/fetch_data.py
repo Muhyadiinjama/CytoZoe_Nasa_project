@@ -2,7 +2,7 @@
 
 Usage:
   python scripts/fetch_data.py --dataset osd575-cmp
-  python scripts/fetch_data.py --dataset radlab-dostel1-2022-03-01
+  python scripts/fetch_data.py --dataset radlab-dostel1-2022-04-01
   python scripts/fetch_data.py --all [--force]
 
 Only HTTPS URLs on allow-listed NASA hosts from data/manifests/sources.json are fetched. Existing raw

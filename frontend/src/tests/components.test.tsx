@@ -29,6 +29,12 @@ const ev: HealthEvidence = {
     method: "retrospective_preflight_arithmetic_mean", baseline: 1.2366666667, n: 3, baseline_available: true,
     baseline_values: [{ visit: "L-92", sample_id: "", value: 1.24, source_row: 3 }, { visit: "L-44", sample_id: "", value: 1.1, source_row: 2 }, { visit: "L-3", sample_id: "", value: 1.37, source_row: 1 }],
     includes_selected_sample: true, delta: 0.1333333333, percent_delta: 10.78167, rule_version: "health-compare-v1", formulas: {},
+    calculation_steps: [
+      { label: "Baseline mean (B)", available: true, n: 3, unit: "mg/dL", expression: "mean(1.24, 1.1, 1.37)", result: 1.2366666667 },
+      { label: "Difference from baseline (Δ)", available: true, unit: "mg/dL", expression: "x − B = 1.37 − 1.236666667", result: 0.1333333333 },
+      { label: "Percent difference (%Δ)", available: true, unit: "%", expression: "100 × Δ / B", result: 10.78167 },
+      { label: "Supplied-range check", available: true, unit: "mg/dL", expression: "x > upper bound: 1.37 > 1.35", result: "ABOVE_SUPPLIED_UPPER_BOUND" },
+    ],
   },
   evidence_strength: "DIRECT_RESEARCH_MEASUREMENT_WITH_DESCRIPTIVE_COMPARISON",
   limitations: ["Not a diagnosis."],
@@ -56,10 +62,11 @@ describe("HealthEvidencePanel", () => {
     render(<DrawerProvider><HealthEvidencePanel ev={ev} followUp={<button>Record follow-up</button>} /></DrawerProvider>);
     const labels = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     expect(labels).toEqual(["Observed", "Compared with", "Source", "Limits", "Follow-up"]);
-    expect(screen.getByText("Outside supplied range · above upper bound")).toBeInTheDocument();
+    expect(screen.getAllByText("Outside supplied range · above upper bound")).toHaveLength(2);
     expect(screen.getByText("1.2367 mg/dL (n = 3)")).toBeInTheDocument();
     expect(screen.getByText(/Data row 1 \(file line 2\)/)).toBeInTheDocument();
     expect(screen.getByText(/comparison is retrospective/)).toBeInTheDocument();
+    expect(screen.getByText("Worked calculation · 4 steps")).toBeInTheDocument();
   });
 });
 

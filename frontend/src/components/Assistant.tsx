@@ -90,7 +90,7 @@ export function Assistant({ evidenceId }: { evidenceId: string }) {
                   </dl>
                 </details>
               ) : null}
-              <p className="meta">Sources: {m.answer.source_ids.join(" · ")} — {m.answer.generated_by}.</p>
+              <p className="meta">Sources: {m.answer.source_ids.join(" · ")} — {m.answer.generated_by}{m.answer.engine ? ` · engine ${m.answer.engine}` : ""}.</p>
             </div>
           </div>
         ))}

@@ -18,20 +18,22 @@
       "citation": "NASA Open Science Data Repository, OSD-575: SpaceX Inspiration4 Comprehensive Metabolic Panel (LSDS-8). https://osdr.nasa.gov/bio/repo/data/studies/OSD-575"
     },
     {
-      "id": "RADLAB-DOSTEL1-2022-03-01",
-      "fetch_key": "radlab-dostel1-2022-03-01",
+      "id": "RADLAB-DOSTEL1-2022-04-01",
+      "fetch_key": "radlab-dostel1-2022-04-01",
       "kind": "ENV_RADIATION",
-      "title": "ISS Columbus DosTel1 absorbed dose rate, 1 March 2022",
+      "title": "ISS Columbus DosTel1 absorbed dose rate, 1 April 2022",
       "provider": "NASA OSDR RadLab",
       "study_id": "RadLab DosTel1",
       "study_url": "https://visualization.osdr.nasa.gov/radlab/gui/knowledgebase/DosTel1",
-      "download_url": "https://visualization.osdr.nasa.gov/radlab/api/?instrument_id=DosTel1&timestamp%3E=2022-03-01&timestamp%3C2022-03-02&absorbed_dose_rate&format=csv",
+      "download_url": "https://visualization.osdr.nasa.gov/radlab/api/?instrument_id=DosTel1&timestamp%3E=2022-04-01&timestamp%3C2022-04-02&absorbed_dose_rate&format=csv",
       "documentation_url": "https://visualization.osdr.nasa.gov/radlab/gui/data-api/",
-      "file_name": "radlab_DosTel1_2022-03-01.csv",
-      "expected_sha256": "d3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1",
-      "expected_bytes": 52555,
+      "file_name": "radlab_DosTel1_2022-04-01.csv",
+      "source_date": "2022-04-01",
+      "expected_sha256": "d2f517eec5129528a1661b972193201676521906464e3d3e9f021794c7ed3441",
+      "expected_bytes": 52184,
       "license_note": "Publicly accessible through the NASA RadLab API. Redistribution terms not verified; raw file is not committed to Git — fetch it with scripts/fetch_data.py.",
-      "citation": "NASA OSDR RadLab, DosTel1 absorbed_dose_rate export for 2022-03-01. https://visualization.osdr.nasa.gov/radlab/gui/data-api/"
+      "citation": "NASA OSDR RadLab, DosTel1 absorbed_dose_rate export for 2022-04-01. https://visualization.osdr.nasa.gov/radlab/gui/data-api/",
+      "date_reconciliation": "The earlier build pinned 2022-03-01. The project's previous download was 2022-04-01; this manifest now records that date as canonical. Both dates return valid, different exports. Do not mix their rows or reuse the old SHA-256."
     }
   ]
 }

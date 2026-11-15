@@ -119,6 +119,12 @@ def health_overview(participant: str = Query(max_length=20), sample: str = Query
         return health_service.overview(conn, participant, sample)
 
 
+@router.get("/health/crew")
+def health_crew(visit: str = Query(max_length=20)) -> dict[str, Any]:
+    with db.session() as conn:
+        return health_service.crew(conn, visit)
+
+
 @router.get("/health/trend")
 def health_trend(participant: str = Query(max_length=20), marker: str = Query(max_length=20)) -> dict[str, Any]:
     with db.session() as conn:

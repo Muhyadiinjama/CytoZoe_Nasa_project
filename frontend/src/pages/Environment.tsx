@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { api } from "../api/client";
 import { useDrawer } from "../app/providers";
 import { LiveRadiation } from "../charts/LiveRadiation";
@@ -20,6 +20,8 @@ export default function Environment() {
   const [logScale, setLogScale] = useState(true);
   const [onlyExcluded, setOnlyExcluded] = useState(true);
   const inspector = useRef<HTMLElement>(null);
+  const reasonLabel = (reason: string) =>
+    env?.integration.excluded_intervals.find((i) => i.reason === reason)?.reason_label ?? reason;
 
   return (
     <>
@@ -28,7 +30,7 @@ export default function Environment() {
       <div className="case-banner" role="note">
         <IconSatellite />
         <span>Separate case study</span><span className="sep">·</span><span>ISS Columbus</span><span className="sep">·</span>
-        <span>DosTel1</span><span className="sep">·</span><span>1 March 2022</span><span className="sep">·</span>
+        <span>DosTel1</span><span className="sep">·</span><span>1 April 2022</span><span className="sep">·</span>
         <span>Not linked to the selected health participant.</span>
       </div>
 
@@ -109,6 +111,33 @@ export default function Environment() {
                 <dt>Rule</dt><dd>{env.integration.rule_version}</dd>
               </dl>
               <div className="formula">{env.integration.method}</div>
+              {env.integration.excluded_intervals.length ? (
+                <details className="disclosure">
+                  <summary>Coverage exclusions · {env.integration.excluded_intervals.length} interval{env.integration.excluded_intervals.length === 1 ? "" : "s"}</summary>
+                  {Object.keys(env.integration.excluded_by_reason).length ? (
+                    <dl className="kv small" style={{ marginBottom: 8 }}>
+                      {Object.entries(env.integration.excluded_by_reason).map(([reason, n]) => (
+                        <Fragment key={reason}>
+                          <dt>{reasonLabel(reason)}</dt><dd>{n} interval{n === 1 ? "" : "s"}</dd>
+                        </Fragment>
+                      ))}
+                    </dl>
+                  ) : null}
+                  <div className="table-wrap">
+                    <table className="data">
+                      <caption>Intervals excluded from the sensor-dose estimate</caption>
+                      <thead><tr><th scope="col">From (source)</th><th scope="col">To (source)</th><th scope="col" className="num">Seconds</th><th scope="col">Reason</th></tr></thead>
+                      <tbody>
+                        {env.integration.excluded_intervals.map((i) => (
+                          <tr key={`${i.start}-${i.end}-${i.reason}`} className="row-excluded">
+                            <td>{timeOnly(i.start)}</td><td>{timeOnly(i.end)}</td><td className="num">{fmt(i.seconds, 0)}</td><td>{i.reason_label}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              ) : null}
               <p className="small muted">No extrapolation before the first or after the last record. No Gy→Sv conversion, no limit comparison, no safe/unsafe signal.</p>
               <div className="btn-row">
                 <button type="button" className="btn btn-primary" onClick={() => open({ kind: "evidence", id: env.summary_evidence_id })}>Inspect estimate</button>

@@ -6,7 +6,7 @@ import json
 import sqlite3
 from typing import Any
 
-from .. import config, db
+from .. import config, db, sources
 from ..engines import environment, health, quality
 from . import environment_service, health_service, reviews
 
@@ -39,7 +39,7 @@ def build_packet(conn: sqlite3.Connection) -> dict[str, Any]:
             "reviews": [r for r in items if r["case"] == "health"],
         },
         "environment": {
-            "case_note": "RadLab DosTel1, ISS Columbus, 1 March 2022 — separate case study, not linked to any participant.",
+            "case_note": f"RadLab DosTel1, ISS Columbus, {sources.date_label('ENV_RADIATION')} — separate case study, not linked to any participant.",
             "limitations": environment_service.ENV_LIMITATIONS,
             "reviews": [r for r in items if r["case"] == "environment"],
         },

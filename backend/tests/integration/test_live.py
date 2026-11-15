@@ -31,7 +31,7 @@ def test_environment_replay_streams_every_accepted_reading_and_matches_static_to
     items = [e for name, d in events if name == "frame" for e in d["events"]]
     readings = [e for e in items if e["kind"] == "reading"]
     excluded = [e for e in items if e["kind"] == "excluded"]
-    assert len(readings) == 1194 and len(excluded) == 4
+    assert len(readings) == 1186 and len(excluded) == 3
     assert [r["t"] for r in readings] == sorted(r["t"] for r in readings)
     end = events[-1]
     assert end[0] == "end"

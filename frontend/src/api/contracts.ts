@@ -78,6 +78,11 @@ export interface SourceBlock {
   location?: string;
 }
 
+export interface CalculationStep {
+  label: string; available: boolean; n?: number; unit: string; expression: string;
+  result: number | string | null; note?: string;
+}
+
 export interface HealthEvidence {
   schema_version: string;
   evidence_id: string;
@@ -98,6 +103,7 @@ export interface HealthEvidence {
     baseline_values: { visit: string; sample_id: string; value: number | null; source_row: number }[];
     includes_selected_sample: boolean; delta: number | null; percent_delta: number | null; rule_version: string;
     formulas: Record<string, string>;
+    calculation_steps: CalculationStep[];
   };
   evidence_strength: string;
   limitations: string[];
@@ -138,15 +144,39 @@ export interface HealthOverview {
   dataset: { id: string; title: string; sha256: string; samples: number; participants: number; visits: string[]; nonmissing_values: number };
 }
 
+export interface CrewMarker {
+  marker: string; marker_name: string; value: number | null; unit: string;
+  range_status: RangeStatus; needs_review: boolean; delta: number | null; percent_delta: number | null;
+  evidence_id: string;
+}
+export interface CrewParticipant {
+  participant_id: string; sample_id: string; phase: "PREFLIGHT" | "POSTFLIGHT"; relative_day: number;
+  visit: string; visit_label: string; measurement_count: number; needs_review_count: number;
+  needs_review_markers: string[]; markers: CrewMarker[];
+  participant_review_counts: Record<ReviewStatus, number>;
+}
+export interface CrewTimelineVisit {
+  visit: string; label: string; phase: "PREFLIGHT" | "POSTFLIGHT"; relative_day: number; order: number;
+  participant_count: number; measurement_count: number; needs_review_count: number;
+}
+export interface CrewSummary {
+  visit: string; visit_label: string; participant_count: number;
+  participants: CrewParticipant[]; visit_timeline: CrewTimelineVisit[];
+  dataset: { id: string; title: string; sha256: string; samples: number; participants: number; visits: string[]; nonmissing_values: number };
+  method: string; rule_version: string;
+}
+
 export interface TrendPoint {
   evidence_id: string; sample_id: string; visit: string; visit_label: string; phase: string; visit_order: number;
   relative_day: number; value: number | null; range_low: number | null; range_high: number | null;
   range_status: RangeStatus; needs_review: boolean; source_row: number;
+  delta: number | null; percent_delta: number | null; range_low_delta: number | null; range_high_delta: number | null;
 }
 export interface HealthTrend {
   participant_id: string; marker: string; marker_name: string; unit: string; points: TrendPoint[];
   baseline: { value: number | null; n: number; available: boolean; method: string; visits: string[] };
-  bounds_consistent: boolean; range_low: number | null; range_high: number | null; x_axis_note: string; rule_version: string;
+  bounds_consistent: boolean; range_low: number | null; range_high: number | null; x_axis_note: string;
+  delta_note: string; rule_version: string;
 }
 
 export interface EnvPoint { t: number; ts: string; rate: number; cumulative: number; source_row: number; }
@@ -164,7 +194,8 @@ export interface EnvironmentView {
   integration: {
     method: string; rule_version: string; max_gap_seconds: number; covered_seconds: number; span_seconds: number;
     coverage_ratio: number | null; estimated_sensor_dose_uGy: number; label: string; included_intervals: number;
-    excluded_intervals: { start: string; end: string; seconds: number; reason: string; start_t: number; end_t: number }[];
+    excluded_intervals: { start: string; end: string; seconds: number; reason: string; reason_label: string; start_t: number; end_t: number }[];
+    excluded_by_reason: Record<string, number>;
   };
   segments: { index: number; start: string; end: string; points: EnvPoint[] }[];
   excluded_events: { t: number; ts: string; status: string; source_row: number }[];
@@ -199,6 +230,7 @@ export interface Explanation {
   facts: { label: string; value: string }[];
   source_ids: string[];
   generated_by: string;
+  engine?: string;
 }
 
 export interface DatasetInfo {

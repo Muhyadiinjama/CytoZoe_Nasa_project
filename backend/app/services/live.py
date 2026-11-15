@@ -10,6 +10,8 @@ import json
 import threading
 from typing import Any, AsyncIterator
 
+from .. import sources
+
 
 class Broker:
     """Fan-out of small change notifications to every connected browser tab."""
@@ -88,7 +90,8 @@ async def environment_replay(view: dict[str, Any], speed: float, start: float, t
             item["covered_seconds"] = covered
             prev = item
     items = [x for x in items if x[0] >= start]
-    yield sse("meta", {"mode": "REPLAY", "label": "Replay of recorded data · 1 March 2022 · not live",
+    yield sse("meta", {"mode": "REPLAY",
+                       "label": f"Replay of recorded data · {sources.date_label('ENV_RADIATION')} · not live",
                        "speed": speed, "start": start, "total_points": sum(len(s["points"]) for s in view["segments"]),
                        "final_estimated_sensor_dose_uGy": integ["estimated_sensor_dose_uGy"],
                        "span_seconds": integ["span_seconds"], "day_start": view["segments"][0]["points"][0]["t"] if view["segments"] else 0})

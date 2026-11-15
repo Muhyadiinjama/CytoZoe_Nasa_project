@@ -5,7 +5,7 @@ All source definitions are pinned in `data/manifests/sources.json`. Raw files ar
 | ID | Source | SHA-256 (verified 2026-11-14) | Rows | Licence / terms |
 |---|---|---|---|---|
 | OSD-575-CMP | [OSD-575](https://osdr.nasa.gov/bio/repo/data/studies/OSD-575), `LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv` | `5eb1e7f025dd8443a9e70111e62bc32afae3432753024489c5c013e401d709d9` | 28 | CC0-1.0 per study page |
-| RADLAB-DOSTEL1-2022-03-01 | [RadLab API](https://visualization.osdr.nasa.gov/radlab/gui/data-api/), DosTel1, 2022-03-01 | `d3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1` | 1,202 | Public API; redistribution not verified, so not committed |
+| RADLAB-DOSTEL1-2022-04-01 | [RadLab API](https://visualization.osdr.nasa.gov/radlab/gui/data-api/), DosTel1, 2022-04-01 | `d2f517eec5129528a1661b972193201676521906464e3d3e9f021794c7ed3441` | 1,192 | Public API; redistribution not verified, so not committed |
 
 Both hashes matched the PRD's previously inspected snapshots byte-for-byte on 14 November 2026.
 

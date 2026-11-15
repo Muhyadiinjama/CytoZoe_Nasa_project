@@ -5,7 +5,7 @@ test("Radiation replay streams real readings in real time, surfaces conflicts, a
   await isolate(page);
   await page.goto("/environment");
   const live = page.getByRole("region", { name: "Replay the day in real time" });
-  await expect(live.getByText("Replay · recorded 1 March 2022 · not live")).toBeVisible();
+  await expect(live.getByText("Replay · recorded 1 April 2022 · not live")).toBeVisible();
   await live.getByLabel("Replay speed").selectOption("3600");
   await live.getByRole("button", { name: "Start replay" }).click();
 
@@ -47,7 +47,8 @@ test("Live sync: a review saved in one window appears instantly in another", asy
   const a = await ctx.newPage();
   const b = await ctx.newPage();
   await b.goto("/reviews");
-  await expect(b.getByText("Live sync on")).toBeVisible();
+  await expect(b.getByText("Local workspace ready")).toBeVisible();
+  await expect(b.getByText(/most recently updated first|No reviews saved yet/)).toBeVisible();
   const before = await b.locator("main table.data tbody tr").count();
 
   await a.goto("/overview?participant=C003&sample=R%2B1");

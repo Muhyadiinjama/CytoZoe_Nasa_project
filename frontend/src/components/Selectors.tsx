@@ -1,11 +1,13 @@
 import { useId, useRef, type KeyboardEvent } from "react";
 import type { Participant, Sample } from "../api/contracts";
 
-export function ParticipantSelect({ participants, value, onChange }: { participants: Participant[]; value: string; onChange: (v: string) => void }) {
+export function ParticipantSelect({ participants, value, onChange, compact = false }: {
+  participants: Participant[]; value: string; onChange: (v: string) => void; compact?: boolean;
+}) {
   const id = useId();
   return (
-    <div className="field">
-      <label className="field-label" htmlFor={id}>Participant (anonymised)</label>
+    <div className={`field${compact ? " field-inline" : ""}`}>
+      <label className="field-label" htmlFor={id}>{compact ? "Participant" : "Participant (anonymised)"}</label>
       <select id={id} className="select" value={value} onChange={(e) => onChange(e.target.value)}>
         {participants.map((p) => <option key={p.participant_id} value={p.participant_id}>{p.participant_id}</option>)}
       </select>
@@ -13,11 +15,13 @@ export function ParticipantSelect({ participants, value, onChange }: { participa
   );
 }
 
-export function SampleSelect({ samples, value, onChange }: { samples: Sample[]; value: string; onChange: (v: string) => void }) {
+export function SampleSelect({ samples, value, onChange, compact = false }: {
+  samples: Sample[]; value: string; onChange: (v: string) => void; compact?: boolean;
+}) {
   const id = useId();
   return (
-    <div className="field" style={{ minWidth: 200 }}>
-      <label className="field-label" htmlFor={id}>Visit (historical sample)</label>
+    <div className={`field${compact ? " field-inline" : ""}`} style={compact ? undefined : { minWidth: 200 }}>
+      <label className="field-label" htmlFor={id}>{compact ? "Visit" : "Visit (historical sample)"}</label>
       <select id={id} className="select" value={value} onChange={(e) => onChange(e.target.value)}>
         {samples.map((s) => <option key={s.visit} value={s.visit}>{s.label}</option>)}
       </select>

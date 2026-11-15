@@ -123,7 +123,7 @@ export function LiveRadiation({ spanSeconds, finalDose }: { spanSeconds: number;
           <h2 id="live-title">Replay the day in real time</h2>
           <p>The local service streams every recorded DosTel1 reading in its original order, sped up. Values are the real source values — this is a replay, not live telemetry.</p>
         </div>
-        <span className="badge badge-replay">Replay · recorded 1 March 2022 · not live</span>
+        <span className="badge badge-replay">Replay · recorded 1 April 2022 · not live</span>
       </div>
 
       <div className="player">

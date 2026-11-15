@@ -16,7 +16,7 @@
 | ID | Status | Notes |
 |---|---|---|
 | DATA-01 | Done | 28 samples / 140 values, hash-verified |
-| DATA-02 | Done | 1,202 raw rows retained; 8 quarantined |
+| DATA-02 | Done | 1,192 raw rows retained; 6 quarantined |
 | DATA-03 | Done | Drawer shows dataset, file, data row, file line, column, raw value, SHA-256, licence, URL |
 | HEAL-01 | Done | 4 participants, 7 categorical visits, URL state |
 | HEAL-02 | Done | 5 cards with values, units, range status, Δ |

@@ -30,11 +30,11 @@ function Tip({ active, payload, kind }: { active?: boolean; payload?: { payload:
 export function RadiationRateChart({ env, logScale }: { env: EnvironmentView; logScale: boolean }) {
   return (
     <div className="chart-box tall" role="img"
-      aria-label={`DosTel1 absorbed dose rate in µGy per hour across 1 March 2022, drawn as ${env.segments.length} separate segments broken at ${env.quality.conflict_groups.length} excluded conflict timestamps. Values are in the data table below.`}>
+      aria-label={`DosTel1 absorbed dose rate in µGy per hour across 1 April 2022, drawn as ${env.segments.length} separate segments broken at ${env.quality.conflict_groups.length} excluded conflict timestamps. Values are in the data table below.`}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart margin={{ top: 12, right: 16, bottom: 28, left: 8 }} accessibilityLayer={false}>
           <CartesianGrid stroke="#EEEAE1" vertical={false} />
-          <XAxis {...axisProps()} label={{ value: "Source timestamp, 1 March 2022 (as exported; no timezone)", position: "insideBottom", offset: -18, fill: "#625E57", fontSize: 12 }} />
+          <XAxis {...axisProps()} label={{ value: "Source timestamp, 1 April 2022 (as exported; no timezone)", position: "insideBottom", offset: -18, fill: "#625E57", fontSize: 12 }} />
           <YAxis scale={logScale ? "log" : "linear"} domain={logScale ? [1, 1000] : [0, "auto"]} allowDataOverflow={logScale}
             ticks={logScale ? [1, 3, 10, 30, 100, 300, 1000] : undefined}
             tick={{ fill: "#625E57", fontSize: 12 }} tickLine={false} axisLine={false} width={64} tickFormatter={(v: number) => fmt(v, 1)}
@@ -61,7 +61,7 @@ export function SensorDoseChart({ env }: { env: EnvironmentView }) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart margin={{ top: 12, right: 16, bottom: 28, left: 8 }} accessibilityLayer={false}>
           <CartesianGrid stroke="#EEEAE1" vertical={false} />
-          <XAxis {...axisProps()} label={{ value: "Source timestamp, 1 March 2022", position: "insideBottom", offset: -18, fill: "#625E57", fontSize: 12 }} />
+          <XAxis {...axisProps()} label={{ value: "Source timestamp, 1 April 2022", position: "insideBottom", offset: -18, fill: "#625E57", fontSize: 12 }} />
           <YAxis domain={[0, "auto"]} tick={{ fill: "#625E57", fontSize: 12 }} tickLine={false} axisLine={false} width={64}
             tickFormatter={(v: number) => fmt(v, 0)}
             label={{ value: "Estimated sensor dose (µGy)", angle: -90, position: "insideLeft", offset: 4, fill: "#625E57", fontSize: 12, style: { textAnchor: "middle" } }} />

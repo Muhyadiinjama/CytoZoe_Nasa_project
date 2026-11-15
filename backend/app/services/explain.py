@@ -5,7 +5,20 @@ Notes and imported text are never interpolated as instructions.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Protocol
+
+from .. import sources
+
+ENV_DATE_LABEL = sources.date_label("ENV_RADIATION")
+
+
+class ExplanationEngine(Protocol):
+    """Narrow seam for a future local wording engine. It may rephrase, never change numbers."""
+
+    name: str
+
+    def explain(self, evidence: dict[str, Any], question_id: str) -> dict[str, Any]:
+        ...
 
 QUESTIONS = {
     "EXPLAIN_RESULT": "Explain this result",
@@ -109,7 +122,7 @@ def _health(ev: dict[str, Any], q: str) -> tuple[list[str], list[dict[str, str]]
         ], facts
     return [
         "No — the available data cannot support that claim.",
-        "The Inspiration4 blood samples (OSD-575) and the ISS DosTel1 radiation record (1 March 2022, ISS Columbus module) come from different missions, times and people. There is no personal dose for this participant, so CytoZoe deliberately never links the two case studies.",
+        f"The Inspiration4 blood samples (OSD-575) and the ISS DosTel1 radiation record ({ENV_DATE_LABEL}, ISS Columbus module) come from different missions, times and people. There is no personal dose for this participant, so CytoZoe deliberately never links the two case studies.",
         "Answering a causal question would require matched, time-aligned personal dosimetry and physiological measurements for the same person, plus a validated study design.",
     ], facts
 
@@ -136,7 +149,7 @@ def _environment(ev: dict[str, Any], q: str) -> tuple[list[str], list[dict[str, 
         ]
         if q == "EXPLAIN_RESULT":
             return [
-                f"On 1 March 2022 the DosTel1 instrument in the ISS Columbus module exported {m['raw_rows']} rows. {m['quarantined_conflict_rows']} rows share timestamps with conflicting values and were quarantined; {m['accepted_rows']} rows were accepted.",
+                f"On {ENV_DATE_LABEL} the DosTel1 instrument in the ISS Columbus module exported {m['raw_rows']} rows. {m['quarantined_conflict_rows']} rows share timestamps with conflicting values and were quarantined; {m['accepted_rows']} rows were accepted.",
                 f"Integrating the accepted readings gives an estimated {fmt(m['estimated_sensor_dose_uGy'], 2)} µGy absorbed at the sensor over {hms(m['covered_seconds'])} of covered time ({fmt(100 * (m['coverage_ratio'] or 0), 2)}% of the recorded span).",
                 "This is an approximate instrument-level estimate. It is not a personal, organ or effective dose and is not compared with any exposure limit.",
             ], facts
@@ -187,7 +200,7 @@ def unsupported(evidence_id: str) -> dict[str, Any]:
     }
 
 
-def explain(evidence: dict[str, Any], question_id: str) -> dict[str, Any]:
+def _render(evidence: dict[str, Any], question_id: str) -> dict[str, Any]:
     if evidence["case"] == "health":
         paragraphs, facts = _health(evidence, question_id)
     else:
@@ -202,4 +215,19 @@ def explain(evidence: dict[str, Any], question_id: str) -> dict[str, Any]:
         "facts": facts,
         "source_ids": [evidence["evidence_id"], evidence["source"]["dataset_id"]],
         "generated_by": "deterministic template (no language model)",
+        "engine": "deterministic_template",
     }
+
+
+class DeterministicExplanationEngine:
+    name = "deterministic_template"
+
+    def explain(self, evidence: dict[str, Any], question_id: str) -> dict[str, Any]:
+        return _render(evidence, question_id)
+
+
+ENGINE: ExplanationEngine = DeterministicExplanationEngine()
+
+
+def explain(evidence: dict[str, Any], question_id: str) -> dict[str, Any]:
+    return ENGINE.explain(evidence, question_id)

@@ -46,7 +46,7 @@ CytoZoe closes that review-workflow gap in one complete loop: **inspect → expl
   - **E3 environment integration:** trapezoidal estimate over covered intervals only
 - **1 evidence drawer:** a *Verified explanation* assistant built from fixed, source-bound templates. No language model is involved.
 - **Real-time features, with no fabricated "live" data:**
-  - **Radiation replay stream:** the server streams the 1,194 recorded DosTel1 readings over server-sent events, in their original order, at 300×, 1200× or 3600× speed. Rate, peak, estimated dose so far and coverage update as they arrive. Data-quality conflicts appear in an event feed at the moment the stream reaches them. Always labelled *Replay · not live*.
+  - **Radiation replay stream:** the server streams the 1,186 recorded DosTel1 readings over server-sent events, in their original order, at 300×, 1200× or 3600× speed. Rate, peak, estimated dose so far and coverage update as they arrive. Data-quality conflicts appear in an event feed at the moment the stream reaches them. Always labelled *Replay · not live*.
   - **Mission timeline replay:** steps through a participant's 7 real blood draws. The whole Overview (cards and findings) updates visit by visit, and range flags appear in an event feed.
   - **Live sync:** saving or changing a review pushes an event to every open window. Tabs refresh instantly, the sidebar's *Recent reviews* updates, and other windows get a notice. A tab with an unsaved draft is never silently rebased; it gets a 409 conflict prompt instead.
 - **Conversational assistant:** suggested questions or a typed question. Typed text is routed by fixed keyword rules to the same verified templates, so there is no language model, and the typed text is never echoed into an answer.
@@ -133,32 +133,31 @@ Verified facts used as acceptance fixtures:
 
 Suitable for descriptive personal comparison and source-range review. **Not** suitable for continuous monitoring, disease labels, prediction, or exposure–health analysis: four people are not a validation cohort.
 
-### 2. NASA RadLab DosTel1: ISS Columbus, 1 March 2022 (**USED: separate environment case**)
+### 2. NASA RadLab DosTel1: ISS Columbus, 1 April 2022 (**USED: separate environment case**)
 
 | Field | Value |
 |---|---|
 | Provider | NASA OSDR RadLab |
 | API documentation | https://visualization.osdr.nasa.gov/radlab/gui/data-api/ |
 | Instrument | https://visualization.osdr.nasa.gov/radlab/gui/knowledgebase/DosTel1 (ISS Columbus module; documented nominal cadence 300 s) |
-| Download URL | https://visualization.osdr.nasa.gov/radlab/api/?instrument_id=DosTel1&timestamp%3E=2022-03-01&timestamp%3C2022-03-02&absorbed_dose_rate&format=csv |
-| Local file name | `radlab_DosTel1_2022-03-01.csv` |
-| SHA-256 (verified 14 Nov 2026) | `d3f64e7f483c3ae2f08bb5e6633bae5091e661a988c434205ce6bb78c050f7e1` |
-| Size | 52,555 bytes · 1,202 rows · columns `timestamp,instrument_id,absorbed_dose_rate` |
+| Download URL | https://visualization.osdr.nasa.gov/radlab/api/?instrument_id=DosTel1&timestamp%3E=2022-04-01&timestamp%3C2022-04-02&absorbed_dose_rate&format=csv |
+| Local file name | `radlab_DosTel1_2022-04-01.csv` |
+| SHA-256 (verified 14 Nov 2026) | `d2f517eec5129528a1661b972193201676521906464e3d3e9f021794c7ed3441` |
+| Size | 52,184 bytes · 1,192 rows · columns `timestamp,instrument_id,absorbed_dose_rate` |
 | Unit | µGy/hour (absorbed dose rate at the instrument) |
-| Time range | 2022-03-01T00:00:00 → 2022-03-01T23:58:34 (no timezone suffix; shown exactly as exported) |
-| Cadence observed | irregular: median 89 s, maximum 213 s |
+| Time range | 2022-04-01T00:00:00 → 2022-04-01T23:58:23 (no timezone suffix; shown exactly as exported) |
+| Cadence observed | irregular: median 90 s, maximum gap 1,055 s |
 | Licence | Publicly accessible via the NASA API. **Redistribution terms not verified**, so the raw file is not committed |
 
-**Data-quality finding (real, in the source):** 4 timestamps appear twice with **different** rates:
+**Data-quality finding (real, in the source):** 3 timestamps appear twice with **different** rates:
 
 | Timestamp | Data row → rate (µGy/hour) |
 |---|---|
-| 09:15:00 | 464 → 10.1122485512821 · 465 → 9.853933 |
-| 09:20:00 | 468 → 5.61126966666667 · 469 → 4.474783 |
-| 18:25:00 | 946 → 5.46090767412141 · 947 → 5.312235 |
-| 18:30:00 | 950 → 6.03754233333333 · 951 → 5.625719 |
+| 04:45:00 | 260 → 1.64210533333333 · 261 → 1.695922 |
+| 09:10:00 | 485 → 6.10317033333333 · 486 → 6.685863 |
+| 09:15:00 | 489 → 2.99937726837061 · 490 → 2.698345 |
 
-All 8 rows are kept for audit and **quarantined** from analysis. They are never averaged, summed or first-picked. This leaves 1,198 unique timestamps and 1,194 accepted rows. The resulting estimate is **296.04 µGy at the sensor over 23 h 44 min 49 s of covered time (99.04% of the recorded span)**, from 1,189 included intervals with 4 excluded. The estimate is *not* a personal, organ or effective dose, and there is no Gy→Sv conversion and no limit comparison.
+All 6 rows are kept for audit and **quarantined** from analysis. They are never averaged, summed or first-picked. This leaves 1,189 unique timestamps and 1,186 accepted rows. The resulting estimate is **289.60 µGy at the sensor over 23 h 30 min 23 s of covered time (98.05% of the recorded span)**, from 1,181 included intervals with 4 excluded (three conflict spans plus one 1,055 s gap above the 300 s limit). The estimate is *not* a personal, organ or effective dose, and there is no Gy→Sv conversion and no limit comparison.
 
 ### 3. NASA GLDS-174: gene-expression context (**NOT USED: deferred to future work**)
 
@@ -179,7 +178,7 @@ Named in the brief as optional validation data. It was excluded because:
 No BIDMC data was downloaded or used.
 
 ### Why the two used datasets are never joined
-The OSD-575 samples come from Inspiration4 (2021). The DosTel1 record comes from the ISS on 1 March 2022. They are different missions, times and people, so there is **no** person-level dose. The API rejects attempts to combine them (`CROSS_CASE_LINK_REJECTED`), and the database enforces that environment reviews never carry a participant. Pairing exposure with physiology is future work, and it needs matched personal dosimetry and onboard measurements.
+The OSD-575 samples come from Inspiration4 (2021). The DosTel1 record comes from the ISS on 1 April 2022. They are different missions, times and people, so there is **no** person-level dose. The API rejects attempts to combine them (`CROSS_CASE_LINK_REJECTED`), and the database enforces that environment reviews never carry a participant. Pairing exposure with physiology is future work, and it needs matched personal dosimetry and onboard measurements.
 
 Full provenance: [data/manifests/sources.json](data/manifests/sources.json) · [docs/SOURCES.md](docs/SOURCES.md) · [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md)
 

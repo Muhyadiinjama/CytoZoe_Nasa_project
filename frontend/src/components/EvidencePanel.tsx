@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { EnvConflictMeasurement, EnvEvidence, EnvSummaryMeasurement, Evidence, HealthEvidence } from "../api/contracts";
+import type { CalculationStep, EnvConflictMeasurement, EnvEvidence, EnvSummaryMeasurement, Evidence, HealthEvidence, RangeStatus } from "../api/contracts";
 import { duration, fmt, RANGE_TEXT, rangeText, REVIEW_LABEL, signed } from "../lib/format";
 import { IconFlag, IconInfo } from "./icons";
 
@@ -23,6 +23,13 @@ export function RangeStatusLine({ status }: { status: HealthEvidence["measuremen
       {RANGE_TEXT[status]}
     </span>
   );
+}
+
+function stepResult(s: CalculationStep): string {
+  if (!s.available) return "Not computed";
+  if (typeof s.result === "string") return RANGE_TEXT[s.result as RangeStatus] ?? s.result;
+  if (s.result === null) return "—";
+  return s.unit === "%" ? `${fmt(s.result, 2)} %` : `${fmt(s.result, 6)} ${s.unit}`;
 }
 
 function SourceStep({ ev, children }: { ev: Evidence; children?: ReactNode }) {
@@ -51,7 +58,10 @@ function SourceStep({ ev, children }: { ev: Evidence; children?: ReactNode }) {
   );
 }
 
-export function HealthEvidencePanel({ ev, followUp }: { ev: HealthEvidence; followUp?: ReactNode }) {
+export function HealthEvidencePanel({ ev, followUp, variant = "full" }: {
+  ev: HealthEvidence; followUp?: ReactNode; variant?: "full" | "trend";
+}) {
+  if (variant === "trend") return <TrendHealthEvidencePanel ev={ev} followUp={followUp} />;
   const m = ev.measurement;
   const c = ev.comparison;
   const ctx = ev.context;
@@ -76,6 +86,22 @@ export function HealthEvidencePanel({ ev, followUp }: { ev: HealthEvidence; foll
           <p className="small muted" style={{ marginTop: 6 }}>This preflight sample is one of the values in the mean, so the comparison is retrospective — not a real-time prediction.</p>
         ) : null}
         <p className="small muted" style={{ marginTop: 6 }}>A difference from the personal mean is descriptive; it is not an abnormality threshold.</p>
+        {c.calculation_steps?.length ? (
+          <details className="disclosure" style={{ marginTop: 8 }}>
+            <summary>Worked calculation · {c.calculation_steps.length} steps</summary>
+            <ol className="calc-steps">
+              {c.calculation_steps.map((s) => (
+                <li key={s.label}>
+                  <strong>{s.label}</strong>
+                  {s.n !== undefined ? <span className="meta"> · n = {s.n}</span> : null}
+                  <div className="formula">{s.expression}</div>
+                  <div className="small">{stepResult(s)}</div>
+                  {s.note ? <p className="meta">{s.note}</p> : null}
+                </li>
+              ))}
+            </ol>
+          </details>
+        ) : null}
       </Step>
       <Step n={3} label="Source">
         <SourceStep ev={ev}>
@@ -96,6 +122,113 @@ export function HealthEvidencePanel({ ev, followUp }: { ev: HealthEvidence; foll
         ) : <p className="small muted" style={{ marginBottom: 8 }}>No review saved for this result yet.</p>}
         {followUp}
       </Step>
+    </div>
+  );
+}
+
+function shortRangeStatus(status: RangeStatus): string {
+  if (status === "ABOVE_SUPPLIED_UPPER_BOUND") return "Above supplied range";
+  if (status === "BELOW_SUPPLIED_LOWER_BOUND") return "Below supplied range";
+  if (status === "WITHIN_SUPPLIED_RANGE") return "Within supplied range";
+  if (status === "ONE_SIDED_COMPARISON") return "One-sided comparison";
+  return "Not assessable";
+}
+
+function TrendHealthEvidencePanel({ ev, followUp }: { ev: HealthEvidence; followUp?: ReactNode }) {
+  const m = ev.measurement;
+  const c = ev.comparison;
+  const ctx = ev.context;
+  const flagged = m.range_status === "ABOVE_SUPPLIED_UPPER_BOUND" || m.range_status === "BELOW_SUPPLIED_LOWER_BOUND";
+  const baseline = c.baseline_available && c.baseline !== null ? `${c.baseline.toFixed(2)} ${m.unit} (n = ${c.n})` : `Not computed (n = ${c.n})`;
+  const difference = c.delta === null
+    ? "—"
+    : `${signed(c.delta, 2)} ${m.unit}${c.percent_delta === null ? "" : ` (${signed(c.percent_delta, 1)}%)`}`;
+  return (
+    <div className="evidence evidence-trend">
+      <section className="ev-section">
+        <h3 className="ev-label">Observed</h3>
+        <div className="ev-big">{m.value === null ? "No value recorded" : <>{fmt(m.value)} <span className="metric-unit">{m.unit}</span></>}</div>
+        <p className="ev-meta">{Math.abs(ctx.relative_day)} {ctx.relative_day_reference}</p>
+        <span className={`status-chip${flagged ? " is-flagged" : ""}`}>
+          {flagged ? <IconFlag /> : <IconInfo />}
+          {shortRangeStatus(m.range_status)}
+        </span>
+      </section>
+      <section className="ev-section">
+        <h3 className="ev-label">Compared with</h3>
+        <dl className="compare-list">
+          <dt>Supplied range</dt><dd>{rangeText(m.range_low, m.range_high, m.unit)}</dd>
+          <dt>Preflight mean</dt><dd>{baseline}</dd>
+          <dt>Difference</dt><dd>{difference}</dd>
+        </dl>
+        {c.baseline_values.length ? (
+          <details className="disclosure disclosure-inline">
+            <summary>Show values</summary>
+            <table className="mini-table">
+              <caption>Preflight values used ({m.unit})</caption>
+              <thead><tr><th scope="col">Visit</th><th scope="col" className="num">Value</th></tr></thead>
+              <tbody>
+                {c.baseline_values.map((b) => (
+                  <tr key={b.visit}>
+                    <th scope="row">{b.visit}</th>
+                    <td className="num">{b.value === null ? "missing" : b.value.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
+        ) : null}
+        {c.includes_selected_sample ? (
+          <p className="ev-note" title="This preflight sample is one of the values in the mean, so the comparison is retrospective — not a real-time prediction.">
+            Retrospective: this sample is included in the preflight mean.
+          </p>
+        ) : (
+          <p className="ev-note" title="A difference from the personal mean is descriptive; it is not an abnormality threshold.">
+            A difference from the personal mean is descriptive, not a threshold.
+          </p>
+        )}
+        {c.calculation_steps?.length ? (
+          <details className="disclosure disclosure-inline">
+            <summary>Worked calculation · {c.calculation_steps.length} steps</summary>
+            <ol className="calc-steps">
+              {c.calculation_steps.map((s) => (
+                <li key={s.label}>
+                  <strong>{s.label}</strong>
+                  {s.n !== undefined ? <span className="meta"> · n = {s.n}</span> : null}
+                  <div className="formula">{s.expression}</div>
+                  <div className="small">{stepResult(s)}</div>
+                  {s.note ? <p className="meta">{s.note}</p> : null}
+                </li>
+              ))}
+            </ol>
+          </details>
+        ) : null}
+      </section>
+      <section className="ev-section">
+        <h3 className="ev-label">Source</h3>
+        <details className="disclosure disclosure-inline">
+          <summary>Source and provenance</summary>
+          <dl className="kv small">
+            <dt>Dataset</dt><dd>{ev.source.title}</dd>
+            <dt>File</dt><dd><code>{ev.source.file_name}</code></dd>
+            <dt>Row</dt><dd>Data row {ev.source.source_row} (file line {ev.source.file_line})</dd>
+            <dt>Rule</dt><dd>{c.rule_version}</dd>
+          </dl>
+        </details>
+      </section>
+      <section className="ev-section">
+        <h3 className="ev-label">Limits</h3>
+        <ul className="ev-list">{ev.limitations.map((l) => <li key={l}>{l}</li>)}</ul>
+      </section>
+      <section className="ev-section">
+        <h3 className="ev-label">Follow-up</h3>
+        {ev.review ? (
+          <p className="small" style={{ marginBottom: 8 }}>
+            Current review: <span className="badge badge-teal">{REVIEW_LABEL[ev.review.status]}</span> · version {ev.review.version}
+          </p>
+        ) : <p className="small muted" style={{ marginBottom: 8 }}>No review saved for this result yet.</p>}
+        {followUp}
+      </section>
     </div>
   );
 }
@@ -123,7 +256,7 @@ export function EnvEvidencePanel({ ev, followUp }: { ev: EnvEvidence; followUp?:
         ) : (
           <>
             <div className="ev-big">{fmt(sm.estimated_sensor_dose_uGy, 2)} <span className="metric-unit">µGy</span></div>
-            <p className="small muted">{sm.label} · DosTel1 · ISS Columbus · 1 March 2022</p>
+            <p className="small muted">{sm.label} · DosTel1 · ISS Columbus · 1 April 2022</p>
           </>
         )}
       </Step>

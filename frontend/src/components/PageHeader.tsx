@@ -1,14 +1,5 @@
 import { useEffect, type ReactNode } from "react";
 import { useDrawer, useServiceStatus } from "../app/providers";
-import { IconHistory, IconSatellite, IconSource } from "./icons";
-
-export function StudyBadge({ kind }: { kind: "health" | "environment" }) {
-  return kind === "health" ? (
-    <span className="badge badge-history"><IconHistory />Historical research data · OSD-575</span>
-  ) : (
-    <span className="badge badge-history"><IconSatellite />Separate case study · ISS DosTel1</span>
-  );
-}
 
 export function ServiceStatus() {
   const { state } = useServiceStatus();
@@ -16,7 +7,7 @@ export function ServiceStatus() {
   return (
     <span className={`service-status ${ok ? "ok" : "bad"}`} role="status">
       <span className="dot" aria-hidden="true" />
-      {state === "BOOTING" ? "Checking local service…" : ok ? "Local service connected" : "Local service unavailable"}
+      {state === "BOOTING" ? "Checking local data…" : state === "READY" ? "Local data loaded" : state === "NO_DATA" ? "No data imported" : "Local service unavailable"}
     </span>
   );
 }
@@ -36,10 +27,16 @@ export function PageHeader({ eyebrow, title, purpose, study, children }: {
         <p className="purpose">{purpose}</p>
       </div>
       <div className="page-head-meta">
-        {study ? <StudyBadge kind={study} /> : null}
+        {study ? (
+          <>
+            <span>{study === "health" ? "Historical data, not live · OSD-575" : "Separate case study · ISS DosTel1"}</span>
+            <span className="meta-sep" aria-hidden="true">·</span>
+          </>
+        ) : null}
         <ServiceStatus />
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => open({ kind: "sources" })}>
-          <IconSource />Sources &amp; quality
+        <span className="meta-sep" aria-hidden="true">·</span>
+        <button type="button" className="link-button" onClick={() => open({ kind: "sources" })}>
+          Sources &amp; quality
         </button>
         {children}
       </div>

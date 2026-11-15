@@ -31,7 +31,7 @@ def main() -> None:
 
     db.migrate()
     if not args.empty:
-        for name in ("LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv", "radlab_DosTel1_2022-03-01.csv"):
+        for name in ("LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv", "radlab_DosTel1_2022-04-01.csv"):
             importer.import_bytes((ROOT / "data" / "raw" / name).read_bytes())
     import uvicorn
 

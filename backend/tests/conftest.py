@@ -9,7 +9,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
 CMP_FILE = RAW / "LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv"
-RAD_FILE = RAW / "radlab_DosTel1_2022-03-01.csv"
+RAD_FILE = RAW / "radlab_DosTel1_2022-04-01.csv"
 
 needs_raw = pytest.mark.skipif(
     not (CMP_FILE.exists() and RAD_FILE.exists()),
